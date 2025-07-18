@@ -1,3 +1,6 @@
+<?php
+       include("send.php");
+    ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -10,7 +13,52 @@
 </head>
 <body>
 
-    <header class="header">
+    <?php if (isset($_GET['status'])): ?>
+    <style>
+        /* Estilos para la barra de mensaje */
+        .mensaje-estado {
+            padding: 15px;
+            margin: 20px auto;
+            text-align: center;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .mensaje-exito {
+            background-color: #28a745; /* Color verde */
+        }
+        .mensaje-error {
+            background-color: #dc3545; /* Color rojo */
+        }
+    </style>
+
+    <?php
+    $mensaje = '';
+    $clase_css = '';
+    
+    // Decidimos qué mensaje y color usar
+    if ($_GET['status'] == 'success') {
+        $mensaje = '¡Consulta agendada con éxito! Nos pondremos en contacto contigo pronto.';
+        $clase_css = 'mensaje-exito';
+    } elseif ($_GET['status'] == 'error') {
+        $mensaje = 'Hubo un error al enviar tu consulta. Por favor, inténtalo de nuevo.';
+        $clase_css = 'mensaje-error';
+    } elseif ($_GET['status'] == 'empty_fields') {
+        $mensaje = 'Error: Todos los campos son obligatorios.';
+        $clase_css = 'mensaje-error';
+    }
+
+    // Mostramos el mensaje en la página si existe
+    if ($mensaje) {
+        echo "<div class='mensaje-estado $clase_css'>$mensaje</div>";
+    }
+    ?>
+ <?php endif; ?>
+
+    <header id="inicio" class="header">
 
         <div class="menu container">
             <a href="#" class="logo"> logo</a>
@@ -19,13 +67,12 @@
                 <img src="Images/menu.png" class="menu-icpmp" alt="menu">
             </label>
             <nav class="navbar">
-                <ul>
-                    <li><a href="#">Inicio</a></li>
-                    <li><a href="#">Nosotros</a></li>
-                    <li><a href="#">Ayuda</a></li>
-                    <li><a href="#">Contacto</a></li>
-                </ul>
-
+             <ul>
+               <li><a href="#inicio">Inicio</a></li>
+               <li><a href="#nosotros">Nosotros</a></li>
+               <li><a href="#servicios">Servicios</a></li>
+               <li><a href="#contacto">Contacto</a></li>
+             </ul>
             </nav>
 
         </div>
@@ -49,7 +96,7 @@
 
     </header>
 
-    <section class="about container">
+    <section id="nosotros" class="about container">
 
         <div class="about-img">
             <img src="Images/about.png" alt="">
@@ -84,7 +131,7 @@
 
     </section>
 
-    <main class="Servicios">
+    <main id="servicios" class="Servicios">
 
         <h2>Servicios</h2>
         <div class="Servicios-content container">
@@ -113,30 +160,39 @@
 
     </main>
 
-    <section class="Formulario container">
+    <section id="contacto" class="Formulario container">
 
         <form method="post" autocomplete="off">
-            <H2>Agenda Consulta</H2>
-            <div class="input-group">
-                <div class="input-container">
-                    <input type="text" name="name" placeholder="Nombre y Apellido">
-                    <i class="fa-solid fa-user"></i>
-                </div>
-                <div class="input-container">
-                    <input type="tel" name="phone" placeholder="Telefono Celular">
-                    <i class="fa-solid fa-phone"></i>
-                </div>
-                <div class="input-container">
-                    <input type="email" name="email" placeholder="Correo">
-                    <i class="fa-solid fa-envelope"></i>
-                </div>
-                <div class="input-container">
-                    <textarea name="message" placeholder="Detalles de la Consulta"></textarea>
-                </div>
-                <input type="submit" name="send" class="btn" onClick="myfunction()">
-            </div>
-
-        </form>
+    <h2>Agenda Consulta</h2>
+    <div class="input-group">
+        
+        <div class="input-container">
+            <label for="name" class="sr-only">Nombre y Apellido</label>
+            <input type="text" id="name" name="name" placeholder="Nombre y Apellido" required>
+            <i class="fa-solid fa-user"></i>
+        </div>
+        
+        <div class="input-container">
+            <label for="phone" class="sr-only">Teléfono Celular</label>
+            <input type="tel" id="phone" name="phone" placeholder="Teléfono Celular" required>
+            <i class="fa-solid fa-phone"></i>
+        </div>
+        
+        <div class="input-container">
+            <label for="email" class="sr-only">Correo Electrónico</label>
+            <input type="email" id="email" name="email" placeholder="Correo" required>
+            <i class="fa-solid fa-envelope"></i>
+        </div>
+        
+        <div class="input-container">
+            <label for="message" class="sr-only">Detalles de la Consulta</label>
+            <textarea id="message" name="message" placeholder="Detalles de la Consulta" required></textarea>
+        </div>
+        
+        <input type="submit" name="send" class="btn" value="Agendar Consulta">
+    
+    </div>
+ </form>
 
     </section>
 
@@ -149,22 +205,17 @@
             </div>
 
             <div class="link">
-                <ul>
-                    <li><a href="#">Inicio</a></li>
-                    <li><a href="#">Nosotros</a></li>
-                    <li><a href="#">Servicios</a></li>
-                    <li><a href="#">Contacto</a></li>
-                </ul>
-
+              <ul>
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="#nosotros">Nosotros</a></li>
+                <li><a href="#servicios">Servicios</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+              </ul>
             </div>
 
         </div>
 
     </footer>
-
-    <?php
-       include("send.php");
-    ?>
 
     <script>
         function myfunction() {
