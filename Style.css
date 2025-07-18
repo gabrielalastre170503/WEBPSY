@@ -414,4 +414,12 @@ textarea {
     border-width: 0;
 }
 
+.login-container {
+    display: flex;
+    justify-content: center; /* Centra el contenido horizontalmente */
+    align-items: center;   /* Centra el contenido verticalmente */
+    min-height: 100vh;     /* Asegura que ocupe toda la altura de la pantalla */
+    background-color: #fafafa; /* Opcional: un color de fondo como el de tu header */
+}
+
 }

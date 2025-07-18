@@ -84,7 +84,7 @@
                     Sistema Automatizado para el registro y diagnostico de 
                     pacientes del consultorio psicologico Jose Alastre
                 </p>
-                <a href="#" class="btn-1">INICIAR SESION</a>
+                <a href="login.php" class="btn-1">INICIAR SESION</a>
             </div>
             <div class="header-img">
                 <img src="Images/left.png" alt="">
