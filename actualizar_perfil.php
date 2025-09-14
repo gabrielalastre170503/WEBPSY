@@ -2,53 +2,48 @@
 session_start();
 include 'conexion.php';
 
-// Seguridad: Asegurarse de que el usuario está logueado
+// Seguridad: El usuario debe estar logueado
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: login.php');
     exit();
 }
 
-// Verificar que el formulario fue enviado
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nueva_pass = $_POST['nueva_pass'];
-    $confirmar_pass = $_POST['confirmar_pass'];
-    $usuario_id = $_SESSION['usuario_id'];
+$usuario_id = $_SESSION['usuario_id'];
 
-    // 1. Validar que las contraseñas no estén vacías y coincidan
-    if (empty($nueva_pass) || empty($confirmar_pass)) {
-        header('Location: panel.php?vista=perfil&error=empty');
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion'])) {
+    
+    // --- LÓGICA PARA CAMBIAR LA CONTRASEÑA (SIMPLIFICADA) ---
+    if ($_POST['accion'] == 'cambiar_contrasena') {
+        $nueva_contrasena = $_POST['nueva_contrasena'];
+        $confirmar_nueva_contrasena = $_POST['confirmar_nueva_contrasena'];
+
+        // 1. Verificar que la nueva contraseña y su confirmación coincidan
+        if ($nueva_contrasena !== $confirmar_nueva_contrasena) {
+            header('Location: panel.php?vista=perfil&error=pass_no_coincide');
+            exit();
+        }
+
+        // 2. Verificar la seguridad de la nueva contraseña
+        if (strlen($nueva_contrasena) < 8 || !preg_match('/[A-Z]/', $nueva_contrasena) || !preg_match('/[\W_]/', $nueva_contrasena)) {
+            header('Location: panel.php?vista=perfil&error=pass_no_segura');
+            exit();
+        }
+
+        // 3. Si todo es correcto, hashear y actualizar la nueva contraseña
+        $nueva_contrasena_hasheada = password_hash($nueva_contrasena, PASSWORD_DEFAULT);
+        $update_stmt = $conex->prepare("UPDATE usuarios SET contrasena = ? WHERE id = ?");
+        $update_stmt->bind_param("si", $nueva_contrasena_hasheada, $usuario_id);
+
+        if ($update_stmt->execute()) {
+            header('Location: panel.php?vista=perfil&status=perfil_actualizado');
+        } else {
+            header('Location: panel.php?vista=perfil&error=actualizacion_fallida');
+        }
+        $update_stmt->close();
         exit();
     }
-    if ($nueva_pass !== $confirmar_pass) {
-        header('Location: panel.php?vista=perfil&error=mismatch');
-        exit();
-    }
-    // 2. Validar longitud mínima (opcional pero recomendado)
-    if (strlen($nueva_pass) < 6) {
-        header('Location: panel.php?vista=perfil&error=short');
-        exit();
-    }
-
-    // 3. Encriptar la nueva contraseña
-    $contrasena_hasheada = password_hash($nueva_pass, PASSWORD_DEFAULT);
-
-    // 4. Actualizar la contraseña en la base de datos
-    $stmt = $conex->prepare("UPDATE usuarios SET contrasena = ? WHERE id = ?");
-    $stmt->bind_param("si", $contrasena_hasheada, $usuario_id);
-
-    if ($stmt->execute()) {
-        // Éxito: redirigir con mensaje de éxito
-        header('Location: panel.php?vista=perfil&status=pass_success');
-    } else {
-        // Error: redirigir con mensaje de error
-        header('Location: panel.php?vista=perfil&error=db_error');
-    }
-    $stmt->close();
-    $conex->close();
-    exit();
-} else {
-    // Si alguien intenta acceder a este archivo directamente, lo redirigimos
-    header('Location: panel.php');
-    exit();
 }
+
+$conex->close();
+header('Location: panel.php'); // Redirigir si se accede al archivo directamente
 ?>

@@ -2,41 +2,31 @@
 session_start();
 include 'conexion.php';
 
-// Seguridad
+// Seguridad: Solo roles autorizados pueden borrar informes
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador'])) {
     header('Location: login.php');
     exit();
 }
 
-if (!isset($_GET['informe_id'])) {
-    die("Error: No se ha especificado un informe para borrar.");
+// Validar que se recibió un ID de informe
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("Parámetros no válidos.");
 }
 
-$informe_id = $_GET['informe_id'];
+$informe_id = $_GET['id'];
 
-// Antes de borrar, necesitamos el ID del paciente para redirigir correctamente
-$stmt_get_paciente = $conex->prepare("SELECT paciente_id FROM informes_psicologicos WHERE id = ?");
-$stmt_get_paciente->bind_param("i", $informe_id);
-$stmt_get_paciente->execute();
-$result = $stmt_get_paciente->get_result();
-$informe = $result->fetch_assoc();
-$paciente_id = $informe['paciente_id'];
-$stmt_get_paciente->close();
+// Preparamos y ejecutamos la consulta de eliminación de forma segura
+$stmt = $conex->prepare("DELETE FROM informes_psicologicos WHERE id = ?");
+$stmt->bind_param("i", $informe_id);
 
-if (!$paciente_id) {
-    die("No se pudo encontrar el paciente asociado a este informe.");
-}
-
-// Proceder con la eliminación
-$stmt_delete = $conex->prepare("DELETE FROM informes_psicologicos WHERE id = ?");
-$stmt_delete->bind_param("i", $informe_id);
-
-if ($stmt_delete->execute()) {
-    header('Location: ver_informes.php?paciente_id=' . $paciente_id . '&status=informe_borrado');
+if ($stmt->execute()) {
+    // Redirigir de vuelta al panel principal. La modal de gestión se actualizará sola.
+    header('Location: panel.php?vista=pacientes&status=informe_borrado');
 } else {
-    header('Location: ver_informe_detalle.php?informe_id=' . $informe_id . '&error=borrado');
+    // Si hubo un error, redirigir con un mensaje de error
+    header('Location: panel.php?vista=pacientes&error=borrado_fallido');
 }
 
-$stmt_delete->close();
+$stmt->close();
 $conex->close();
 ?>

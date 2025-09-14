@@ -82,42 +82,66 @@ if (!$historia_existente) {
         .historia-vista .dato-item strong { color: #333; display: block; }
         .historia-vista .dato-item p { margin: 5px 0 0 0; padding-left: 10px; border-left: 3px solid #eee; }
 
-        /* --- NUEVO Y MEJORADO DISEÑO PARA BOTONES DE SELECCIÓN --- */
-        .selection-container { text-align: center; }
-        .selection-container p { font-size: 1.1em; color: #555; }
-        .selection-grid {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 20px 0 30px 0;
-        }
-        .selection-card {
-            background-color: transparent;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 30px;
-            width: 250px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        .selection-card:hover {
-            transform: translateY(-5px);
-            border-color: #02b1f4;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        }
-        .selection-card i {
-            font-size: 40px;
-            color: #02b1f4;
-            margin-bottom: 15px;
-        }
-        .selection-card h3 {
-            border: none;
-            margin: 0;
-            padding: 0;
-            font-size: 1.2em;
-        }
-        /* --- CORRECCIÓN PARA EL FORMULARIO INTERNO --- */
+        /* --- NUEVO DISEÑO ELEGANTE PARA SELECCIÓN DE HISTORIA --- */
+.selection-container {
+    text-align: center;
+    background-color: white; /* <-- LÍNEA CAMBIADA */
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    margin-top: -20px; /* <-- AÑADE ESTA LÍNEA */
+}
+.selection-container p {
+    font-size: 1.1em;
+    color: #555;
+    margin-top: 0;
+}
+.selection-container h2 {
+    border: none;
+    padding: 0;
+    margin: 5px 0 30px 0;
+}
+.selection-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap; /* Para que se adapte en pantallas pequeñas */
+}
+.selection-card {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 30px;
+    width: 280px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+.selection-card:hover {
+    transform: translateY(-8px);
+    border-color: #02b1f4;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+.selection-card i {
+    font-size: 45px;
+    color: #02b1f4;
+    margin-bottom: 20px;
+}
+.selection-card h3 {
+    border: none;
+    margin: 0 0 10px 0;
+    padding: 0;
+    font-size: 1.3em;
+    color: #333;
+}
+.selection-card .card-description {
+    font-size: 14px;
+    color: #777;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* --- CORRECCIÓN PARA EL FORMULARIO INTERNO --- */
 .main-container form {
       /* Quita la sombra del formulario */
     box-shadow: none;
@@ -138,10 +162,11 @@ if (!$historia_existente) {
     padding: 20px;         /* Añade un área clicable invisible de 10px alrededor del texto */
     margin-left: -10px;    /* Compensa el padding izquierdo para que el texto no se mueva */
     margin-bottom: 20px;
+    color: #555;
     text-decoration: none;
-    color: #004fa4ff;
-    font-weight: 400;
+    font-weight: 500;
 }
+
 .back-link:hover {
     text-decoration: underline; /* Opcional: añade un subrayado al pasar el mouse */
 }
@@ -190,16 +215,44 @@ if (!$historia_existente) {
     border-color: #028ac7;
 }
 
-/* Contenedor para el botón de guardar, para centrarlo */
-.form-actions {
-    text-align: center;
-    margin-top: 30px;
-}
+/* --- ESTILO PARA BOTONES DE GUARDAR (ESTILO CONTORNO) --- */
+        .form-actions {
+            text-align: center; /* Centra el botón */
+            margin-top: 30px;
+        }
 
-/* Ajuste para el botón principal de guardar */
-.form-actions .btn {
-    width: auto; /* Hacemos que el botón no ocupe el 100% */
-    padding: 12px 40px; /* Le damos un tamaño generoso */
+        .btn {
+            cursor: pointer;
+            padding: 12px 40px; /* Tamaño del botón */
+            font-size: 17px;
+            font-weight: 549;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            
+            /* Estilo de contorno */
+            background-color: transparent;
+            border: 2px solid #02b1f4;
+            color: #02b1f4;
+            
+            /* Quitamos el ancho completo y la sombra inicial */
+            width: auto;
+            box-shadow: none;
+            margin-top: 0; /* Reseteamos el margen que tenía antes */
+        }
+
+        .btn:hover {
+            background-color: #02b1f4; /* Se rellena al pasar el mouse */
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(2, 177, 244, 0.4);
+        }
+
+        /* --- AJUSTE DE MARGEN PARA TÍTULOS DE FORMULARIO --- */
+.hidden-form h2 {
+    margin-top: -90px; /* <-- Reduce el espacio superior a cero */
+    border-bottom: none; /* Opcional: Quita la línea de abajo para un look más limpio */
+    padding-bottom: 0; /* Opcional: Quita el espacio de la línea */
+    margin-bottom: 30px; /* Mantiene un buen espacio antes de los campos */
 }
     </style>
 </head>
@@ -310,19 +363,24 @@ if (!$historia_existente) {
 
         </div>
     <?php else: ?>
-        <div class="selection-container">
-            <p>Este paciente no tiene una historia clínica. Selecciona el tipo de historia a crear:</p>
-            <div class="selection-grid">
-                <button class="selection-card" onclick="mostrarForm('adulto')">
-                    <i class="fa-solid fa-user"></i>
-                    <h3>Historia de Adulto</h3>
-                </button>
-                <button class="selection-card" onclick="mostrarForm('infantil')">
-                    <i class="fa-solid fa-child"></i>
-                    <h3>Historia Infantil</h3>
-                </button>
+        
+        <!-- SECCIÓN PARA CREAR UNA NUEVA HISTORIA (DISEÑO MEJORADO) -->
+    <div class="selection-container">
+        <p>Este paciente aún no tiene una historia clínica registrada.</p>
+        <h2>Selecciona el tipo de historia a crear</h2>
+        <div class="selection-grid">
+            <div class="selection-card" onclick="mostrarForm('adulto')">
+                <i class="fa-solid fa-user"></i>
+                <h3>Historia de Adulto</h3>
+                <p class="card-description">Para pacientes mayores de 18 años.</p>
+            </div>
+            <div class="selection-card" onclick="mostrarForm('infantil')">
+                <i class="fa-solid fa-child"></i>
+                <h3>Historia Infantil</h3>
+                <p class="card-description">Para niños y adolescentes.</p>
             </div>
         </div>
+    </div>
 
         <div id="form-adulto" class="hidden-form">
             <form action="guardar_historia.php" method="POST">
@@ -345,7 +403,7 @@ if (!$historia_existente) {
                     <div class="form-group"><label>Religión:</label><input type="text" name="religion"></div>
                     <div class="form-group"><label>Grado de Instrucción:</label><input type="text" name="grado_instruccion"></div>
                     <div class="form-group"><label>Ocupación:</label><input type="text" name="ocupacion"></div>
-                    <div class="form-group full-width"><label>Dirección:</label><textarea name="direccion"></textarea></div>
+                    <div class="form-group full-width" style="margin-bottom: 40px;"><label>Dirección:</label><textarea name="direccion"></textarea></div>
                 </div>
                 <h3 style="margin-top: -10px;" >Motivo y Antecedentes</h3>
                 <div class="form-grid">
@@ -356,7 +414,7 @@ if (!$historia_existente) {
                     <div class="form-group full-width" style="margin-top: -30px;" ><label>Antecedentes Médicos:</label><textarea name="antecedentes_medicos" rows="3"></textarea></div>
                     <div class="form-group full-width" style="margin-top: -30px;" ><label>Antecedentes de Pareja:</label><textarea name="antecedentes_pareja" rows="3"></textarea></div>
                 </div>
-                <h3 style="margin-top: -10px;" >Diagnóstico</h3>
+                <h3 style="margin-top: 10px;" >Diagnóstico</h3>
                 <div class="form-group full-width"><label>Impresión Diagnóstica:</label><textarea name="impresion_diagnostica" rows="5"></textarea></div>
                 <div class="form-actions">
     <button type="submit" class="btn">Guardar Historia de Adulto</button>

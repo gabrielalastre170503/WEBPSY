@@ -118,6 +118,7 @@ img {
 
 .about {
     padding: 100px 0;
+    margin-top: 10px;
     display: flex;
 }
 
@@ -144,10 +145,12 @@ img {
 .about-txt p {
     font-size: 16px;
     color: #818181;
+    text-align: justify; /* <-- ESTA ES LA LÍNEA CLAVE */
 }
 
 .Servicios {
-    padding: 70px 0 100px 0;
+    padding: 80px 0 100px 0;
+    margin-top: 5px;
     text-align: center;
     background-color: #FAFAFA;
 }
@@ -168,25 +171,34 @@ img {
     padding: 25px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
     flex-basis: calc(25% - 20px);
+    color: var(--color-texto-principal); /* Hereda el color de texto */
+    transition: transform 0.3s, box-shadow 0.3s;
+    background-color: var(--color-white);
+    border-radius: 10px;
+}
+
+.Servicio-1:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .Servicio-1 i {
     font-size: 30px;
-    color: #02b1f4;
+    color: #02b1f4 !important; /* color azul */
     margin-bottom: 15px;
 }
 
 .Servicio-1 h3 {
     font-size: 20px;
-    color: #323232;
+    color: var(--color-texto-principal);
     text-transform: capitalize;
 }
 
 .Formulario {
     margin: 0px;
-    margin-top: 180px;
-    margin-left: 15px;
-    margin-bottom: 100px;
+    margin-top: 70px;
+    margin-left: 210px;
+    margin-bottom: 50px;
     display: flex;
     justify-content: right; /* Esto centrará tu formulario horizontalmente */
     align-items: center;    /* Esto centrará tu formulario verticalmente */
@@ -195,10 +207,10 @@ img {
 }
 
 form {
-    padding: 80px;
-    width: 700px;
+    padding: 100px;
+    width: 2000px;
     text-align: center;
-    box-shadow: 0 0 10px rgb(0, 0, 0, 0.2);
+    
 }
 
 form h2 {
@@ -221,7 +233,7 @@ form h2 {
     position: absolute;
     font-size: 20px;
     top: 4px;
-    left: 10px;
+    left: 5px;
 }
 
 .input-container > input, textarea {

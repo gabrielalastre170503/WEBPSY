@@ -7,7 +7,7 @@ if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo',
     header('Location: login.php'); 
     exit(); 
 }
-if (!isset($_GET['paciente_id'])) { 
+if (!isset($_GET['paciente_id']) || !is_numeric($_GET['paciente_id'])) { 
     die("Error: No se ha especificado un paciente."); 
 }
 
@@ -31,185 +31,155 @@ if (!$paciente) {
     <style>
         /* Estilos generales */
         body {
-            background-color: white;
+            background-color: #f0f2f5;
             font-family: "Poppins", sans-serif;
             margin: 0;
-            padding: 30px 250px; /* Espacio para que el formulario no pegue a los bordes */
+            padding: 30px 20px;
         }
-
-        /* Contenedor principal del formulario */
-        .form-container {
+        .main-container {
             background: white;
-            padding: 40px;
+            padding: 180px;
+            padding-top: 100px;
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 850px; /* Un poco más ancho para los campos de texto */
+            max-width: 840px;
             margin: 0 auto;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Sombra añadida */
         }
-
         /* Títulos */
-        .form-container h1, .form-container h3 {
-            text-align: center;
+        .main-container h1, .main-container h3 {
             color: #333;
-            margin-bottom: 20px;
         }
-        .form-container h1 {
+        .main-container h1 {
+            text-align: center;
             font-size: 28px;
             margin-top: 0;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
-        .form-container h3 {
+        .main-container .subtitulo-paciente {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 30px;
+            color: #777;
+        }
+        .main-container h3 {
             font-size: 20px;
             margin-top: 30px;
+            margin-bottom: 20px;
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
             text-align: left;
         }
-
         /* Rejilla para organizar los campos */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 25px;
         }
-        
         .full-width {
             grid-column: 1 / -1;
         }
-
         .form-group {
             display: flex;
             flex-direction: column;
+            margin-bottom: 30px;
         }
-
         .form-group label {
             font-weight: 500;
             margin-bottom: 8px;
             color: #555;
             font-size: 14px;
         }
-
         .form-group input, .form-group textarea {
             width: 100%;
-            padding: 12px;
+            padding: 8px;
             border: 1px solid #ccc;
-            border-radius: 8px;
+            border-radius: 5px;
             font-size: 15px;
             font-family: "Poppins", sans-serif;
-            box-sizing: border-box;
             transition: border-color 0.3s, box-shadow 0.3s;
+            box-sizing: border-box;
         }
-        
         .form-group input:focus, .form-group textarea:focus {
             outline: none;
             border-color: #02b1f4;
             box-shadow: 0 0 0 3px rgba(2, 177, 244, 0.2);
         }
-
         textarea {
             resize: vertical;
         }
-
-        /* Estilos para los botones */
-        .button-group {
-            display: flex;
-            gap: 20px;
-            margin-top: 40px;
-        }
-
-        .btn {
-            flex-grow: 1;
-            padding: 12px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #fff;
-            background: linear-gradient(45deg, #02b1f4, #00c2ff);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(2, 177, 244, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(2, 177, 244, 0.4);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .btn-secondary:hover {
-            background: #5a6268;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-        
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #818181;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        /* Estilos para la impresión */
-        @media print {
-            body { background-color: white; padding: 0; }
-            .form-container { box-shadow: none; margin: 0; max-width: 100%; border: 1px solid #ccc; }
-            .no-print { display: none; }
-        }
-        /* --- ESTILOS MEJORADOS PARA LOS BOTONES DEL FORMULARIO DE INFORME --- */
+        /* --- ESTILOS PARA LOS BOTONES DE ACCIÓN (ESTILO CONTORNO) --- */
 .button-group {
     display: flex;
-    justify-content: center; /* Centra los botones */
-    gap: 40px; /* Espacio entre los botones */
-    margin-top: 30px;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 40px;
 }
 
-.button-group button { /* Estilo base para ambos botones */
-    flex-grow: 1; /* Ocupan el mismo espacio */
-    max-width: 250px; /* Pero con un ancho máximo */
-    padding: 12px;
-    font-size: 16px;
-    font-weight: 100;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
+/* Estilo base para todos los botones de acción */
+.action-links.approve,
+.action-links.secondary {
+    padding: 10px 25px;
+    font-weight: 500;
+    border: 2px solid;
+    background-color: transparent;
     transition: all 0.3s ease;
+    border-radius: 8px;
+    text-decoration: none !important;
 }
 
-.btn-submit {
-    background: linear-gradient(45deg, #02b1f4, #00c2ff);
-    box-shadow: 0 4px 15px rgba(2, 177, 244, 0.3);
+/* Estilo para el botón principal (azul) */
+.action-links.approve {
+    border-color: #02b1f4;
+    color: #02b1f4 !important;
+}
+.action-links.approve:hover {
+    background-color: #02b1f4;
+    color: white !important;
 }
 
-.btn-submit:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(2, 177, 244, 0.4);
+/* Estilo para el botón secundario (gris) */
+.action-links.secondary {
+    border-color: #6c757d;
+    color: #6c757d !important;
 }
-
-.btn-secondary {
-    background: #6c757d;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+.action-links.secondary:hover {
+    background-color: #6c757d;
+    color: white !important;
 }
+    
+    .back-link { display: block; text-align: center; margin-top: 20px; color: #818181; text-decoration: none; font-size: 14px; }
+    
+    /* Estilos para la impresión */
+    @media print {
+        body { background-color: white; padding: 0; }
+        .main-container { box-shadow: none; margin: 0; max-width: 100%; border: 1px solid #ccc; }
+        .no-print { display: none; }
+    }
 
-.btn-secondary:hover {
-    background: #5a6268;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        /* --- Estilo para el enlace de volver --- */
+.back-link-top {
+    display: block;
+    text-align: center;
+    margin-bottom: 30px;
+    margin-top: -20px; /* Sube el enlace para que quede más cerca del título */
+    color: #555;
+    text-decoration: none;
+    font-weight: 500;
+}
+.back-link-top:hover {
+    color: #02b1f4;
 }
     </style>
 </head>
 <body>
 <div class="main-container">
     <div class="no-print">
-        <h1>Informe Psicológico</h1>
-        <h3>Paciente: <?php echo htmlspecialchars($paciente['nombre_completo']); ?></h3>
-    </div>
+    <h1>Informe Psicológico de: <?php echo htmlspecialchars($paciente['nombre_completo']); ?></h1>
+    <br>
+    <a href="gestionar_paciente.php?paciente_id=<?php echo $paciente_id; ?>" class="back-link-top">&larr; Volver a Gestión de Paciente</a>
+</div>
 
     <form action="guardar_informe.php" method="POST">
         <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
@@ -218,31 +188,33 @@ if (!$paciente) {
         <div class="form-grid">
             <div class="form-group"><label>N° de Historia:</label><input type="text" name="numero_historia" placeholder="Ej: 12345"></div>
             <div class="form-group"><label>Fecha de Evaluación:</label><input type="date" name="fecha_evaluacion" value="<?php echo date('Y-m-d'); ?>"></div>
-            <div class="form-group full-width"><label>Referido por:</label><input type="text" name="referido_por" placeholder="Ej: Dr. Juan Pérez"></div>
+            <div class="form-group full-width" style="margin-top: -25px;">
+    <label>Referido por:</label>
+    <input type="text" name="referido_por" placeholder="Ej: Dr. Juan Pérez">
+</div>
         </div>
 
-        <div class="form-group full-width" style="margin-top: 15px;">
+        <div class="form-group full-width" style="margin-top: 10x;">
             <label>Motivo de la Referencia:</label>
             <textarea name="motivo_referencia" rows="3" placeholder="Descripción del motivo..."></textarea>
-            </div>
-
-        <div class="form-group full-width" style="margin-top: 15px;">
+        </div>
+        <div class="form-group full-width" style="margin-bottom: 50px;">
             <label>Actitud ante la Evaluación:</label>
-            <textarea name="actitud_ante_evaluacion" rows="3" placeholder="Describe la actitud y comportamiento del paciente..."></textarea>
+            <textarea name="actitud_ante_evaluacion" rows="4" placeholder="Describe la actitud y comportamiento del paciente..."></textarea>
         </div>
 
         <h3>Resultados de la Evaluación</h3>
         <div class="form-group full-width"><label>Área Visomotriz:</label><textarea name="area_visomotriz" rows="4"></textarea></div>
-        <div class="form-group full-width" style="margin-top: 15px;" ><label>Área Intelectual:</label><textarea name="area_intelectual" rows="4"></textarea></div>
-        <div class="form-group full-width" style="margin-top: 15px;" ><label>Área Emocional:</label><textarea name="area_emocional" rows="4"></textarea></div>
-        <div class="form-group full-width" style="margin-top: 15px;" ><label>Otros Resultados Relevantes:</label><textarea name="resultados_adicionales" rows="4"></textarea></div>
+        <div class="form-group full-width"><label>Área Intelectual:</label><textarea name="area_intelectual" rows="4"></textarea></div>
+        <div class="form-group full-width"><label>Área Emocional:</label><textarea name="area_emocional" rows="4"></textarea></div>
+        <div class="form-group full-width"><label>Otros Resultados Relevantes:</label><textarea name="resultados_adicionales" rows="4"></textarea></div>
         
         <h3>Recomendaciones</h3>
         <div class="form-group full-width"><label>Recomendaciones:</label><textarea name="recomendaciones" rows="6"></textarea></div>
         
-        <div class="button-group no-print">
-    <button type="submit" class="btn-submit">Guardar Informe</button>
-    <button type="button" class="btn-secondary" onclick="window.print()">Imprimir</button>
+        <div class="button-group no-print" style="margin-top: 55px;">
+    <a href="#" onclick="event.preventDefault(); this.closest('form').submit();" class="action-links approve">Guardar Informe</a>
+    <a href="#" onclick="window.print(); return false;" class="action-links secondary">Imprimir</a>
 </div>
         <a href="gestionar_paciente.php?paciente_id=<?php echo $paciente_id; ?>" class="back-link no-print">Cancelar y Volver</a>
     </form>
