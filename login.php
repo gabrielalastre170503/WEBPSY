@@ -19,8 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $correo = $_POST['correo'];
         $contrasena = $_POST['contrasena'];
 
-        // Usamos una sentencia preparada para seguridad
-        $stmt = $conex->prepare("SELECT id, nombre_completo, contrasena, rol, estado FROM usuarios WHERE correo = ?");
+        // Usamos una sentencia preparada para seguridad                           
+        $stmt = $conex->prepare("SELECT id, nombre_completo, correo, contrasena, rol, estado FROM usuarios WHERE correo = ?");
         $stmt->bind_param("s", $correo);
         $stmt->execute();
         $resultado = $stmt->get_result();
@@ -35,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
          // La contraseña y el estado son correctos, iniciamos la sesión
          $_SESSION['usuario_id'] = $usuario['id'];
          $_SESSION['nombre_completo'] = $usuario['nombre_completo'];
+         $_SESSION['correo'] = $usuario['correo'];
          $_SESSION['rol'] = $usuario['rol'];
 
          header('Location: panel.php');

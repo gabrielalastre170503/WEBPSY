@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     );
 
     if ($stmt->execute()) {
-        header('Location: panel.php?status=informe_guardado');
+        header('Location: gestionar_paciente.php?paciente_id=' . $paciente_id . '&status=informe_guardado');
     } else {
         header('Location: crear_informe.php?paciente_id=' . $paciente_id . '&error=guardado');
     }

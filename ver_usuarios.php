@@ -57,6 +57,33 @@ $resultado = $conex->query($sql);
         .back-button i {
             margin-right: 8px;
         }
+        /* --- ESTILOS DE BOTONES CORREGIDOS --- */
+        .action-links a {
+            display: inline-block;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white !important;
+            text-decoration: none !important;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease-in-out;
+            margin-right: 8px; /* <-- ESTA LÍNEA AÑADE LA SEPARACIÓN */
+        }
+        .action-links a:last-child {
+            margin-right: 0; /* Opcional: quita el margen del último botón */
+        }
+        .action-links a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .action-links a.approve { background-color: #02b1f4; }
+        .action-links a.approve:hover { background-color: #028ac7; }
+        .action-links a.reject { background-color: #dc3545; }
+        .action-links a.reject:hover { background-color: #c82333; }
     </style>
 </head>
 <body>
@@ -72,6 +99,19 @@ $resultado = $conex->query($sql);
         <div class="panel-seccion">
             <a href="panel.php" class="back-button"><i class="fa-solid fa-arrow-left"></i> Volver al Panel</a>
             <h1><?php echo htmlspecialchars($titulo); ?></h1>
+            <?php
+// Mostrar mensaje con la nueva contraseña temporal si existe
+if (isset($_SESSION['reset_user_id']) && isset($_SESSION['reset_temp_pass'])) {
+    echo '<div class="panel-seccion" style="background-color: #d1ecf1; border-left: 5px solid #0c5460;">';
+    echo '<h4>¡Contraseña Restablecida!</h4>';
+    echo '<p>La nueva contraseña temporal para el usuario con ID ' . htmlspecialchars($_SESSION['reset_user_id']) . ' es: <strong style="font-size: 1.2em; background: #fff; padding: 2px 8px; border-radius: 4px;">' . htmlspecialchars($_SESSION['reset_temp_pass']) . '</strong></p>';
+    echo '</div>';
+
+    // Limpiar las variables
+    unset($_SESSION['reset_user_id']);
+    unset($_SESSION['reset_temp_pass']);
+}
+?>
             
             <?php if ($resultado->num_rows > 0): ?>
                 <table class="users-table">
@@ -90,13 +130,10 @@ $resultado = $conex->query($sql);
             <td><?php echo htmlspecialchars($usuario['correo']); ?></td>
             <td><?php echo htmlspecialchars($usuario['rol']); ?></td>
             <td><?php echo htmlspecialchars($usuario['estado']); ?></td>
-            <td>
-                <?php if ($_SESSION['usuario_id'] != $usuario['id']): // Para no borrarse a sí mismo ?>
-                    <a href="borrar_usuario.php?id=<?php echo $usuario['id']; ?>" 
-                       onclick="return confirm('¿Estás seguro de que quieres borrar a este usuario? Esta acción es irreversible.');"
-                       style="color: #dc3545; text-decoration: none; font-weight: 500;">
-                       <i class="fa-solid fa-trash"></i> Borrar
-                    </a>
+            <td class="action-links">
+                <?php if ($_SESSION['usuario_id'] != $usuario['id']): ?>
+                    <a href="reset_password.php?id=<?php echo $usuario['id']; ?>" class="approve" onclick="return confirm('¿Seguro que quieres restablecer la contraseña de este usuario?');">Restablecer</a>
+                    <a href="borrar_usuario.php?id=<?php echo $usuario['id']; ?>" class="reject" onclick="return confirm('¿Estás seguro de que quieres borrar a este usuario?');">Borrar</a>
                 <?php endif; ?>
             </td>
         </tr>

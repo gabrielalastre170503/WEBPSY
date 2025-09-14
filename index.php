@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebPSY</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.0">
     
 </head>
 <body>
@@ -61,7 +61,7 @@
     <header id="inicio" class="header">
 
         <div class="menu container">
-            <a href="#" class="logo"> logo</a>
+            <a href="#" class="logo">WebPSY</a>
             <input type="checkbox" id="menu" />
             <label for="menu">
                 <img src="Images/menu.png" class="menu-icpmp" alt="menu">
@@ -81,8 +81,8 @@
             <div class="header-txt">
                 <h1>Programa de Salud Mental</h1>
                 <p>
-                    Sistema Automatizado para el registro y diagnostico de 
-                    pacientes del consultorio psicologico Jose Alastre
+                    Sistema Automatizado para el registro y control de 
+                    pacientes de consultorios de Psicologia y Psiquiatria
                 </p>
                 <a href="login.php" class="btn-1">INICIAR SESION</a>
             </div>
@@ -161,47 +161,48 @@
     </main>
 
     <section id="contacto" class="Formulario container">
+    <form method="post" autocomplete="off">
+        <h2>¿Listo para empezar? Agenda tu primera consulta</h2>
+        <p style="margin-top: -20px; margin-bottom: 30px; color: #818181;">Completa el formulario para crear tu cuenta y enviar tu solicitud.</p>
+        <div class="input-group">
+            
+            <div class="input-container">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" name="name" placeholder="Nombre y Apellido" required>
+            </div>
+            
+            <!-- CAMPO DE CÉDULA AÑADIDO -->
+            <div class="input-container">
+                <i class="fa-solid fa-id-card"></i>
+                <input type="number" name="cedula" placeholder="Cédula de Identidad (solo números)" required>
+            </div>
 
-        <form method="post" autocomplete="off">
-    <h2>Agenda Consulta</h2>
-    <div class="input-group">
-        
-        <div class="input-container">
-            <label for="name" class="sr-only">Nombre y Apellido</label>
-            <input type="text" id="name" name="name" placeholder="Nombre y Apellido" required>
-            <i class="fa-solid fa-user"></i>
-        </div>
-        
-        <div class="input-container">
-            <label for="phone" class="sr-only">Teléfono Celular</label>
-            <input type="tel" id="phone" name="phone" placeholder="Teléfono Celular" required>
-            <i class="fa-solid fa-phone"></i>
-        </div>
-        
-        <div class="input-container">
-            <label for="email" class="sr-only">Correo Electrónico</label>
-            <input type="email" id="email" name="email" placeholder="Correo" required>
-            <i class="fa-solid fa-envelope"></i>
-        </div>
-        
-        <div class="input-container">
-            <label for="message" class="sr-only">Detalles de la Consulta</label>
-            <textarea id="message" name="message" placeholder="Detalles de la Consulta" required></textarea>
-        </div>
-        
-        <input type="submit" name="send" class="btn" value="Agendar Consulta">
-    
+            <div class="input-container">
+                <i class="fa-solid fa-envelope"></i>
+                <input type="email" name="email" placeholder="Correo Electrónico" required>
+            </div>
+
+            <div class="input-container">
+        <i class="fa-solid fa-lock"></i>
+        <input type="password" name="password" placeholder="Crea una contraseña" required>
     </div>
- </form>
-
-    </section>
+            
+            <div class="input-container">
+                <textarea name="message" placeholder="Describe el motivo de tu consulta..." required></textarea>
+            </div>
+            
+            <input type="submit" name="send" class="btn" value="Registrarme y Solicitar Cita">
+        
+        </div>
+    </form>
+</section>
 
     <footer class="footer">
 
         <div class="footer-content container">
 
             <div class="link">
-                <a href="#" class="logo">logo</a>
+                <a href="#" class="logo">WebPSY</a>
             </div>
 
             <div class="link">

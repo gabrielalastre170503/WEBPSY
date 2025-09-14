@@ -1,49 +1,52 @@
 <?php
-// Habilitar la visualización de errores
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 session_start();
 include 'conexion.php';
 
-// 1. Seguridad: Verificar si el usuario está logueado y tiene el rol correcto
+// Seguridad y obtención de datos del paciente
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador'])) {
-    header('Location: login.php');
+    header('Location: login.php'); 
     exit();
 }
-
-// 2. Seguridad: Verificar que se pasó un ID de paciente
-if (!isset($_GET['paciente_id'])) {
-    die("Error Crítico: No se ha especificado un ID de paciente.");
+if (!isset($_GET['paciente_id']) || !is_numeric($_GET['paciente_id'])) { 
+    die("Error: No se ha especificado un paciente válido."); 
 }
 
 $paciente_id = $_GET['paciente_id'];
-
-// 3. Obtener el nombre del paciente
 $stmt_paciente = $conex->prepare("SELECT nombre_completo FROM usuarios WHERE id = ?");
 $stmt_paciente->bind_param("i", $paciente_id);
 $stmt_paciente->execute();
 $result = $stmt_paciente->get_result();
-
 if ($result->num_rows === 0) {
-    die("Error: Paciente con ID " . htmlspecialchars($paciente_id) . " no fue encontrado.");
+    die("Error: Paciente no encontrado.");
 }
 $paciente = $result->fetch_assoc();
 $paciente_nombre = $paciente['nombre_completo'];
 $stmt_paciente->close();
 
-// 4. Lógica para verificar si ya existe una historia clínica
+// --- LÓGICA CORRECTA Y SEGURA PARA VERIFICAR SI EXISTE HISTORIA ---
 $tiene_historia = false;
-$sql_check = "SELECT 1 FROM historias_adultos WHERE paciente_id = ? UNION ALL SELECT 1 FROM historias_infantiles WHERE paciente_id = ? LIMIT 1";
-$stmt_check = $conex->prepare($sql_check);
-$stmt_check->bind_param("ii", $paciente_id, $paciente_id);
-$stmt_check->execute();
-$stmt_check->store_result();
-if ($stmt_check->num_rows > 0) {
+
+// Primero, buscamos en la tabla de adultos
+$stmt_adulto = $conex->prepare("SELECT id FROM historias_adultos WHERE paciente_id = ? LIMIT 1");
+$stmt_adulto->bind_param("i", $paciente_id);
+$stmt_adulto->execute();
+$stmt_adulto->store_result();
+if ($stmt_adulto->num_rows > 0) {
     $tiene_historia = true;
 }
-$stmt_check->close();
+$stmt_adulto->close();
+
+// Si no la encontramos, buscamos en la tabla infantil
+if (!$tiene_historia) {
+    $stmt_infantil = $conex->prepare("SELECT id FROM historias_infantiles WHERE paciente_id = ? LIMIT 1");
+    $stmt_infantil->bind_param("i", $paciente_id);
+    $stmt_infantil->execute();
+    $stmt_infantil->store_result();
+    if ($stmt_infantil->num_rows > 0) {
+        $tiene_historia = true;
+    }
+    $stmt_infantil->close();
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -70,7 +73,7 @@ $stmt_check->close();
 <body>
 <div class="main-container">
     <h1>Gestionando a: <?php echo htmlspecialchars($paciente_nombre); ?></h1>
-    <a href="panel.php" style="display:inline-block; margin-bottom:20px;">&larr; Volver a la lista de pacientes</a>
+    <a href="panel.php?vista=pacientes" style="display:inline-block; margin-bottom:20px;">&larr; Volver a la lista de pacientes</a>
 
     <div class="action-grid">
         <?php if ($tiene_historia): ?>
