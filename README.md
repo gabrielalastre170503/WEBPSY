@@ -1,1 +1,1 @@
-Sistema web para la gestion y control de pacientes en consultorios de Psicologia y Psiquiatria, manejo de pacientes, agenda de citas, crecion de historias clinica visualizacion de informes, notas y graficos
+Sistema web para la gestion y control de pacientes en consultorios de Psicologia y Psiquiatria, manejo de pacientes, agenda de citas, creacion de historias clinicas, visualizacion de informes, notas y graficos
