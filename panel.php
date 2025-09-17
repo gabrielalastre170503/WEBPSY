@@ -6452,9 +6452,9 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             const pacienteNombreDisplay = document.getElementById('ver-historia-paciente-nombre');
             const modalHeader = modalVerHistoria.querySelector('.modal-header-premium');
 
-            // Limpiar cualquier botón de borrar anterior para evitar duplicados
-            const oldDeleteBtn = document.getElementById('btn-borrar-historia');
-            if (oldDeleteBtn) oldDeleteBtn.remove();
+            // Limpiar cualquier botón de acción anterior (borrar/editar) para evitar duplicados
+            const oldActionBtn = document.getElementById('btn-borrar-historia') || document.getElementById('btn-editar-historia');
+            if (oldActionBtn) oldActionBtn.remove();
 
             modalBody.innerHTML = '<p>Cargando historial...</p>';
             modalTitulo.textContent = 'Historia Clínica';
@@ -6470,19 +6470,14 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                         return;
                     }
                     
-                    // --- LÓGICA PARA AÑADIR EL BOTÓN DE BORRAR ---
-                    const deleteButton = document.createElement('a');
-                    deleteButton.id = 'btn-borrar-historia';
-                    deleteButton.className = 'btn-delete-historia';
-                    deleteButton.href = `borrar_historia.php?historia_id=${data.datos.id}&tipo=${data.tipo}&paciente_id=${pacienteId}`;
-                    deleteButton.innerHTML = '<i class="fa-solid fa-trash-can"></i> Borrar Historia';
-                    deleteButton.onclick = function(event) {
-                        if (!confirm('¿Estás seguro de que quieres borrar esta historia clínica? Esta acción es irreversible.')) {
-                            event.preventDefault();
-                        }
-                    };
+                    // --- LÓGICA PARA AÑADIR EL BOTÓN DE EDITAR ---
+                    const editButton = document.createElement('a');
+                    editButton.id = 'btn-editar-historia';
+                    editButton.className = 'btn-edit-historia';
+                    editButton.href = `editar_historia.php?historia_id=${data.datos.id}&tipo=${data.tipo}&paciente_id=${pacienteId}`;
+                    editButton.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Editar Historia';
                     // Insertamos el botón en el encabezado
-                    modalHeader.appendChild(deleteButton);
+                    modalHeader.appendChild(editButton);
                     
                     const nombrePaciente = document.getElementById('gestion-paciente-nombre').textContent;
                     // Construimos el texto del encabezado, añadiendo la edad solo si existe
