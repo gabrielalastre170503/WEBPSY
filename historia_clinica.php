@@ -388,7 +388,7 @@ if (!$historia_existente) {
                 <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
                 <h2>Historia Clínica de Adulto</h2>
                 <div class="form-grid">
-                    <div class="form-group"><label>N° de Historia:</label><input type="text" name="numero_historia"></div>
+                    <div class="form-group"><label>N° de Historia:</label><input type="text" name="numero_historia" value="<?php echo htmlspecialchars($paciente['cedula']); ?>"></div>
                     <div class="form-group"><label>Centro de Salud:</label><input type="text" name="centro_salud" value="WebPSY Consultorio"></div>
                     <div class="form-group"><label>Fecha:</label><input type="date" name="fecha" value="<?php echo date('Y-m-d'); ?>" required></div>
                 </div>
@@ -423,13 +423,13 @@ if (!$historia_existente) {
         </div>
 
         <!-- FORMULARIO INFANTIL COMPLETO Y OCULTO -->
-<div id="form-infantil" class="hidden-form">
+        <div id="form-infantil" class="hidden-form">
     <form action="guardar_historia.php" method="POST">
         <input type="hidden" name="tipo_historia" value="infantil">
         <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
         <h2>Historia Clínica Infantil</h2>
         <div class="form-grid">
-            <div class="form-group"><label>N° de Historia:</label><input type="text" name="numero_historia"></div>
+            <div class="form-group"><label>N° de Historia:</label><input type="text" name="numero_historia" value="<?php echo htmlspecialchars($paciente['cedula']); ?>"></div>
             <div class="form-group"><label>Centro de Salud:</label><input type="text" name="centro_salud" value="WebPSY Consultorio"></div>
             <div class="form-group"><label>Fecha:</label><input type="date" name="fecha" value="<?php echo date('Y-m-d'); ?>" required></div>
         </div>

@@ -123,47 +123,48 @@ if (empty($paciente_id)) {
 
     // Vincular los parámetros a la consulta
 
+        // Ajuste de tipos: tratar número de historia, cédulas y teléfonos como strings
         $stmt->bind_param(
-    "iiissssisiissssissiissssissssssssssssss",
+    "iisssssssissssssssissssssssssssssssssss",
     $paciente_id,          // i
-    $entrevistador_id,    // i
-    $numero_historia,            // i
-    $centro_salud,               // s
-    $fecha,                      // s
-    $lugar_nacimiento,           // s
-    $institucion_escolar,        // s
-    $ci_infante,                 // i
-    $padre_nombre,               // s
-    $padre_edad,                 // i
-    $padre_ci,                   // i
-    $padre_nacionalidad,         // s
-    $padre_religion,             // s
-    $padre_instruccion,          // s
-    $padre_ocupacion,            // s
-    $padre_telefono,             // i
-    $padre_direccion,            // s
-    $madre_nombre,               // s
-    $madre_edad,                 // i
-    $madre_ci,                   // i
-    $madre_nacionalidad,         // s
-    $madre_religion,             // s
-    $madre_instruccion,          // s
-    $madre_ocupacion,            // s
-    $madre_telefono,             // i
-    $madre_direccion,            // s
-    $padres_viven_juntos,        // s
-    $motivo_separacion,          // s
-    $estan_casados,              // s
-    $hermanos_json,              // s
-    $motivo_consulta,            // s
-    $antecedentes_embarazo,      // s
-    $antecedentes_parto,         // s
-    $estado_nino_nacer,          // s
-    $desarrollo_psicomotor,      // s
-    $habitos_independencia,      // s
-    $condiciones_salud,          // s
-    $vida_social,                // s
-    $plan_psicoterapeutico       // s
+    $entrevistador_id,     // i
+    $numero_historia,      // s (se guarda como texto para evitar conversiones a 0)
+    $centro_salud,         // s
+    $fecha,                // s
+    $lugar_nacimiento,     // s
+    $institucion_escolar,  // s
+    $ci_infante,           // s (guardar cedula como texto)
+    $padre_nombre,         // s
+    $padre_edad,           // i
+    $padre_ci,             // s (guardar cedula como texto)
+    $padre_nacionalidad,   // s
+    $padre_religion,       // s
+    $padre_instruccion,    // s
+    $padre_ocupacion,      // s
+    $padre_telefono,       // s (guardar teléfono como texto)
+    $padre_direccion,      // s
+    $madre_nombre,         // s
+    $madre_edad,           // i
+    $madre_ci,             // s
+    $madre_nacionalidad,   // s
+    $madre_religion,       // s
+    $madre_instruccion,    // s
+    $madre_ocupacion,      // s
+    $madre_telefono,       // s
+    $madre_direccion,      // s
+    $padres_viven_juntos,  // s
+    $motivo_separacion,    // s
+    $estan_casados,        // s
+    $hermanos_json,        // s
+    $motivo_consulta,      // s
+    $antecedentes_embarazo,// s
+    $antecedentes_parto,   // s
+    $estado_nino_nacer,    // s
+    $desarrollo_psicomotor,// s
+    $habitos_independencia,// s
+    $condiciones_salud,    // s
+    $vida_social,          // s
+    $plan_psicoterapeutico // s
 );
     } else {
         $response['message'] = 'Error: Tipo de historia no válido.';

@@ -6178,8 +6178,15 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     function abrirModalCrearHistoria(pacienteId, pacienteCedula, pacienteNombre, pacienteEdad) {
     if (modalCrearHistoria) {
         document.getElementById('historia-paciente-id').value = pacienteId;
-        document.getElementById('historia-paciente-cedula').value = pacienteCedula;
-        document.getElementById('historia-numero-adulto').value = pacienteCedula; // <-- LÍNEA AÑADIDA
+        // Asignar cédula sólo si existe y no es '0'
+        const cedulaAdulto = (typeof pacienteCedula !== 'undefined' && pacienteCedula !== null) ? String(pacienteCedula) : '';
+        if (cedulaAdulto && cedulaAdulto !== '0') {
+            document.getElementById('historia-paciente-cedula').value = cedulaAdulto;
+            document.getElementById('historia-numero-adulto').value = cedulaAdulto;
+        } else {
+            document.getElementById('historia-paciente-cedula').value = '';
+            document.getElementById('historia-numero-adulto').value = '';
+        }
         
         let displayText = `Paciente: ${pacienteNombre}`;
         if (pacienteEdad) {
@@ -6209,8 +6216,15 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     function abrirModalCrearHistoriaInfantil(pacienteId, pacienteCedula, pacienteNombre, pacienteEdad) {
     if (modalCrearHistoriaInfantil) {
         document.getElementById('historia-paciente-id-infantil').value = pacienteId;
-        document.getElementById('ci_infante_modal').value = pacienteCedula;
-        document.getElementById('historia-numero-infantil').value = pacienteCedula; // <-- LÍNEA AÑADIDA
+        // Asignar cédula sólo si existe y no es '0'
+        const cedulaInfantil = (typeof pacienteCedula !== 'undefined' && pacienteCedula !== null) ? String(pacienteCedula) : '';
+        if (cedulaInfantil && cedulaInfantil !== '0') {
+            document.getElementById('ci_infante_modal').value = cedulaInfantil;
+            document.getElementById('historia-numero-infantil').value = cedulaInfantil;
+        } else {
+            document.getElementById('ci_infante_modal').value = '';
+            document.getElementById('historia-numero-infantil').value = '';
+        }
         
         let displayText = `Paciente: ${pacienteNombre}`;
         if (pacienteEdad) {
