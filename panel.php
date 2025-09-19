@@ -1708,7 +1708,7 @@ body.fade-out {
     text-align: left;
 }
 .modal-body-premium h3:first-of-type {
-    margin-top: 10px; /* Sin margen extra para el primer título */
+    margin-top: 15px !important; /* Sin margen extra para el primer título */
 }
 
 .modal-body-premium .form-grid {
@@ -2055,13 +2055,13 @@ body.fade-out {
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s ease-in-out;
-    border: 2px solid #dc3545;
+    border: 2px solid #02b1f4;
     background-color: transparent;
-    color: #dc3545 !important;
+    color: #02b1f4 !important;
 }
 
 .btn-delete-historia:hover {
-    background-color: #dc3545;
+    background-color: #02b1f4;
     color: white !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
@@ -2215,9 +2215,9 @@ body.fade-out {
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s ease-in-out;
-    border: 2px solid #6c757d; /* Borde gris */
+    border: 2px solid #02b1f4; /* Borde azul */
     background-color: transparent;
-    color: #6c757d !important;
+    color: #02b1f4 !important;
     cursor: pointer;
     font-family: "Poppins", sans-serif;
 }
@@ -2231,14 +2231,14 @@ body.fade-out {
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s ease-in-out;
-    border: 2px solid #dc3545; /* Borde rojo oscuro */
+    border: 2px solid #02b1f4; /* Borde rojo oscuro */
     background-color: transparent;
-    color: #dc3545 !important; /* Texto rojo oscuro */
+    color: #02b1f4 !important; /* Texto rojo oscuro */
     cursor: pointer;
     font-family: "Poppins", sans-serif;
 }
 .btn-print-informe:hover {
-    background-color: #dc3545; /* Se rellena de azul oscuro */
+    background-color: #02b1f4; /* Se rellena de azul oscuro */
     color: white !important; /* El texto se vuelve blanco */
 }
 .btn-print-informe i {
@@ -2686,7 +2686,7 @@ body.fade-out {
 
 /* --- ESTILO PARA EL ENCABEZADO DE LA MODAL DE CREAR INFORME --- */
 #modal-crear-informe .modal-header-premium {
-    background: linear-gradient(160deg, #17a2b8, #d9f1f6ff) !important; /* <-- CAMBIA ESTE COLOR */
+    background: linear-gradient(160deg, #02b1f4, #0c3b8cff) !important; /* <-- CAMBIA ESTE COLOR */
 }
 
 /* --- ESTILOS PREMIUM PARA EL DASHBOARD DEL PACIENTE --- */
@@ -3536,6 +3536,141 @@ body.fade-out {
     padding-bottom: 0px; /* Espacio entre las tarjetas y la línea */
     margin-bottom: 40px;  /* Espacio debajo de la línea */
     border-bottom: 1px solid #e9ecef; /* La línea divisoria sutil */
+}
+
+/* === Overrides: Unificar estilo de Crear Historia con Editar Historia/Informe === */
+#modal-crear-historia .modal-body-premium,
+#modal-crear-historia-infantil .modal-body-premium {
+  padding: 10px 80px 30px 80px !important;
+}
+@media (max-width: 768px) {
+  #modal-crear-historia .modal-body-premium,
+  #modal-crear-historia-infantil .modal-body-premium {
+    padding: 10px 20px 20px 20px !important;
+  }
+}/* Títulos de sección iguales (borde 2px y color #007bff) */
+#modal-crear-historia .modal-body-premium h3,
+#modal-crear-historia-infantil .modal-body-premium h3 {
+  grid-column: 1 / -1;
+  margin-top: 25px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #007bff !important;
+  color: #007bff !important;
+  font-size: 1.2em;
+}
+#modal-crear-historia .modal-body-premium h3:first-of-type,
+#modal-crear-historia-infantil .modal-body-premium h3:first-of-type {
+  margin-top: 0;
+}
+
+/* Grilla responsiva como Editar Historia */
+#modal-crear-historia .modal-body-premium .form-grid,
+#modal-crear-historia-infantil .modal-body-premium .form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 20px !important;
+}
+
+/* Grupos y labels */
+#modal-crear-historia .modal-body-premium .form-group,
+#modal-crear-historia-infantil .modal-body-premium .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#modal-crear-historia .modal-body-premium .form-group label,
+#modal-crear-historia-infantil .modal-body-premium .form-group label {
+  font-weight: bold;
+  font-size: 0.9em;
+  color: #333;
+}
+#modal-crear-historia .modal-body-premium .form-group label i,
+#modal-crear-historia-infantil .modal-body-premium .form-group label i {
+  margin-right: 8px;
+  color: #555;
+}
+
+/* Campos (alineado a Editar Historia) */
+#modal-crear-historia .modal-body-premium .form-group input[type="text"],
+#modal-crear-historia .modal-body-premium .form-group input[type="date"],
+#modal-crear-historia .modal-body-premium .form-group input[type="number"],
+#modal-crear-historia .modal-body-premium .form-group select,
+#modal-crear-historia .modal-body-premium .form-group textarea,
+#modal-crear-historia-infantil .modal-body-premium .form-group input[type="text"],
+#modal-crear-historia-infantil .modal-body-premium .form-group input[type="date"],
+#modal-crear-historia-infantil .modal-body-premium .form-group input[type="number"],
+#modal-crear-historia-infantil .modal-body-premium .form-group select,
+#modal-crear-historia-infantil .modal-body-premium .form-group textarea {
+  width: 100%;
+  padding: 10px !important;
+  border: 1px solid #ccc !important;
+  border-radius: 5px !important;
+  box-sizing: border-box;
+  font-size: 1em;
+  min-height: initial !important; /* quita altura fija premium para igualar */
+}
+
+/* Foco azul consistente (#007bff) */
+#modal-crear-historia .modal-body-premium .form-group input:focus,
+#modal-crear-historia .modal-body-premium .form-group select:focus,
+#modal-crear-historia .modal-body-premium .form-group textarea:focus,
+#modal-crear-historia-infantil .modal-body-premium .form-group input:focus,
+#modal-crear-historia-infantil .modal-body-premium .form-group select:focus,
+#modal-crear-historia-infantil .modal-body-premium .form-group textarea:focus {
+  outline: none !important;
+  border-color: #007bff !important;
+  box-shadow: 0 0 5px rgba(0,123,255,0.5) !important;
+}
+
+/* Ancho completo en grilla */
+#modal-crear-historia .modal-body-premium .full-width,
+#modal-crear-historia-infantil .modal-body-premium .full-width,
+#modal-crear-historia .modal-body-premium .grid-span-full,
+#modal-crear-historia-infantil .modal-body-premium .grid-span-full {
+  grid-column: 1 / -1;
+}
+
+/* Acciones del modal alineadas a la derecha y sin borde superior */
+#modal-crear-historia .modal-body-premium .modal-actions,
+#modal-crear-historia-infantil .modal-body-premium .modal-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  margin-top: 20px !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+}
+
+/* --- ESTILO PARA EL BOTÓN DE EDITAR HISTORIA (CONTORNO AZUL) --- */
+.btn-edit-historia {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+
+    /* Estado normal: Transparente con borde azul */
+    background-color: transparent;
+    border: 2px solid #02b1f4; /* Color del contorno azul */
+    color: #02b1f4 !important;   /* Color del texto e icono */
+}
+
+/* Efecto al pasar el mouse */
+.btn-edit-historia:hover {
+    background-color: #02b1f4; /* Se rellena de azul */
+    color: white !important;   /* El texto se vuelve blanco */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(2, 177, 244, 0.3);
+}
+
+.btn-edit-historia i {
+    margin-right: 5px;
 }
 </style>
 </head>
@@ -5339,7 +5474,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                                 <option value="+44">(+44)</option>
                                 <!-- Puedes añadir más países aquí -->
                             </select>
-                            <input type="text" name="telefono_numero" placeholder="EJ: 4141234567" required class="validate-numeric" maxlength="10">
+                            <input type="text" name="telefono_numero" required class="validate-numeric" maxlength="10">
                         </div>
                     </div>
                     <div class="form-group"><label><i class="fa-solid fa-ring"></i> Edo. Civil:</label><select name="estado_civil" required><option value="" disabled selected>Seleccione</option><option value="Soltero(a)">Soltero(a)</option><option value="Casado(a)">Casado(a)</option><option value="Divorciado(a)">Divorciado(a)</option><option value="Viudo(a)">Viudo(a)</option><option value="Unión Libre">Unión Libre</option></select></div>
