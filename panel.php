@@ -3041,9 +3041,33 @@ body.fade-out {
     cursor: pointer; /* Muestra el cursor de "mano" al pasar el mouse */
 }
 
+/* --- ESTILOS PARA EL HISTORIAL DE CITAS DEL PACIENTE --- */
+#tabla-historial-citas-container tr.clickable-row td {
+    cursor: pointer;
+}
+
 /* --- AJUSTE DE ANCHO PARA LA MODAL DE DETALLES DE SOLICITUD --- */
 #modal-solicitud-detalle .modal-content-premium-header {
-    max-width: 850px !important; /* <-- CAMBIA ESTE VALOR PARA AJUSTAR EL ANCHO */
+    max-width: 900px !important; /* <-- CAMBIA ESTE VALOR PARA AJUSTAR EL ANCHO */
+}
+
+#modal-solicitud-detalle .modal-body-premium {
+    scrollbar-width: thin;
+    scrollbar-color: #1068dbff rgba(10, 45, 92, 0.15);
+}
+#modal-solicitud-detalle .modal-body-premium::-webkit-scrollbar {
+    width: 10px;
+}
+#modal-solicitud-detalle .modal-body-premium::-webkit-scrollbar-track {
+    background: rgba(10, 45, 92, 0.08);
+    border-radius: 10px;
+}
+#modal-solicitud-detalle .modal-body-premium::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #0a2d5c, #143b78);
+    border-radius: 10px;
+}
+#modal-solicitud-detalle .modal-body-premium::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #0d3670, #1a4a8f);
 }
 
 /* --- ESTILOS PARA LA FILA CLICABLE EN LA TABLA DE PRÓXIMAS CITAS --- */
@@ -3540,17 +3564,30 @@ body.fade-out {
 
 /* === Overrides: Unificar estilo de Crear Historia con Editar Historia/Informe === */
 #modal-crear-historia .modal-body-premium,
-#modal-crear-historia-infantil .modal-body-premium {
-  padding: 10px 80px 30px 80px !important;
+#modal-crear-historia-infantil .modal-body-premium,
+#modal-crear-informe .modal-body-premium {
+    padding: 10px 80px 30px 80px !important;
 }
 @media (max-width: 768px) {
-  #modal-crear-historia .modal-body-premium,
-  #modal-crear-historia-infantil .modal-body-premium {
-    padding: 10px 20px 20px 20px !important;
-  }
-}/* Títulos de sección iguales (borde 2px y color #007bff) */
+    #modal-crear-historia .modal-body-premium,
+    #modal-crear-historia-infantil .modal-body-premium,
+    #modal-crear-informe .modal-body-premium {
+        padding: 10px 20px 20px 20px !important;
+    }
+}
+
+#modal-editar-historia .modal-body-premium {
+    padding: 10px 80px 30px 80px !important;
+}
+@media (max-width: 768px) {
+    #modal-editar-historia .modal-body-premium {
+        padding: 10px 20px 20px 20px !important;
+    }
+}
+/* Títulos de sección iguales (borde 2px y color #007bff) */
 #modal-crear-historia .modal-body-premium h3,
-#modal-crear-historia-infantil .modal-body-premium h3 {
+#modal-crear-historia-infantil .modal-body-premium h3,
+#modal-crear-informe .modal-body-premium h3 {
   grid-column: 1 / -1;
   margin-top: 25px;
   margin-bottom: 10px;
@@ -3560,13 +3597,15 @@ body.fade-out {
   font-size: 1.2em;
 }
 #modal-crear-historia .modal-body-premium h3:first-of-type,
-#modal-crear-historia-infantil .modal-body-premium h3:first-of-type {
+#modal-crear-historia-infantil .modal-body-premium h3:first-of-type,
+#modal-crear-informe .modal-body-premium h3:first-of-type {
   margin-top: 0;
 }
 
 /* Grilla responsiva como Editar Historia */
 #modal-crear-historia .modal-body-premium .form-grid,
-#modal-crear-historia-infantil .modal-body-premium .form-grid {
+#modal-crear-historia-infantil .modal-body-premium .form-grid,
+#modal-crear-informe .modal-body-premium .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
   gap: 20px !important;
@@ -3574,19 +3613,22 @@ body.fade-out {
 
 /* Grupos y labels */
 #modal-crear-historia .modal-body-premium .form-group,
-#modal-crear-historia-infantil .modal-body-premium .form-group {
+#modal-crear-historia-infantil .modal-body-premium .form-group,
+#modal-crear-informe .modal-body-premium .form-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 #modal-crear-historia .modal-body-premium .form-group label,
-#modal-crear-historia-infantil .modal-body-premium .form-group label {
+#modal-crear-historia-infantil .modal-body-premium .form-group label,
+#modal-crear-informe .modal-body-premium .form-group label {
   font-weight: bold;
   font-size: 0.9em;
   color: #333;
 }
 #modal-crear-historia .modal-body-premium .form-group label i,
-#modal-crear-historia-infantil .modal-body-premium .form-group label i {
+#modal-crear-historia-infantil .modal-body-premium .form-group label i,
+#modal-crear-informe .modal-body-premium .form-group label i {
   margin-right: 8px;
   color: #555;
 }
@@ -3601,7 +3643,12 @@ body.fade-out {
 #modal-crear-historia-infantil .modal-body-premium .form-group input[type="date"],
 #modal-crear-historia-infantil .modal-body-premium .form-group input[type="number"],
 #modal-crear-historia-infantil .modal-body-premium .form-group select,
-#modal-crear-historia-infantil .modal-body-premium .form-group textarea {
+#modal-crear-historia-infantil .modal-body-premium .form-group textarea,
+#modal-crear-informe .modal-body-premium .form-group input[type="text"],
+#modal-crear-informe .modal-body-premium .form-group input[type="date"],
+#modal-crear-informe .modal-body-premium .form-group input[type="number"],
+#modal-crear-informe .modal-body-premium .form-group select,
+#modal-crear-informe .modal-body-premium .form-group textarea {
   width: 100%;
   padding: 10px !important;
   border: 1px solid #ccc !important;
@@ -3617,7 +3664,10 @@ body.fade-out {
 #modal-crear-historia .modal-body-premium .form-group textarea:focus,
 #modal-crear-historia-infantil .modal-body-premium .form-group input:focus,
 #modal-crear-historia-infantil .modal-body-premium .form-group select:focus,
-#modal-crear-historia-infantil .modal-body-premium .form-group textarea:focus {
+#modal-crear-historia-infantil .modal-body-premium .form-group textarea:focus,
+#modal-crear-informe .modal-body-premium .form-group input:focus,
+#modal-crear-informe .modal-body-premium .form-group select:focus,
+#modal-crear-informe .modal-body-premium .form-group textarea:focus {
   outline: none !important;
   border-color: #007bff !important;
   box-shadow: 0 0 5px rgba(0,123,255,0.5) !important;
@@ -5736,6 +5786,26 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     </div>
 </div>
 
+    <!-- ================== MODAL PARA EDITAR HISTORIA CLÍNICA (DISEÑO PREMIUM) ================== -->
+    <div id="modal-editar-historia" class="modal-overlay" style="display: none;">
+        <div class="modal-content-premium-header">
+            <div class="modal-header-premium">
+                <div class="header-content">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <div>
+                        <h2 id="editar-historia-titulo">Editar Historia Clínica</h2>
+                        <p id="editar-historia-paciente-nombre"></p>
+                    </div>
+                </div>
+                <button type="button" class="modal-close-btn" onclick="cerrarModalEditarHistoria(true)"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body-premium" id="editar-historia-body">
+                <p>Cargando formulario de edición...</p>
+            </div>
+        </div>
+    </div>
+
 <!-- ================== MODAL PARA ASIGNAR Y PROGRAMAR CITA (DISEÑO PREMIUM) ================== -->
 <div id="modal-asignar-cita" class="modal-overlay" style="display: none;">
     <div class="modal-content-premium">
@@ -5944,6 +6014,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     const modalInformeDetalle = document.getElementById('modal-informe-detalle');
     const modalCrearInforme = document.getElementById('modal-crear-informe');
     const modalVerHistoria = document.getElementById('modal-ver-historia');
+    const modalEditarHistoria = document.getElementById('modal-editar-historia');
     // Variables para las ventanas modales
     const modalCrearPaciente = document.getElementById('modal-crear-paciente');
     const modalProgramarCita = document.getElementById('modal-programar-cita');
@@ -5959,6 +6030,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     let newPatientsChart = null;
     let pacienteCalendar; // Calendario de disponibilidad para el paciente
     let currentManagedPatientId = null;
+    let currentHistoriaContext = null;
     
 
     // --- FUNCIÓN ÚNICA Y CORRECTA PARA CAMBIAR DE VISTA (PESTAÑAS) ---
@@ -6605,25 +6677,42 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                         return;
                     }
                     
+                    const datos = data.datos;
+                    const nombrePaciente = document.getElementById('gestion-paciente-nombre').textContent;
+
                     // --- LÓGICA PARA AÑADIR EL BOTÓN DE EDITAR ---
                     const editButton = document.createElement('a');
                     editButton.id = 'btn-editar-historia';
                     editButton.className = 'btn-edit-historia';
-                    editButton.href = `editar_historia.php?historia_id=${data.datos.id}&tipo=${data.tipo}&paciente_id=${pacienteId}`;
+                    editButton.href = '#';
                     editButton.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Editar Historia';
-                    // Insertamos el botón en el encabezado
+                    editButton.onclick = function(event) {
+                        event.preventDefault();
+                        abrirModalEditarHistoria({
+                            historiaId: data.datos.id,
+                            tipo: data.tipo,
+                            pacienteId,
+                            pacienteNombre: nombrePaciente,
+                            pacienteEdad: pacienteEdad || null
+                        });
+                    };
                     modalHeader.appendChild(editButton);
-                    
-                    const nombrePaciente = document.getElementById('gestion-paciente-nombre').textContent;
+
                     // Construimos el texto del encabezado, añadiendo la edad solo si existe
                     let displayText = `Paciente: ${nombrePaciente}`;
                     if (pacienteEdad) {
                         displayText += ` (${pacienteEdad} años)`;
                     }
                     pacienteNombreDisplay.textContent = displayText;
-                    
+                    currentHistoriaContext = {
+                        pacienteId,
+                        pacienteEdad: pacienteEdad || null,
+                        pacienteNombre: nombrePaciente,
+                        historiaId: datos.id,
+                        tipo: data.tipo
+                    };
+
                     let historiaHtml = '';
-                    const datos = data.datos;
 
                     // Función auxiliar para mostrar los datos de forma segura
                     const mostrar = (valor) => valor ? htmlspecialchars(valor) : 'No especificado';
@@ -6739,6 +6828,183 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 abrirModalGestionarPaciente(currentManagedPatientId);
             }
         }
+    }
+
+    function abrirModalEditarHistoria({ historiaId, tipo, pacienteId, pacienteNombre, pacienteEdad }) {
+        if (!modalEditarHistoria || !historiaId || !tipo) {
+            return;
+        }
+
+        const titulo = document.getElementById('editar-historia-titulo');
+        const nombreDisplay = document.getElementById('editar-historia-paciente-nombre');
+        const cuerpo = document.getElementById('editar-historia-body');
+
+        if (titulo) {
+            titulo.textContent = (tipo === 'adulto') ? 'Editar Historia Clínica de Adulto' : 'Editar Historia Clínica Infantil';
+        }
+        if (nombreDisplay) {
+            nombreDisplay.textContent = pacienteEdad ? `${pacienteNombre} (${pacienteEdad} años)` : pacienteNombre;
+        }
+        if (cuerpo) {
+            cuerpo.innerHTML = '<p>Cargando formulario de edición...</p>';
+        }
+
+        if (modalVerHistoria) {
+            modalVerHistoria.style.display = 'none';
+        }
+        modalEditarHistoria.style.display = 'flex';
+
+        currentHistoriaContext = {
+            pacienteId,
+            pacienteEdad: pacienteEdad || null,
+            pacienteNombre,
+            historiaId,
+            tipo
+        };
+
+        fetch(`editar_historia.php?historia_id=${historiaId}&tipo=${tipo}&ajax=1`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('No se pudo cargar el formulario de edición.');
+                }
+                return response.text();
+            })
+            .then(html => {
+                if (cuerpo) {
+                    cuerpo.innerHTML = html;
+                    prepararFormularioEdicion(cuerpo);
+                }
+            })
+            .catch(error => {
+                if (cuerpo) {
+                    cuerpo.innerHTML = `<p style="color: red;">${error.message}</p>`;
+                }
+            });
+    }
+
+    function cerrarModalEditarHistoria(reabrirVista = false) {
+        if (modalEditarHistoria) {
+            modalEditarHistoria.style.display = 'none';
+            const cuerpoEdicion = document.getElementById('editar-historia-body');
+            if (cuerpoEdicion) {
+                cuerpoEdicion.innerHTML = '';
+            }
+        }
+
+        if (reabrirVista && modalVerHistoria) {
+            modalVerHistoria.style.display = 'flex';
+        }
+    }
+
+    function prepararFormularioEdicion(contenedor) {
+        if (!contenedor) return;
+
+        const mensajeErrorExistente = contenedor.querySelector('.alert-error-edicion');
+        if (mensajeErrorExistente) {
+            mensajeErrorExistente.remove();
+        }
+
+        const form = contenedor.querySelector('#editar-historia-form');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Guardando...';
+                }
+
+                const formData = new FormData(form);
+
+                fetch('guardar_historia.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(respuesta => respuesta.json())
+                .then(datos => {
+                    if (!datos.success) {
+                        throw new Error(datos.message || 'No se pudo actualizar la historia clínica.');
+                    }
+
+                    cerrarModalEditarHistoria(false);
+                    if (currentHistoriaContext) {
+                        abrirModalVerHistoria(currentHistoriaContext.pacienteId, currentHistoriaContext.pacienteEdad);
+                    }
+                    alert('Historia clínica actualizada correctamente.');
+                })
+                .catch(error => {
+                    mostrarErrorEdicion(contenedor, error.message);
+                })
+                .finally(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Guardar cambios';
+                    }
+                });
+            });
+        }
+
+        const cancelBtn = contenedor.querySelector('.btn-secondary');
+        if (cancelBtn) {
+            cancelBtn.onclick = function(event) {
+                event.preventDefault();
+                cerrarModalEditarHistoria(true);
+            };
+        }
+
+        // Botón para añadir nuevos hermanos (solo formulario infantil)
+        const addHermanoBtn = contenedor.querySelector('#add-hermano-btn-edit');
+        if (addHermanoBtn) {
+            addHermanoBtn.addEventListener('click', function() {
+                const hermanosContainer = contenedor.querySelector('#hermanos-container');
+                if (!hermanosContainer) return;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'hermano-entry';
+                wrapper.innerHTML = `
+                    <div class="form-group"><label>Nombre:</label><input type="text" name="hermano_nombre[]"></div>
+                    <div class="form-group"><label>Edad:</label><input type="number" name="hermano_edad[]"></div>
+                    <div class="form-group"><label>Sexo:</label><input type="text" name="hermano_sexo[]"></div>
+                    <div class="form-group"><label>Ocupación:</label><input type="text" name="hermano_ocupacion[]"></div>
+                    <div class="form-group"><label>¿Vive en casa?:</label><select name="hermano_vive_hogar[]"><option value="Sí">Sí</option><option value="No">No</option></select></div>
+                    <button type="button" class="remove-hermano-btn" title="Quitar">&times;</button>
+                `;
+
+                const removeBtn = wrapper.querySelector('.remove-hermano-btn');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', () => wrapper.remove());
+                }
+
+                hermanosContainer.appendChild(wrapper);
+            });
+        }
+
+        contenedor.querySelectorAll('.remove-hermano-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const bloque = this.closest('.hermano-entry');
+                if (bloque) bloque.remove();
+            });
+        });
+    }
+
+    function mostrarErrorEdicion(contenedor, mensaje) {
+        if (!contenedor) return;
+
+        let alerta = contenedor.querySelector('.alert-error-edicion');
+        if (!alerta) {
+            alerta = document.createElement('div');
+            alerta.className = 'alert-error-edicion';
+            alerta.style.backgroundColor = '#f8d7da';
+            alerta.style.color = '#721c24';
+            alerta.style.padding = '12px 15px';
+            alerta.style.borderRadius = '8px';
+            alerta.style.marginBottom = '15px';
+            alerta.style.fontSize = '14px';
+            contenedor.prepend(alerta);
+        }
+        alerta.textContent = mensaje;
+        alerta.style.display = 'block';
     }
 
     // --- NUEVAS FUNCIONES PARA LA MODAL DE ASIGNAR CITA ---

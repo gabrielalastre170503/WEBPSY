@@ -34,7 +34,7 @@ if ($isAjax) {
 ?>
 <style>
     .modal-edit-body {
-        padding: 15px 25px;
+        padding: 10px 0 30px 0;
     }
     
     .modal-edit-body h3 {
@@ -140,8 +140,6 @@ if ($isAjax) {
 </style>
 
 <div class="modal-edit-body">
-    <h2>Editar Historia Clínica (<?php echo ucfirst(htmlspecialchars($tipo)); ?>)</h2>
-    
     <form id="editar-historia-form">
         <input type="hidden" name="tipo_historia" value="<?php echo htmlspecialchars($tipo); ?>">
         <input type="hidden" name="paciente_id" value="<?php echo htmlspecialchars($hist['paciente_id']); ?>">

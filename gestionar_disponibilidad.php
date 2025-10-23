@@ -39,7 +39,10 @@ $stmt->close();
         body { background-color: #f0f2f5; font-family: "Poppins", sans-serif; margin: 0; padding: 30px; }
         .container { max-width: 1200px; margin: 0 auto; }
         .panel { background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.07); margin-bottom: 30px; }
-        h1, h2 { color: #333; margin-top: 0; }
+    h1, h2 { color: #333; margin-top: 0; }
+    .section-title { display: flex; align-items: center; gap: 12px; font-size: 22px; }
+    .section-title .back-arrow { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; border: 1px solid #d0d6fd; color: #0c3b8c; text-decoration: none; font-size: 16px; transition: all 0.25s ease; background: linear-gradient(135deg, rgba(12,59,140,0.08), rgba(2,177,244,0.12)); }
+    .section-title .back-arrow:hover { background: linear-gradient(135deg, rgba(12,59,140,0.18), rgba(2,177,244,0.22)); transform: translateX(-2px); }
         h1 { margin-bottom: 5px; }
         .page-subtitle { color: #777; margin-top: 0; margin-bottom: 20px; }
         .back-link { text-decoration: none; color: #555; font-weight: 500; display: inline-block; margin-bottom: 20px; }
@@ -79,7 +82,10 @@ $stmt->close();
         <div class="management-grid">
             <!-- Columna Izquierda: Horario Semanal -->
             <div class="panel schedule-form">
-                <h2>Horario Semanal Fijo</h2>
+                <h2 class="section-title">
+                    <a href="panel.php" class="back-arrow" title="Volver al panel"><i class="fa-solid fa-arrow-left"></i></a>
+                    Horario Semanal Fijo
+                </h2>
                 <form action="guardar_disponibilidad.php" method="POST">
                     <input type="hidden" name="accion" value="guardar_recurrente">
                     <?php
