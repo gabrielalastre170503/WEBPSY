@@ -3,7 +3,7 @@ session_start();
 include 'conexion.php';
 
 // Seguridad básica
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador', 'secretaria'])) {
     header('Location: login.php');
     exit();
 }

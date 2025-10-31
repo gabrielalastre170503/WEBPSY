@@ -3,6 +3,22 @@ date_default_timezone_set('America/Caracas'); // <-- AÑADE ESTA LÍNEA
 session_start();
 include 'conexion.php';
 
+if (!function_exists('formatearBytes')) {
+    function formatearBytes($bytes)
+    {
+        $bytes = (int)$bytes;
+        if ($bytes < 1024) {
+            return $bytes . ' B';
+        }
+        $units = ['KB', 'MB', 'GB', 'TB'];
+        $power = (int)floor(log($bytes, 1024));
+        $power = min($power, count($units));
+        $value = $bytes / pow(1024, $power);
+        $unit = $units[$power - 1] ?? 'KB';
+        return number_format($value, $value >= 10 ? 1 : 2) . ' ' . $unit;
+    }
+}
+
 // 1. Seguridad: Si no hay sesión, redirigir al login.
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: login.php');
@@ -16,6 +32,14 @@ $rol_usuario = $_SESSION['rol'];
 
 // 3. Lógica para obtener estadísticas (para admin Y psicólogo).
 $stats = [];
+$especialidades_panel_data = [
+    'profesionales' => [],
+    'resumen' => [],
+    'catalogo' => [],
+    'unique_total' => 0,
+    'with_specialty' => 0,
+    'without_specialty' => 0
+];
 if ($rol_usuario == 'administrador') {
     $result_pendientes = $conex->query("SELECT COUNT(id) as total FROM usuarios WHERE estado = 'pendiente'");
     $stats['pendientes'] = $result_pendientes->fetch_assoc()['total'];
@@ -34,6 +58,256 @@ if ($rol_usuario == 'administrador') {
     // Pacientes activos
     $result_pacientes = $conex->query("SELECT COUNT(id) as total FROM usuarios WHERE rol = 'paciente' AND estado = 'aprobado'");
     $stats['pacientes_activos'] = $result_pacientes->fetch_assoc()['total'];
+
+    $especialidades_panel_data = [
+        'profesionales' => [],
+        'resumen' => [],
+        'catalogo' => [],
+        'unique_total' => 0,
+        'with_specialty' => 0,
+        'without_specialty' => 0
+    ];
+
+    $documentos_data = [
+        'items' => [],
+        'stats' => [
+            'total_archivos' => 0,
+            'tamano_total' => 0,
+            'tamano_total_legible' => '0 B',
+            'por_categoria' => []
+        ],
+        'carpeta_disponible' => true,
+        'base_url' => 'documentos/',
+        'feedback' => null
+    ];
+
+    if (isset($_SESSION['documentos_feedback'])) {
+        $documentos_data['feedback'] = $_SESSION['documentos_feedback'];
+        unset($_SESSION['documentos_feedback']);
+    }
+
+    $profesionales_stmt = $conex->query("SELECT id, nombre_completo, correo, rol, especialidades, estado FROM usuarios WHERE rol IN ('psicologo', 'psiquiatra') ORDER BY nombre_completo ASC");
+
+    if ($profesionales_stmt) {
+        $uniqueEspecialidades = [];
+        $specialtySummary = [];
+
+        while ($profesional = $profesionales_stmt->fetch_assoc()) {
+            $especialidadesTexto = trim((string)($profesional['especialidades'] ?? ''));
+            $especialidadesLimpias = [];
+
+            if ($especialidadesTexto !== '') {
+                $segmentos = preg_split('/[,;]+/', $especialidadesTexto);
+
+                foreach ($segmentos as $segmento) {
+                    $especialidadLimpia = trim($segmento);
+                    if ($especialidadLimpia === '') {
+                        continue;
+                    }
+
+                    $especialidadesLimpias[] = $especialidadLimpia;
+                    $claveEspecialidad = strtolower($especialidadLimpia);
+
+                    if (!isset($uniqueEspecialidades[$claveEspecialidad])) {
+                        $uniqueEspecialidades[$claveEspecialidad] = $especialidadLimpia;
+                    }
+
+                    if (!isset($specialtySummary[$claveEspecialidad])) {
+                        $specialtySummary[$claveEspecialidad] = [
+                            'nombre' => $especialidadLimpia,
+                            'total' => 0,
+                            'profesionales' => []
+                        ];
+                    }
+
+                    $specialtySummary[$claveEspecialidad]['total']++;
+                    $specialtySummary[$claveEspecialidad]['profesionales'][] = $profesional['nombre_completo'];
+                }
+            }
+
+            if (!empty($especialidadesLimpias)) {
+                $especialidades_panel_data['with_specialty']++;
+            } else {
+                $especialidades_panel_data['without_specialty']++;
+            }
+
+            $profesional['especialidades_lista'] = $especialidadesLimpias;
+            $profesional['especialidades_texto'] = $especialidadesTexto;
+            $profesional['search_text'] = strtolower($profesional['nombre_completo'] . ' ' . $profesional['rol'] . ' ' . $especialidadesTexto . ' ' . $profesional['correo']);
+            $especialidades_panel_data['profesionales'][] = $profesional;
+        }
+
+        $especialidades_panel_data['unique_total'] = count($uniqueEspecialidades);
+        $especialidades_panel_data['catalogo'] = array_values($uniqueEspecialidades);
+
+        $resumenEspecialidades = array_values(array_map(function ($item) {
+            $item['profesionales'] = array_values(array_unique($item['profesionales']));
+            sort($item['profesionales'], SORT_NATURAL | SORT_FLAG_CASE);
+            return $item;
+        }, $specialtySummary));
+
+        usort($resumenEspecialidades, function ($a, $b) {
+            return strcasecmp($a['nombre'], $b['nombre']);
+        });
+
+        $especialidades_panel_data['resumen'] = $resumenEspecialidades;
+    }
+
+    $documentos_base_path = __DIR__ . DIRECTORY_SEPARATOR . 'documentos';
+    if (!is_dir($documentos_base_path)) {
+        @mkdir($documentos_base_path, 0777, true);
+    }
+    $documentos_data['carpeta_disponible'] = is_dir($documentos_base_path) && is_writable($documentos_base_path);
+
+    $extensiones_permitidas = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'zip', 'rar'];
+    $mapa_categorias = [
+        'pdf' => 'PDF y Manuales',
+        'doc' => 'Documentos Word',
+        'docx' => 'Documentos Word',
+        'xls' => 'Hojas de Cálculo',
+        'xlsx' => 'Hojas de Cálculo',
+        'ppt' => 'Presentaciones',
+        'pptx' => 'Presentaciones',
+        'txt' => 'Notas y Texto Plano',
+        'csv' => 'Registros CSV',
+        'zip' => 'Archivos Comprimidos',
+        'rar' => 'Archivos Comprimidos'
+    ];
+    $peso_maximo_bytes = 10 * 1024 * 1024; // 10 MB
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['documento_action'])) {
+        $accionDocumento = $_POST['documento_action'];
+        $redirectUrl = 'panel.php?vista=admin-documentos';
+
+        if ($accionDocumento === 'upload') {
+            if (!$documentos_data['carpeta_disponible']) {
+                $_SESSION['documentos_feedback'] = ['type' => 'error', 'message' => 'No se puede escribir en la carpeta de documentos. Verifica permisos.'];
+                header('Location: ' . $redirectUrl);
+                exit();
+            }
+
+            if (!isset($_FILES['documento_archivo']) || $_FILES['documento_archivo']['error'] !== UPLOAD_ERR_OK) {
+                $_SESSION['documentos_feedback'] = ['type' => 'error', 'message' => 'No se recibió el archivo o se produjo un error durante la subida.'];
+                header('Location: ' . $redirectUrl);
+                exit();
+            }
+
+            $archivoSubido = $_FILES['documento_archivo'];
+            if ($archivoSubido['size'] > $peso_maximo_bytes) {
+                $_SESSION['documentos_feedback'] = ['type' => 'error', 'message' => 'El archivo supera el tamaño máximo permitido (10 MB).'];
+                header('Location: ' . $redirectUrl);
+                exit();
+            }
+
+            $nombreOriginal = $archivoSubido['name'];
+            $extension = strtolower(pathinfo($nombreOriginal, PATHINFO_EXTENSION));
+            if (!in_array($extension, $extensiones_permitidas, true)) {
+                $_SESSION['documentos_feedback'] = ['type' => 'error', 'message' => 'Tipo de archivo no permitido.'];
+                header('Location: ' . $redirectUrl);
+                exit();
+            }
+
+            $nombreBase = pathinfo($nombreOriginal, PATHINFO_FILENAME);
+            $nombreSanitizado = preg_replace('/[^a-zA-Z0-9-_]+/', '-', $nombreBase);
+            $nombreSanitizado = trim($nombreSanitizado, '-_');
+            if ($nombreSanitizado === '') {
+                $nombreSanitizado = 'documento';
+            }
+            $nombreDestino = $nombreSanitizado . '-' . date('Ymd-His') . '.' . $extension;
+            $rutaDestino = $documentos_base_path . DIRECTORY_SEPARATOR . $nombreDestino;
+
+            if (!move_uploaded_file($archivoSubido['tmp_name'], $rutaDestino)) {
+                $_SESSION['documentos_feedback'] = ['type' => 'error', 'message' => 'No se pudo guardar el archivo en el servidor.'];
+                header('Location: ' . $redirectUrl);
+                exit();
+            }
+
+            $_SESSION['documentos_feedback'] = ['type' => 'success', 'message' => 'Documento cargado correctamente.'];
+            header('Location: ' . $redirectUrl);
+            exit();
+        }
+
+        if ($accionDocumento === 'delete') {
+            $archivoEliminar = isset($_POST['documento_nombre']) ? basename($_POST['documento_nombre']) : '';
+            $rutaEliminar = $archivoEliminar ? realpath($documentos_base_path . DIRECTORY_SEPARATOR . $archivoEliminar) : false;
+            $carpetaReal = realpath($documentos_base_path);
+
+            if (!$archivoEliminar || !$rutaEliminar || strpos($rutaEliminar, $carpetaReal) !== 0 || !is_file($rutaEliminar)) {
+                $_SESSION['documentos_feedback'] = ['type' => 'error', 'message' => 'No se encontró el archivo solicitado.'];
+                header('Location: ' . $redirectUrl);
+                exit();
+            }
+
+            if (!@unlink($rutaEliminar)) {
+                $_SESSION['documentos_feedback'] = ['type' => 'error', 'message' => 'No se pudo eliminar el archivo.'];
+                header('Location: ' . $redirectUrl);
+                exit();
+            }
+
+            $_SESSION['documentos_feedback'] = ['type' => 'success', 'message' => 'Documento eliminado correctamente.'];
+            header('Location: ' . $redirectUrl);
+            exit();
+        }
+
+        header('Location: ' . $redirectUrl);
+        exit();
+    }
+
+    if (is_dir($documentos_base_path)) {
+        $archivos = scandir($documentos_base_path);
+        $carpetaReal = realpath($documentos_base_path);
+        foreach ($archivos as $archivo) {
+            if ($archivo === '.' || $archivo === '..') {
+                continue;
+            }
+
+            $rutaArchivo = $documentos_base_path . DIRECTORY_SEPARATOR . $archivo;
+            if (!is_file($rutaArchivo)) {
+                continue;
+            }
+
+            $extension = strtolower(pathinfo($archivo, PATHINFO_EXTENSION));
+            $categoria = $mapa_categorias[$extension] ?? 'Otros Documentos';
+            $tamano = filesize($rutaArchivo);
+            $documentos_data['stats']['total_archivos']++;
+            $documentos_data['stats']['tamano_total'] += $tamano;
+
+            if (!isset($documentos_data['stats']['por_categoria'][$categoria])) {
+                $documentos_data['stats']['por_categoria'][$categoria] = [
+                    'nombre' => $categoria,
+                    'total' => 0,
+                    'tamano' => 0
+                ];
+            }
+            $documentos_data['stats']['por_categoria'][$categoria]['total']++;
+            $documentos_data['stats']['por_categoria'][$categoria]['tamano'] += $tamano;
+
+            $documentos_data['items'][] = [
+                'nombre' => $archivo,
+                'extension' => $extension,
+                'categoria' => $categoria,
+                'tamano' => $tamano,
+                'tamano_legible' => formatearBytes($tamano),
+                'modificado' => filemtime($rutaArchivo),
+                'modificado_legible' => date('d/m/Y H:i', filemtime($rutaArchivo)),
+                'search_text' => strtolower($archivo . ' ' . $categoria . ' ' . ($mapa_categorias[$extension] ?? $extension))
+            ];
+        }
+
+        usort($documentos_data['items'], function ($a, $b) {
+            return $b['modificado'] <=> $a['modificado'];
+        });
+
+        $documentos_data['stats']['tamano_total_legible'] = formatearBytes($documentos_data['stats']['tamano_total']);
+        $documentos_data['stats']['por_categoria'] = array_values(array_map(function ($categoria) {
+            $categoria['tamano_legible'] = formatearBytes($categoria['tamano']);
+            return $categoria;
+        }, $documentos_data['stats']['por_categoria']));
+
+        usort($documentos_data['stats']['por_categoria'], function ($a, $b) {
+            return $b['total'] <=> $a['total'];
+        });
+    }
 
 } elseif ($rol_usuario == 'psicologo' || $rol_usuario == 'psiquiatra') {
     $psicologo_id = $_SESSION['usuario_id'];
@@ -91,7 +365,7 @@ if ($rol_usuario == 'administrador') {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
-    <style>
+<style>
     /* --- ESTILOS GENERALES Y LAYOUT --- */
     body { margin: 0; background-color: #f0f2f5; font-family: "Poppins", sans-serif; color: #333; }
     .dashboard-container {
@@ -160,6 +434,535 @@ if ($rol_usuario == 'administrador') {
 }
     .stat-card .info .number { font-size: 28px; font-weight: 600; color: #333; }
     .stat-card .info .label { color: #777; font-size: 14px; }
+
+    /* --- ESTILOS PARA LA GESTIÓN DE ESPECIALIDADES (ADMINISTRADOR) --- */
+    #vista-admin-especialidades .specialty-overview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .specialty-overview-card {
+        background: white;
+        border-radius: 12px;
+        padding: 22px;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+        border: 1px solid rgba(2, 177, 244, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .specialty-overview-card .metric-label {
+        color: #6b7280;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    .specialty-overview-card .metric-value {
+        font-size: 30px;
+        font-weight: 600;
+        color: #111827;
+    }
+    .specialty-overview-card .metric-hint {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+    .specialty-summary-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+    }
+    .specialty-summary-table th,
+    .specialty-summary-table td {
+        padding: 12px 14px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 14px;
+    }
+    .specialty-summary-table th {
+        font-weight: 600;
+        color: #0f172a;
+        background: #f8fafc;
+    }
+    .specialty-summary-table tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+    .specialty-professionals-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .specialty-badge {
+        background: rgba(2, 177, 244, 0.12);
+        color: #0369a1;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .specialty-search-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    .specialty-search-bar input[type="search"] {
+        flex: 1;
+        min-width: 220px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 14px;
+        transition: border 0.2s ease;
+    }
+    .specialty-search-bar input[type="search"]:focus {
+        outline: none;
+        border-color: #02b1f4;
+        box-shadow: 0 0 0 2px rgba(2, 177, 244, 0.15);
+    }
+    .specialty-management-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .specialty-management-table th,
+    .specialty-management-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #e2e8f0;
+        text-align: left;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+    .specialty-management-table th {
+        font-weight: 600;
+        color: #0f172a;
+        background-color: #f8fafc;
+    }
+    .specialty-management-table tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+    .specialty-role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, 0.12);
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    .specialty-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(16, 185, 129, 0.12);
+        color: #047857;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    .specialty-status-badge.pendiente {
+        background: rgba(234, 179, 8, 0.14);
+        color: #ca8a04;
+    }
+    .specialty-status-badge.suspendido,
+    .specialty-status-badge.rechazado {
+        background: rgba(239, 68, 68, 0.14);
+        color: #b91c1c;
+    }
+    .specialty-form {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .specialty-form input[type="text"] {
+        flex: 1;
+        min-width: 180px;
+        padding: 9px 12px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 14px;
+        transition: border 0.2s ease;
+    }
+    .specialty-form input[type="text"]:focus {
+        outline: none;
+        border-color: #02b1f4;
+        box-shadow: 0 0 0 2px rgba(2, 177, 244, 0.15);
+    }
+    .specialty-form button {
+        background: linear-gradient(135deg, #02b1f4, #0284c7);
+        border: none;
+        color: white;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .specialty-form button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(2, 177, 244, 0.28);
+    }
+    .specialty-empty-state {
+        text-align: center;
+        padding: 35px 20px;
+        color: #6b7280;
+        background: #f8fafc;
+        border-radius: 10px;
+        border: 1px dashed #cbd5e1;
+    }
+    .specialty-empty-text {
+        color: #94a3b8;
+        font-size: 13px;
+        font-style: italic;
+    }
+
+    /* --- ESTILOS PARA LA GESTIÓN DE DOCUMENTOS (ADMINISTRADOR) --- */
+    #vista-admin-documentos .document-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-top: 18px;
+    }
+    .document-stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 22px;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+        border: 1px solid rgba(2, 177, 244, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .document-stat-card .metric-label {
+        color: #6b7280;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    .document-stat-card .metric-value {
+        font-size: 30px;
+        font-weight: 600;
+        color: #111827;
+    }
+    .document-stat-card .metric-hint {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+    .document-upload-card {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 22px;
+        border: 1px dashed #cbd5e1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .document-upload-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+    }
+    .document-upload-form input[type="file"] {
+        flex: 1;
+        min-width: 240px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 10px;
+        background: white;
+        font-size: 14px;
+    }
+    .document-upload-form button {
+        background: linear-gradient(135deg, #02b1f4, #0ea5e9);
+        border: none;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .document-upload-form button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 18px rgba(14, 165, 233, 0.28);
+    }
+    .document-category-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+    }
+    .document-category-pill {
+        background: rgba(14, 165, 233, 0.15);
+        color: #0369a1;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .document-search-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    .document-search-bar input[type="search"] {
+        flex: 1;
+        min-width: 220px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 14px;
+    }
+    .document-search-bar input[type="search"]:focus {
+        outline: none;
+        border-color: #02b1f4;
+        box-shadow: 0 0 0 2px rgba(2, 177, 244, 0.15);
+    }
+    .document-list-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .document-list-table th,
+    .document-list-table td {
+        padding: 13px 16px;
+        border-bottom: 1px solid #e2e8f0;
+        text-align: left;
+        font-size: 14px;
+    }
+    .document-list-table th {
+        font-weight: 600;
+        color: #0f172a;
+        background-color: #f8fafc;
+    }
+    .document-list-table tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+    .document-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .document-actions form {
+        display: inline-flex;
+    }
+    .document-actions a,
+    .document-actions button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+    }
+    .document-actions a.download-link {
+        background: #e0f2fe;
+        color: #0369a1;
+        text-decoration: none;
+    }
+    .document-actions button.copy-link {
+        background: #ede9fe;
+        color: #5b21b6;
+    }
+    .document-actions form button.delete-link {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+    .document-empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #64748b;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px dashed #cbd5e1;
+    }
+
+    /* --- ESTILOS PARA TAREAS RÁPIDAS DEL ADMINISTRADOR --- */
+    #vista-admin-tareas .admin-task-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 22px;
+    }
+    .admin-task-panel {
+        background: white;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 16px 35px rgba(15, 23, 42, 0.08);
+        border: 1px solid rgba(15, 23, 42, 0.04);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .admin-task-panel h3 {
+        margin: 0;
+        font-size: 20px;
+        color: #0f172a;
+    }
+    .admin-task-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .admin-task-form input[type="text"] {
+        flex: 1;
+        min-width: 200px;
+        padding: 11px 14px;
+        border-radius: 10px;
+        border: 1px solid #cbd5e1;
+        font-size: 14px;
+    }
+    .admin-task-form button {
+        background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+        border: none;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .admin-task-form button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 20px rgba(14, 165, 233, 0.32);
+    }
+    .admin-task-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .admin-task-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        transition: background 0.2s ease, border 0.2s ease;
+    }
+    .admin-task-item.completed {
+        background: #ecfeff;
+        border-color: #22d3ee;
+        opacity: 0.8;
+    }
+    .admin-task-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+    .admin-task-text {
+        flex: 1;
+        font-size: 14px;
+        color: #1f2937;
+    }
+    .admin-task-item.completed .admin-task-text {
+        text-decoration: line-through;
+        color: #64748b;
+    }
+    .admin-task-actions {
+        display: flex;
+        gap: 8px;
+    }
+    .admin-task-actions button {
+        border: none;
+        background: none;
+        color: #ef4444;
+        cursor: pointer;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        transition: background 0.2s ease;
+    }
+    .admin-task-actions button:hover {
+        background: rgba(248, 113, 113, 0.12);
+    }
+    .admin-task-empty {
+        text-align: center;
+        padding: 30px 10px;
+        color: #94a3b8;
+        font-size: 14px;
+    }
+    .admin-task-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #475569;
+        font-size: 13px;
+    }
+    .admin-task-filters {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+    }
+    .admin-task-filters button {
+        background: #e0f2fe;
+        color: #0369a1;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    .admin-task-filters button.active {
+        background: #0ea5e9;
+        color: white;
+    }
+    .admin-task-filters button:hover {
+        background: #38bdf8;
+        color: white;
+    }
+
+    /* --- CONTENEDORES DEL DASHBOARD PARA SECRETARÍA --- */
+    .secretary-dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-top: 36px; align-items: stretch; }
+    .secretary-dashboard-card { background-color: #ffffff; border-radius: 16px; padding: 24px 26px; box-shadow: 0 18px 35px rgba(15, 23, 42, 0.07); display: flex; flex-direction: column; gap: 18px; border: 1px solid rgba(15, 118, 230, 0.08); position: relative; overflow: hidden; }
+    .secretary-dashboard-card::after { content: ""; position: absolute; inset: 0; border-radius: 16px; pointer-events: none; border: 1px solid rgba(15, 23, 42, 0.04); }
+    .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .card-title-group { flex: 1; }
+    .card-title-group h3 { margin: 0; font-size: 18px; color: #0f172a; }
+    .card-subtitle { display: block; margin-top: 4px; font-size: 13px; color: #6b7280; }
+    .secretary-card-icon { width: 46px; height: 46px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: #ffffff; }
+    .solicitudes-card .secretary-card-icon { width: 46px; min-width: 46px; }
+    .agenda-card .secretary-card-icon { width: 46px; min-width: 46px; }
+    .icon-blue { background: linear-gradient(135deg, #38bdf8, #0ea5e9); }
+    .icon-indigo { background: linear-gradient(135deg, #818cf8, #4f46e5); }
+    .icon-emerald { background: linear-gradient(135deg, #34d399, #059669); }
+    .card-highlight { font-weight: 600; font-size: 13px; color: #0f172a; background: rgba(15, 118, 230, 0.1); padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
+    .card-body { display: flex; flex-direction: column; gap: 18px; }
+    .dashboard-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; }
+    .dashboard-list-item { display: flex; gap: 14px; align-items: flex-start; }
+    .time-badge { min-width: 88px; padding: 6px 12px; border-radius: 999px; background: rgba(2, 177, 244, 0.12); color: #0369a1; font-size: 13px; font-weight: 600; text-align: center; }
+    .list-content strong { display: block; font-size: 15px; color: #111827; margin-bottom: 4px; }
+    .list-content p { margin: 0; font-size: 13px; color: #6b7280; line-height: 1.4; }
+    .card-empty { background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(14,116,144,0.08)); border-radius: 14px; padding: 18px; display: flex; gap: 14px; align-items: flex-start; color: #0f172a; font-size: 14px; }
+    .card-empty i { font-size: 18px; color: #0284c7; margin-top: 2px; }
+    .card-divider { height: 1px; width: 100%; background: linear-gradient(90deg, rgba(15,23,42,0.08), rgba(15,23,42,0)); border: none; margin: 6px 0; }
+    .quick-action-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    .quick-action-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; color: #334155; }
+    .quick-action-label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+    .list-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .mini-status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #eef2ff; color: #4338ca; font-size: 12px; font-weight: 600; text-decoration: none; }
+    .time-badge.indigo { background: rgba(99, 102, 241, 0.16); color: #4338ca; }
+    .time-badge.emerald { background: rgba(16, 185, 129, 0.16); color: #047857; }
     
     /* --- ESTILOS PARA LAS TABLAS (TODOS LOS PANELES) --- */
     .approvals-table {
@@ -243,11 +1046,12 @@ if ($rol_usuario == 'administrador') {
 }
 .stat-card {
     background-color: white;
-    padding: 25px;
+    padding: 16px 18px;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     border: 1px solid #e9e9e9;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    min-height: 104px;
 }
 .stat-card:hover {
     transform: translateY(-5px);
@@ -261,7 +1065,7 @@ if ($rol_usuario == 'administrador') {
 }
 .card-header h3 {
     margin: 0;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 500;
     color: #555;
     border: none;
@@ -272,7 +1076,7 @@ if ($rol_usuario == 'administrador') {
     color: #aaa;
 }
 .card-body .stat-number {
-    font-size: 38px;
+    font-size: 34px;
     font-weight: 600;
     color: #333;
     margin: 0 0 5px 0;
@@ -1308,7 +2112,7 @@ if ($rol_usuario == 'administrador') {
         .modal-content .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
         .modal-content .full-width { grid-column: 1 / -1; }
         .modal-content .input-group { position: relative; }
-        .modal-content .input-group label { display: block; font-weight: 500; margin-bottom: 8px; color: #555; }
+    .modal-content .input-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #555; font-size: 15px; }
         .modal-content .input-group input { width: 100%; padding: 12px 12px 12px 45px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
         .modal-content .input-group i { position: absolute; left: 15px; top: 42px; color: #aaa; }
 
@@ -1388,7 +2192,19 @@ if ($rol_usuario == 'administrador') {
 }
 .modal-form-panel h4 { margin-top: 0; margin-bottom: 25px; font-size: 20px; color: #333; }
 .modal-form-panel .form-group { margin-bottom: 20px; }
-.modal-form-panel .form-group label { font-weight: 500; margin-bottom: 8px; color: #555; font-size: 14px; }
+.modal-form-panel .form-group label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 15px;
+}
+
+.modal-form-panel .input-group label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 15px;
+}
 .modal-form-panel .input-wrapper { position: relative; }
 .modal-form-panel .input-wrapper i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa; }
 .modal-form-panel .form-group input, .modal-form-panel .form-group textarea {
@@ -1723,11 +2539,15 @@ body.fade-out {
     margin-bottom: 15px;
 }
 .modal-body-premium .form-group label {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     color: #555;
     margin-bottom: 8px;
     display: block;
+}
+
+.modal-body-premium .label-tight {
+    margin-top: 10px !important;
 }
 
 
@@ -1770,6 +2590,79 @@ body.fade-out {
     border-color: #02b1f4;
     background-color: #fff;
     box-shadow: 0 0 0 3px rgba(2, 177, 244, 0.15);
+}
+
+.modal-body-premium .form-group.select-with-icon {
+    position: relative;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(148, 163, 184, 0.18), rgba(203, 213, 225, 0.08));
+    padding: 2px;
+}
+
+.modal-body-premium .form-group.select-with-icon::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    pointer-events: none;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.modal-body-premium .form-group.select-with-icon i {
+    position: absolute;
+    left: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    pointer-events: none;
+    font-size: 17px;
+    transition: color 0.2s ease;
+}
+
+.modal-body-premium .form-group.select-with-icon select {
+    padding-left: 54px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    background-color: #f8fafc;
+    box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.04);
+    color: #334155;
+    font-weight: 500;
+}
+
+.modal-body-premium .form-group.select-with-icon select:hover {
+    border-color: #94a3b8;
+}
+
+.modal-body-premium .form-group.select-with-icon select:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    background-color: #f1f5f9;
+}
+
+.modal-body-premium .form-group.select-with-icon:focus-within::after {
+    opacity: 1;
+}
+
+.modal-body-premium .form-group.select-with-icon:focus-within i {
+    color: #0ea5e9;
+}
+
+.modal-body-premium .form-group.select-with-icon:focus-within select {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18);
+    background-color: #ffffff;
+}
+
+.modal-body-premium .form-group .helper-text {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.modal-body-premium .form-group .helper-text.error-text {
+    color: #b91c1c;
 }
 
 .modal-body-premium textarea {
@@ -2169,6 +3062,7 @@ body.fade-out {
     transform: translateY(-50%);
     color: #aaa;
     transition: color 0.3s;
+    pointer-events: none;
 }
 
 /* Estilo para los íconos en campos de texto de una línea */
@@ -2314,21 +3208,521 @@ body.fade-out {
 
 /* --- ESTILOS PREMIUM PARA LA LISTA DE SOLICITUDES (SECRETARIA) --- */
 .solicitudes-list {
-    margin-top: 20px;
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 22px;
 }
 .solicitud-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+.solicitud-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    pointer-events: none;
+    border: 1px solid rgba(2, 177, 244, 0.12);
+    z-index: 0;
+}
+
+.solicitud-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    background: linear-gradient(135deg, rgba(2, 177, 244, 0.25), rgba(2, 177, 244, 0));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.solicitud-card:hover::before { opacity: 1; }
+
+/* --- ESTILOS PARA NOTAS RÁPIDAS (SECRETARIA) --- */
+.quick-notes-container {
+    margin-top: 28px;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12);
+    padding: 32px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: relative;
+    overflow: hidden;
+}
+.quick-notes-container::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.1), transparent 55%);
+    pointer-events: none;
+}
+.quick-notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    position: relative;
+    z-index: 1;
+}
+.quick-notes-header h3 {
+    margin: 6px 0 8px;
+    font-size: 24px;
+    color: #0f172a;
+}
+.quick-notes-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 15px;
+    max-width: 520px;
+}
+.quick-notes-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(14, 165, 233, 0.12);
+    color: #0369a1;
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: 999px;
+    padding: 6px 14px;
+}
+.quick-notes-badge i {
+    font-size: 14px;
+}
+.quick-notes-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(120px, 1fr));
+    gap: 14px;
+}
+.quick-notes-stat {
+    background: linear-gradient(135deg, #f8fafc, #ffffff);
+    border-radius: 14px;
+    padding: 16px 18px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+.quick-notes-stat .stat-label {
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+.quick-notes-stat .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+}
+.quick-notes-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 340px) 1fr;
+    gap: 32px;
+    position: relative;
+    z-index: 1;
+}
+.quick-notes-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.quick-notes-form-card {
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(14, 165, 233, 0.04));
+    border: 1px solid rgba(14, 165, 233, 0.16);
+    box-shadow: 0 16px 32px rgba(14, 165, 233, 0.18);
+    padding: 24px 26px;
+}
+.quick-note-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.quick-note-form label {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 15px;
+}
+.quick-note-textarea {
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-family: "Poppins", sans-serif;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.96);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    resize: vertical;
+    min-height: 110px;
+}
+.quick-note-textarea:focus {
+    outline: none;
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.18);
+    background: #ffffff;
+}
+.quick-note-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+.quick-note-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 14px 32px rgba(14, 165, 233, 0.28);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.quick-note-add-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 36px rgba(14, 165, 233, 0.34);
+}
+.quick-note-add-btn i {
+    font-size: 14px;
+}
+.quick-note-hint {
+    font-size: 13px;
+    color: #0369a1;
+    background: rgba(2, 177, 244, 0.12);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.quick-note-hint i {
+    font-size: 16px;
+    margin-top: 2px;
+}
+.quick-note-hint strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #0f172a;
+}
+.quick-note-hint span {
+    display: block;
+    color: #1e293b;
+    line-height: 1.45;
+}
+.quick-notes-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+.quick-notes-tabs {
+    display: inline-flex;
+    background: rgba(226, 232, 240, 0.6);
+    padding: 6px;
+    border-radius: 999px;
+    gap: 6px;
+}
+.quick-notes-tab {
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.quick-notes-tab.is-active {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(14, 165, 233, 0.25);
+}
+.quick-notes-empty {
+    display: none;
+    align-items: center;
+    gap: 18px;
+    padding: 22px;
+    border-radius: 16px;
+    border: 1px dashed rgba(148, 163, 184, 0.5);
+    background: rgba(241, 245, 249, 0.65);
+    color: #475569;
+}
+.quick-notes-empty i {
+    font-size: 30px;
+    color: #0ea5e9;
+}
+.quick-notes-empty strong {
+    display: block;
+    margin-bottom: 4px;
+}
+.quick-notes-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.quick-note-item {
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    border-radius: 16px;
+    padding: 20px 22px;
+    background: linear-gradient(135deg, #ffffff, #f8fafc);
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+}
+.quick-note-item::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    border-left: 4px solid #0ea5e9;
+    pointer-events: none;
+    opacity: 0.9;
+}
+.quick-note-item.is-completed::before {
+    border-left-color: #22c55e;
+}
+.quick-note-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.16);
+}
+.quick-note-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.quick-note-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+}
+.quick-note-main input[type="checkbox"] {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+.quick-note-text {
+    font-size: 15px;
+    color: #0f172a;
+    line-height: 1.55;
+}
+.quick-note-item.is-completed .quick-note-text {
+    text-decoration: line-through;
+    color: #94a3b8;
+}
+.quick-note-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #64748b;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.quick-note-actions-row {
+    display: flex;
+    gap: 10px;
+}
+.quick-note-badge {
+    background: rgba(14, 165, 233, 0.14);
+    color: #0284c7;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+}
+.quick-note-item.is-completed .quick-note-badge {
+    background: rgba(34, 197, 94, 0.18);
+    color: #15803d;
+}
+.quick-note-delete {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 10px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.quick-note-delete:hover {
+    background: rgba(239, 68, 68, 0.14);
+    color: #b91c1c;
+}
+.quick-note-timestamp i {
+    margin-right: 6px;
+}
+
+@media (max-width: 1100px) {
+    .quick-notes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 768px) {
+    .quick-notes-container {
+        padding: 26px 22px;
+    }
+    .quick-notes-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .quick-notes-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .quick-notes-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .quick-notes-tabs {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .quick-note-actions {
+        width: 100%;
+    }
+    .quick-note-add-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+    background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+    opacity: 0.85;
+    z-index: 1;
+}
+.solicitud-card > * {
+    position: relative;
+    z-index: 2;
+}
+.solicitud-card-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
-    border: 1px solid #e9ecef;
-    margin-bottom: 15px;
+    gap: 16px;
 }
-.solicitud-info h4 { margin: 0 0 5px 0; font-size: 16px; }
-.solicitud-info p { margin: 0; font-size: 14px; color: #555; }
-.solicitud-info p strong { color: #333; }
+.solicitud-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    box-shadow: 0 12px 24px rgba(14, 165, 233, 0.25);
+}
+.solicitud-card-title {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.solicitud-card-title h4 {
+    margin: 0;
+    font-size: 18px;
+    color: #0f172a;
+}
+.solicitud-card-subtitle {
+    font-size: 13px;
+    color: #64748b;
+}
+.solicitud-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.solicitud-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(2, 177, 244, 0.12);
+    color: #0369a1;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.solicitud-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    font-size: 13px;
+    color: #475569;
+}
+.solicitud-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.solicitud-motivo-box {
+    background: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.6;
+}
+.solicitud-motivo-box strong {
+    color: #0f172a;
+}
+.solicitud-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+}
+.solicitud-action-primary,
+.solicitud-action-secondary {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+.solicitud-actions i {
+    margin-right: 6px;
+}
+.solicitud-action-primary {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: #ffffff;
+    box-shadow: 0 14px 28px rgba(14, 165, 233, 0.28);
+}
+.solicitud-action-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px rgba(14, 165, 233, 0.32);
+}
+.solicitud-action-secondary {
+    background: rgba(2, 177, 244, 0.1);
+    color: #0369a1;
+}
+.solicitud-action-secondary:hover {
+    background: rgba(2, 177, 244, 0.18);
+    transform: translateY(-2px);
+}
 
 /* Estilo para la caja de texto del motivo en la modal */
 .info-text-box {
@@ -2338,21 +3732,6 @@ body.fade-out {
     border-radius: 8px;
     font-size: 15px;
     min-height: 80px;
-}
-
-/* --- ESTILOS PARA DETALLES ADICIONALES EN TARJETA DE SOLICITUD --- */
-.solicitud-details {
-    display: flex;
-    flex-wrap: wrap; /* Para que se adapte en pantallas pequeñas */
-    gap: 10px 20px; /* Espacio vertical y horizontal */
-    font-size: 13px;
-    color: #555;
-    margin: 8px 0;
-    padding-left: 5px;
-}
-.solicitud-motivo {
-    margin-top: 10px;
-    padding-left: 5px;
 }
 
 /* --- ESTILO PARA MOSTRAR INFORMACIÓN EN LÍNEA (LABEL: VALOR) --- */
@@ -2378,19 +3757,22 @@ body.fade-out {
 }
 
 /* --- ESTA ES LA REGLA CLAVE CORREGIDA --- */
-#modal-asignar-cita .input-wrapper {
+#modal-asignar-cita .input-wrapper,
+#modal-crear-paciente .input-wrapper {
     position: relative;
 }
-#modal-asignar-cita .input-wrapper i {
+
+#modal-asignar-cita .input-wrapper i,
+#modal-crear-paciente .input-wrapper i {
     position: absolute;
     left: 15px;
     top: 50%;
     transform: translateY(-50%);
     color: #aaa;
-    pointer-events: none; /* Para que el clic llegue al select */
 }
+
 #modal-asignar-cita .input-wrapper select,
-#modal-asignar-cita .input-wrapper input {
+#modal-crear-paciente .input-wrapper select {
     width: 100%;
     padding: 12px 15px 12px 45px; /* Padding izquierdo para el icono */
     border: 1px solid #ccc;
@@ -2406,6 +3788,22 @@ body.fade-out {
     background-position: right 15px center;
     background-size: 16px;
     cursor: pointer;
+}
+
+#modal-asignar-cita .input-wrapper input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: "Poppins", sans-serif;
+    box-sizing: border-box;
+    background-color: #fff;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 16px;
 }
 
 /* --- ESTILOS PARA AJUSTAR LA MODAL DE DETALLES DE CITA --- */
@@ -2786,6 +4184,36 @@ body.fade-out {
 #vista-pacientes .approvals-table td {
     padding: 15px; /* <-- Restaura el padding original o ajústalo a tu gusto */
     vertical-align: middle; /* Asegura que el texto esté centrado verticalmente */
+}
+
+#tabla-pacientes-secretaria-container .approvals-table {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+#tabla-pacientes-secretaria-container .approvals-table th,
+#tabla-pacientes-secretaria-container .approvals-table td {
+    padding: 10px 18px;
+    vertical-align: middle;
+}
+
+#tabla-pacientes-secretaria-container .appHrovals-table th:nth-child(3),
+#tabla-pacientes-secretaria-container .approvals-table td:nth-child(3) {
+    max-width: 240px;
+    white-space: normal;
+}
+
+#tabla-pacientes-secretaria-container .action-links {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+#tabla-pacientes-secretaria-container .action-links .approve,
+#tabla-pacientes-secretaria-container .action-links .btn-secondary {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
 }
 
 /* --- ESTILOS PARA EL ACORDEÓN DE PREGUNTAS FRECUENTES --- */
@@ -3740,6 +5168,18 @@ body.fade-out {
     <a href="#" class="nav-link" onclick="mostrarVista('admin-personal', event)">
     <i class="fa-solid fa-users-cog"></i> <span>Añadir Personal</span>
     </a>
+    <a href="#" class="nav-link" onclick="mostrarVista('admin-especialidades', event)">
+        <i class="fa-solid fa-stethoscope"></i> <span>Especialidades</span>
+    </a>
+    <a href="#" class="nav-link" onclick="mostrarVista('agenda-general', event)">
+        <i class="fa-solid fa-calendar-week"></i> <span>Agenda General</span>
+    </a>
+    <a href="#" class="nav-link" onclick="mostrarVista('notas-rapidas', event)">
+        <i class="fa-solid fa-note-sticky"></i> <span>Tareas Rápidas</span>
+    </a>
+    <a href="#" class="nav-link" onclick="mostrarVista('admin-documentos', event)">
+        <i class="fa-solid fa-folder-open"></i> <span>Rv Documentos</span>
+    </a>
     <a href="#" class="nav-link" onclick="mostrarVista('admin-contenido', event)"><i class="fa-solid fa-file-pen"></i> <span>Editar Contenido</span></a>
     <a href="#" class="nav-link" onclick="mostrarVista('perfil', event)">
         <i class="fa-solid fa-user-gear"></i> <span>Mi Perfil Personal</span>
@@ -3814,24 +5254,30 @@ body.fade-out {
 
                 <!-- ENLACES PARA SECRETARIA -->
 <?php if ($rol_usuario == 'secretaria'): ?>
-    <a href="#" class="nav-link active" onclick="mostrarVista('solicitudes-generales', event)">
-        <i class="fa-solid fa-inbox"></i> <span>Solicitudes de Citas</span>
+    <a href="#" class="nav-link active" onclick="mostrarVista('secretaria-dashboard', event)">
+        <i class="fa-solid fa-chart-line"></i> <span>Panel de Control</span>
+    </a>
+    <a href="#" class="nav-link" onclick="mostrarVista('solicitudes-generales', event)">
+        <i class="fa-solid fa-inbox"></i> <span>Citas Pendientes</span>
     </a>
     <a href="#" class="nav-link" onclick="mostrarVista('historial-citas-general', event)">
-        <i class="fa-solid fa-clipboard-list"></i> <span>Historial de Citas del Personal</span>
+        <i class="fa-solid fa-clipboard-list"></i> <span>Historial de Citas</span>
     </a>
     <a href="#" class="nav-link" onclick="mostrarVista('agenda-general', event)">
-        <i class="fa-solid fa-calendar-week"></i> <span>Agenda de personal</span>
+        <i class="fa-solid fa-calendar-week"></i> <span>Agenda Personal</span>
     </a>
     <a href="#" class="nav-link" onclick="mostrarVista('gestion-pacientes', event)">
-        <i class="fa-solid fa-address-book"></i> <span>Gestión de Pacientes</span>
+        <i class="fa-solid fa-address-book"></i> <span>Gestión Pacientes</span>
     </a>
     <a href="#" class="nav-link" onclick="mostrarVista('directorio', event)">
-        <i class="fa-solid fa-user-doctor"></i> <span>Directorio Profesional</span>
+        <i class="fa-solid fa-user-doctor"></i> <span>Directorio Clinico</span>
+    </a>
+    <a href="#" class="nav-link" onclick="mostrarVista('notas-rapidas', event)">
+        <i class="fa-solid fa-note-sticky"></i> <span>Notas Personales</span>
     </a>
     
     <a href="#" class="nav-link" onclick="mostrarVista('perfil', event)">
-        <i class="fa-solid fa-user-gear"></i> <span>Mi Perfil</span>
+        <i class="fa-solid fa-user-gear"></i> <span>Mi Perfil Personal</span>
     </a>
 <?php endif; ?>
 
@@ -4064,7 +5510,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                     <div class="icon"><i class="fa-solid fa-user-tie"></i></div>
                     <div class="info">
                         <div class="number"><?php echo $stats['personal']; ?></div>
-                        <div class="label">Personal Activo</div>
+                        <div class="label">Personales Activo</div>
                     </div>
                 </div>
             </a>
@@ -4224,7 +5670,353 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     </div>
 </div>
 
+    <div id="vista-admin-especialidades" class="panel-vista">
+        <div class="panel-seccion">
+            <h2>Gestión de Especialidades</h2>
+            <p>Centraliza las áreas de experiencia de tu equipo profesional para mantener actualizado el catálogo clínico.</p>
 
+            <?php if (isset($_GET['esp']) && $_GET['esp'] === 'success'): ?>
+                <div class="alert-box success"><span><strong>¡Cambios guardados!</strong> Las especialidades fueron actualizadas correctamente.</span></div>
+            <?php elseif (isset($_GET['esp']) && $_GET['esp'] === 'error'): ?>
+                <div class="alert-box error"><span><strong>No se pudo guardar.</strong> Inténtalo nuevamente o verifica los datos enviados.</span></div>
+            <?php endif; ?>
+
+            <?php $totalProfesionalesEspecialidad = count($especialidades_panel_data['profesionales']); ?>
+            <div class="specialty-overview-grid">
+                <div class="specialty-overview-card">
+                    <span class="metric-label">Especialidades únicas</span>
+                    <span class="metric-value"><?php echo $especialidades_panel_data['unique_total']; ?></span>
+                    <span class="metric-hint">Áreas distintas registradas.</span>
+                </div>
+                <div class="specialty-overview-card">
+                    <span class="metric-label">Profesionales con especialidad</span>
+                    <span class="metric-value"><?php echo $especialidades_panel_data['with_specialty']; ?></span>
+                    <span class="metric-hint">de <?php echo $totalProfesionalesEspecialidad; ?> profesionales activos.</span>
+                </div>
+                <div class="specialty-overview-card">
+                    <span class="metric-label">Profesionales por asignar</span>
+                    <span class="metric-value"><?php echo $especialidades_panel_data['without_specialty']; ?></span>
+                    <span class="metric-hint">Pendientes de definir áreas.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-seccion">
+            <h3>Mapa de Especialidades</h3>
+            <p>Consulta cuántos profesionales cubren cada área para detectar oportunidades de contratación o formación.</p>
+
+            <?php if (!empty($especialidades_panel_data['resumen'])): ?>
+                <table class="specialty-summary-table">
+                    <thead>
+                        <tr>
+                            <th>Especialidad</th>
+                            <th>Profesionales</th>
+                            <th>Equipo de referencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($especialidades_panel_data['resumen'] as $resumen): ?>
+                            <?php $profPreview = array_slice($resumen['profesionales'], 0, 3); ?>
+                            <?php $restantes = max($resumen['total'] - count($profPreview), 0); ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($resumen['nombre']); ?></td>
+                                <td><?php echo (int)$resumen['total']; ?></td>
+                                <td>
+                                    <div class="specialty-professionals-list">
+                                        <?php foreach ($profPreview as $nombreProfesional): ?>
+                                            <span class="specialty-badge"><?php echo htmlspecialchars($nombreProfesional); ?></span>
+                                        <?php endforeach; ?>
+                                        <?php if ($restantes > 0): ?>
+                                            <span class="specialty-badge">+<?php echo $restantes; ?> más</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <div class="specialty-empty-state">
+                    <p>No hay especialidades registradas aún. Asigna al menos una a cada profesional para iniciar el catálogo.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="panel-seccion">
+            <h3>Asignar o editar especialidades</h3>
+            <p>Define las áreas de experiencia de cada profesional. Usa comas para separar múltiples especialidades.</p>
+
+            <div class="specialty-search-bar">
+                <input type="search" id="specialty-search-input" placeholder="Buscar por nombre, rol o especialidad...">
+                <span class="specialty-empty-text">Los cambios se guardan de forma individual.</span>
+            </div>
+
+            <table class="specialty-management-table">
+                <thead>
+                    <tr>
+                        <th>Profesional</th>
+                        <th>Rol</th>
+                        <th>Especialidades actuales</th>
+                        <th>Estado</th>
+                        <th>Actualizar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!empty($especialidades_panel_data['profesionales'])): ?>
+                        <?php foreach ($especialidades_panel_data['profesionales'] as $profesional): ?>
+                            <?php $estadoActual = strtolower($profesional['estado'] ?? ''); ?>
+                            <tr class="specialty-row" data-search="<?php echo htmlspecialchars($profesional['search_text']); ?>">
+                                <td>
+                                    <strong><?php echo htmlspecialchars($profesional['nombre_completo']); ?></strong><br>
+                                    <small><?php echo htmlspecialchars($profesional['correo']); ?></small>
+                                </td>
+                                <td>
+                                    <span class="specialty-role-badge"><?php echo htmlspecialchars($profesional['rol']); ?></span>
+                                </td>
+                                <td>
+                                    <?php if (!empty($profesional['especialidades_lista'])): ?>
+                                        <div class="specialty-professionals-list">
+                                            <?php foreach ($profesional['especialidades_lista'] as $especialidadActual): ?>
+                                                <span class="specialty-badge"><?php echo htmlspecialchars($especialidadActual); ?></span>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="specialty-empty-text">Sin especialidades asignadas.</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="specialty-status-badge <?php echo htmlspecialchars($estadoActual); ?>"><?php echo htmlspecialchars($profesional['estado'] ? ucfirst($profesional['estado']) : 'Sin estado'); ?></span>
+                                </td>
+                                <td>
+                                    <form action="actualizar_especialidades.php" method="POST" class="specialty-form">
+                                        <input type="hidden" name="usuario_id" value="<?php echo (int)$profesional['id']; ?>">
+                                        <input type="text" name="especialidades" value="<?php echo htmlspecialchars($profesional['especialidades_texto']); ?>" placeholder="Ej. Terapia Familiar, Mindfulness" list="catalogo-especialidades">
+                                        <button type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5">
+                                <div class="specialty-empty-state">
+                                    <p>No hay profesionales disponibles para gestionar.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+
+            <datalist id="catalogo-especialidades">
+                <?php foreach ($especialidades_panel_data['catalogo'] as $especialidadCatalogo): ?>
+                    <option value="<?php echo htmlspecialchars($especialidadCatalogo); ?>"></option>
+                <?php endforeach; ?>
+            </datalist>
+        </div>
+    </div>
+
+
+    <div id="vista-admin-documentos" class="panel-vista">
+        <div class="panel-seccion">
+            <h2>Repositorio de Documentos</h2>
+            <p>Administra contratos, reglamentos y manuales internos desde un espacio centralizado. Mantén al equipo sincronizado con la información más reciente.</p>
+
+            <?php if (!empty($documentos_data['feedback'])): ?>
+                <?php $feedbackClass = $documentos_data['feedback']['type'] === 'success' ? 'success' : 'error'; ?>
+                <div class="alert-box <?php echo $feedbackClass; ?>">
+                    <span><strong><?php echo $documentos_data['feedback']['type'] === 'success' ? 'Listo' : 'Ups'; ?>:</strong> <?php echo htmlspecialchars($documentos_data['feedback']['message']); ?></span>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!$documentos_data['carpeta_disponible']): ?>
+                <div class="alert-box error" style="margin-bottom: 18px;">
+                    <span><strong>Permisos insuficientes:</strong> No se puede escribir en la carpeta <code>documentos/</code>. Ajusta los permisos para habilitar la subida de archivos.</span>
+                </div>
+            <?php endif; ?>
+
+            <?php $totalCategoriasDoc = count($documentos_data['stats']['por_categoria']); ?>
+            <div class="document-stats-grid">
+                <div class="document-stat-card">
+                    <span class="metric-label">Documentos disponibles</span>
+                    <span class="metric-value"><?php echo $documentos_data['stats']['total_archivos']; ?></span>
+                    <span class="metric-hint">Archivos almacenados en el repositorio.</span>
+                </div>
+                <div class="document-stat-card">
+                    <span class="metric-label">Espacio ocupado</span>
+                    <span class="metric-value"><?php echo htmlspecialchars($documentos_data['stats']['tamano_total_legible']); ?></span>
+                    <span class="metric-hint">Uso total de almacenamiento.</span>
+                </div>
+                <div class="document-stat-card">
+                    <span class="metric-label">Categorías activas</span>
+                    <span class="metric-value"><?php echo $totalCategoriasDoc; ?></span>
+                    <span class="metric-hint">Grupos de documentos identificados.</span>
+                </div>
+            </div>
+
+            <?php if ($totalCategoriasDoc > 0): ?>
+                <div class="document-category-pills">
+                    <?php foreach ($documentos_data['stats']['por_categoria'] as $categoriaResumen): ?>
+                        <span class="document-category-pill">
+                            <?php echo htmlspecialchars($categoriaResumen['nombre']); ?> · <?php echo (int)$categoriaResumen['total']; ?> docs
+                        </span>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="panel-seccion">
+            <h3>Subir nuevo documento</h3>
+            <div class="document-upload-card">
+                <p>Arrastra tu archivo al botón o selecciónalo manualmente. Formatos admitidos: PDF, Word, Excel, PowerPoint, TXT, CSV, ZIP y RAR (máx. 10 MB).</p>
+                <form method="POST" enctype="multipart/form-data" class="document-upload-form">
+                    <input type="hidden" name="documento_action" value="upload">
+                    <input type="file" name="documento_archivo" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" <?php echo $documentos_data['carpeta_disponible'] ? '' : 'disabled'; ?> required>
+                    <button type="submit" <?php echo $documentos_data['carpeta_disponible'] ? '' : 'disabled'; ?>><i class="fa-solid fa-cloud-arrow-up"></i> Subir documento</button>
+                </form>
+                <small style="color: #64748b;">Consejo: utiliza nombres descriptivos (p. ej. <em>Contrato-clínica-2025.pdf</em>) para encontrarlos rápido.</small>
+            </div>
+        </div>
+
+        <div class="panel-seccion">
+            <h3>Documentos disponibles</h3>
+            <p>Mantén tus archivos organizados y accesibles para el equipo administrativo. Filtra por nombre, tipo o categoría.</p>
+
+            <div class="document-search-bar">
+                <input type="search" id="document-search-input" placeholder="Buscar por nombre, extensión o categoría...">
+                <span class="specialty-empty-text">Los enlaces se abren en nueva pestaña.</span>
+            </div>
+
+            <?php if (!empty($documentos_data['items'])): ?>
+                <table class="document-list-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Tamaño</th>
+                            <th>Actualizado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($documentos_data['items'] as $documento): ?>
+                            <tr class="document-row" data-search="<?php echo htmlspecialchars($documento['search_text']); ?>">
+                                <td>
+                                    <strong><?php echo htmlspecialchars($documento['nombre']); ?></strong><br>
+                                    <small>.<?php echo htmlspecialchars($documento['extension']); ?></small>
+                                </td>
+                                <td><?php echo htmlspecialchars($documento['categoria']); ?></td>
+                                <td><?php echo htmlspecialchars($documento['tamano_legible']); ?></td>
+                                <td><?php echo htmlspecialchars($documento['modificado_legible']); ?></td>
+                                <td>
+                                    <div class="document-actions">
+                                        <a class="download-link" href="<?php echo htmlspecialchars($documentos_data['base_url'] . rawurlencode($documento['nombre'])); ?>" target="_blank" rel="noopener">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir
+                                        </a>
+                                        <button type="button" class="copy-link document-copy-link" data-url="<?php echo htmlspecialchars($documentos_data['base_url'] . rawurlencode($documento['nombre'])); ?>">
+                                            <i class="fa-solid fa-link"></i> Copiar enlace
+                                        </button>
+                                        <form method="POST" onsubmit="return confirm('¿Eliminar este documento?');">
+                                            <input type="hidden" name="documento_action" value="delete">
+                                            <input type="hidden" name="documento_nombre" value="<?php echo htmlspecialchars($documento['nombre']); ?>">
+                                            <button type="submit" class="delete-link"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <div class="document-empty-state">
+                    <p>Aún no has subido documentos. Utiliza el formulario superior para comenzar y mantener un repositorio siempre disponible.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+
+<?php endif; ?>
+
+<?php if ($rol_usuario == 'administrador' || $rol_usuario == 'secretaria'): ?>
+<div id="vista-agenda-general" class="panel-vista">
+    <div class="panel-seccion">
+        <h2>Agenda General del Consultorio</h2>
+        <p>Calendario con las citas de todos los profesionales.</p>
+        <div id="calendario-general" style="height: 70vh;"></div>
+    </div>
+</div>
+
+<div id="vista-notas-rapidas" class="panel-vista">
+    <div class="panel-seccion">
+        <h2><i class="fa-solid fa-note-sticky"></i> Notas rápidas</h2>
+        <p>Guarda recordatorios internos sobre tareas pendientes, seguimientos o mensajes importantes para el día a día.</p>
+
+        <div class="quick-notes-container">
+            <div class="quick-notes-header">
+                <div>
+                    <span class="quick-notes-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> Organiza tu día</span>
+                    <h3>Panel de notas rápidas</h3>
+                    <p>Centraliza pendientes internos, recuerda seguimientos clave y mantén a la mano lo que no puede olvidarse.</p>
+                </div>
+                <div class="quick-notes-metrics">
+                    <div class="quick-notes-stat">
+                        <span class="stat-label">Notas totales</span>
+                        <span class="stat-value" id="quick-notes-total">0</span>
+                    </div>
+                    <div class="quick-notes-stat">
+                        <span class="stat-label">Pendientes</span>
+                        <span class="stat-value" id="quick-notes-pending">0</span>
+                    </div>
+                    <div class="quick-notes-stat">
+                        <span class="stat-label">Completadas</span>
+                        <span class="stat-value" id="quick-notes-completed">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-notes-grid">
+                <div class="quick-notes-column">
+                    <div class="quick-notes-form-card">
+                        <form id="nota-rapida-form" class="quick-note-form">
+                            <label for="nota-rapida-texto">Nueva nota</label>
+                            <textarea id="nota-rapida-texto" class="quick-note-textarea" rows="3" placeholder="Ejemplo: Llamar a paciente X mañana a primera hora" required></textarea>
+                            <div class="quick-note-actions">
+                                <button type="submit" class="quick-note-add-btn"><i class="fa-solid fa-plus"></i> Guardar nota</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="quick-note-hint">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <div>
+                            <strong>Consejo rápido</strong>
+                            <span>Prioriza tus recordatorios con verbos de acción y marca las notas como completadas para tener claridad al final del día.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="quick-notes-column">
+                    <div class="quick-notes-controls">
+                        <div class="quick-notes-tabs">
+                            <button type="button" class="quick-notes-tab is-active" data-quick-notes-filter="all">Todas</button>
+                            <button type="button" class="quick-notes-tab" data-quick-notes-filter="pending">Pendientes</button>
+                            <button type="button" class="quick-notes-tab" data-quick-notes-filter="completed">Completadas</button>
+                        </div>
+                    </div>
+
+                    <div id="estado-notas-vacio" class="quick-notes-empty">
+                        <i class="fa-solid fa-inbox"></i>
+                        <div>
+                            <strong id="quick-notes-empty-title">No tienes notas todavía</strong>
+                            <p id="quick-notes-empty-message">Agrega un recordatorio y aparecerá aquí.</p>
+                        </div>
+                    </div>
+
+                    <ul id="lista-notas-rapidas" class="quick-notes-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <?php endif; ?>
             <?php if ($rol_usuario == 'psicologo' || $rol_usuario == 'psiquiatra'): ?>
 
@@ -5010,85 +6802,386 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 <!-- ================== VISTAS PARA SECRETARIA ================== -->
 <?php if ($rol_usuario == 'secretaria'): ?>
 
+    <!-- VISTA 0: DASHBOARD GENERAL PARA SECRETARÍA -->
+<div id="vista-secretaria-dashboard" class="panel-vista active">
+    <div class="panel-seccion">
+        <h2>Resumen General</h2>
+        <?php
+            $totalPendientesSecretaria = 0;
+            $citasConfirmadasHoy = 0;
+            $pacientesActivosSecretaria = 0;
+            $profesionalesActivosSecretaria = 0;
+            $nuevasSolicitudesSecretaria = 0;
+
+            if ($resultadoTemp = $conex->query("SELECT COUNT(*) AS total FROM citas WHERE estado = 'pendiente'")) {
+                $fila = $resultadoTemp->fetch_assoc();
+                $totalPendientesSecretaria = (int)($fila['total'] ?? 0);
+                $resultadoTemp->free();
+            }
+
+            if ($resultadoTemp = $conex->query("SELECT COUNT(*) AS total FROM citas WHERE estado IN ('confirmada','reprogramada') AND DATE(fecha_cita) = CURDATE()")) {
+                $fila = $resultadoTemp->fetch_assoc();
+                $citasConfirmadasHoy = (int)($fila['total'] ?? 0);
+                $resultadoTemp->free();
+            }
+
+            if ($resultadoTemp = $conex->query("SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'paciente' AND estado = 'aprobado'")) {
+                $fila = $resultadoTemp->fetch_assoc();
+                $pacientesActivosSecretaria = (int)($fila['total'] ?? 0);
+                $resultadoTemp->free();
+            }
+
+            if ($resultadoTemp = $conex->query("SELECT COUNT(*) AS total FROM usuarios WHERE rol IN ('psicologo','psiquiatra') AND estado = 'aprobado'")) {
+                $fila = $resultadoTemp->fetch_assoc();
+                $profesionalesActivosSecretaria = (int)($fila['total'] ?? 0);
+                $resultadoTemp->free();
+            }
+
+            if ($resultadoTemp = $conex->query("SELECT COUNT(*) AS total FROM citas WHERE estado = 'pendiente' AND fecha_solicitud >= (NOW() - INTERVAL 1 DAY)")) {
+                $fila = $resultadoTemp->fetch_assoc();
+                $nuevasSolicitudesSecretaria = (int)($fila['total'] ?? 0);
+                $resultadoTemp->free();
+            }
+
+            $agendaHoySecretaria = [];
+            if ($stmtAgendaHoySecretaria = $conex->prepare("SELECT c.fecha_cita, c.motivo_consulta, u.nombre_completo AS paciente_nombre, prof.nombre_completo AS profesional_nombre FROM citas c JOIN usuarios u ON c.paciente_id = u.id LEFT JOIN usuarios prof ON c.psicologo_id = prof.id WHERE c.estado IN ('confirmada','reprogramada') AND DATE(c.fecha_cita) = CURDATE() ORDER BY c.fecha_cita ASC LIMIT 5")) {
+                $stmtAgendaHoySecretaria->execute();
+                $resultadoAgenda = $stmtAgendaHoySecretaria->get_result();
+                while ($filaAgenda = $resultadoAgenda->fetch_assoc()) {
+                    $agendaHoySecretaria[] = $filaAgenda;
+                }
+                $stmtAgendaHoySecretaria->close();
+            }
+
+            $solicitudesRecientesSecretaria = [];
+            if ($stmtSolicitudesRecientesSecretaria = $conex->prepare("SELECT c.id, c.fecha_solicitud, u.nombre_completo AS paciente_nombre, u.correo FROM citas c JOIN usuarios u ON c.paciente_id = u.id WHERE c.estado = 'pendiente' ORDER BY c.fecha_solicitud DESC LIMIT 5")) {
+                $stmtSolicitudesRecientesSecretaria->execute();
+                $resultadoSolicitudes = $stmtSolicitudesRecientesSecretaria->get_result();
+                while ($filaSolicitud = $resultadoSolicitudes->fetch_assoc()) {
+                    $solicitudesRecientesSecretaria[] = $filaSolicitud;
+                }
+                $stmtSolicitudesRecientesSecretaria->close();
+            }
+
+            $nuevosPacientesSecretaria = [];
+            if ($resultadoTemp = $conex->query("SELECT nombre_completo, fecha_registro FROM usuarios WHERE rol = 'paciente' AND estado = 'aprobado' ORDER BY fecha_registro DESC LIMIT 3")) {
+                while ($filaPaciente = $resultadoTemp->fetch_assoc()) {
+                    $nuevosPacientesSecretaria[] = $filaPaciente;
+                }
+                $resultadoTemp->free();
+            }
+
+            $agendaHoyTotal = count($agendaHoySecretaria);
+            $solicitudesRecientesTotal = count($solicitudesRecientesSecretaria);
+            $nuevosPacientesTotal = count($nuevosPacientesSecretaria);
+        ?>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon" style="background-color: rgba(2, 177, 244, 0.15); color: #02b1f4;"><i class="fa-solid fa-inbox"></i></div>
+                <div class="info">
+                    <div class="number"><?php echo number_format($totalPendientesSecretaria); ?></div>
+                    <div class="label">Citas pendientes</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="background-color: rgba(34, 197, 94, 0.15); color: #15803d;"><i class="fa-solid fa-calendar-day"></i></div>
+                <div class="info">
+                    <div class="number"><?php echo number_format($citasConfirmadasHoy); ?></div>
+                    <div class="label">Citas programadas</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="background-color: rgba(99, 102, 241, 0.15); color: #4338ca;"><i class="fa-solid fa-users"></i></div>
+                <div class="info">
+                    <div class="number"><?php echo number_format($pacientesActivosSecretaria); ?></div>
+                    <div class="label">Pacientes activos</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="background-color: rgba(249, 115, 22, 0.15); color: #c2410c;"><i class="fa-solid fa-user-doctor"></i></div>
+                <div class="info">
+                    <div class="number"><?php echo number_format($profesionalesActivosSecretaria); ?></div>
+                    <div class="label">Profesionales disponibles</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="secretary-dashboard-grid">
+            <div class="secretary-dashboard-card agenda-card">
+                <div class="card-header">
+                    <span class="secretary-card-icon icon-blue"><i class="fa-solid fa-calendar-check"></i></span>
+                    <div class="card-title-group">
+                        <h3>Mi Agenda de hoy</h3>
+                        <span class="card-subtitle">Citas confirmadas</span>
+                    </div>
+                    <span class="card-highlight"><?php echo number_format($agendaHoyTotal); ?> <?php echo $agendaHoyTotal === 1 ? 'cita programada' : 'citas programadas'; ?></span>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($agendaHoySecretaria)): ?>
+                        <ul class="dashboard-list">
+                            <?php foreach ($agendaHoySecretaria as $citaHoy): ?>
+                                <?php
+                                    $horaCita = !empty($citaHoy['fecha_cita']) ? date('h:i A', strtotime($citaHoy['fecha_cita'])) : 'Por definir';
+                                    $motivoBruto = isset($citaHoy['motivo_consulta']) ? trim((string)$citaHoy['motivo_consulta']) : '';
+                                    if ($motivoBruto !== '' && strlen($motivoBruto) > 80) {
+                                        $motivoBruto = substr($motivoBruto, 0, 77) . '...';
+                                    }
+                                    $motivoTexto = $motivoBruto !== '' ? $motivoBruto : 'Sin motivo registrado';
+                                    $profesionalTexto = $citaHoy['profesional_nombre'] ?? 'Por asignar';
+                                ?>
+                                <li class="dashboard-list-item">
+                                    <span class="time-badge"><?php echo htmlspecialchars($horaCita); ?></span>
+                                    <div class="list-content">
+                                        <strong><?php echo htmlspecialchars($citaHoy['paciente_nombre'] ?? 'Paciente'); ?></strong>
+                                        <p><?php echo htmlspecialchars($motivoTexto); ?></p>
+                                        <div class="list-meta">
+                                            <span class="mini-status"><i class="fa-solid fa-user-doctor"></i> <?php echo htmlspecialchars($profesionalTexto); ?></span>
+                                        </div>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php else: ?>
+                        <div class="card-empty">
+                            <i class="fa-solid fa-calendar-minus"></i>
+                            <div>
+                                <strong>Sin agenda confirmada.</strong>
+                                <p>Cuando se programen citas para hoy aparecerán en este resumen.</p>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="secretary-dashboard-card solicitudes-card">
+                <div class="card-header">
+                    <span class="secretary-card-icon icon-indigo"><i class="fa-solid fa-paper-plane"></i></span>
+                    <div class="card-title-group">
+                        <h3>Solicitudes recientes</h3>
+                        <span class="card-subtitle">Últimas peticiones</span>
+                    </div>
+                    <span class="card-highlight"><?php echo number_format($solicitudesRecientesTotal); ?> <?php echo $solicitudesRecientesTotal === 1 ? 'solicitud abierta' : 'solicitudes abiertas'; ?></span>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($solicitudesRecientesSecretaria)): ?>
+                        <ul class="dashboard-list">
+                            <?php foreach ($solicitudesRecientesSecretaria as $solicitud): ?>
+                                <?php
+                                    $fechaSolicitud = !empty($solicitud['fecha_solicitud']) ? date('d/m H:i', strtotime($solicitud['fecha_solicitud'])) : 'Sin fecha';
+                                    $correoSolicitud = $solicitud['correo'] ?? 'Sin correo';
+                                ?>
+                                <li class="dashboard-list-item">
+                                    <span class="time-badge indigo"><?php echo htmlspecialchars($fechaSolicitud); ?></span>
+                                    <div class="list-content">
+                                        <strong><?php echo htmlspecialchars($solicitud['paciente_nombre'] ?? 'Paciente'); ?></strong>
+                                        <p><?php echo htmlspecialchars($correoSolicitud); ?></p>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                                <div id="vista-admin-tareas" class="panel-vista">
+                                    <div class="panel-seccion">
+                                        <h2>Tareas Rápidas Administrativas</h2>
+                                        <p>Organiza los pendientes del día a día, asigna responsables y marca avances sin salir del panel.</p>
+                                        <div class="admin-task-grid">
+                                            <div class="admin-task-panel">
+                                                <h3>Nueva tarea</h3>
+                                                <form id="admin-task-form" class="admin-task-form">
+                                                    <input type="text" id="admin-task-input" placeholder="Ej. Actualizar contratos de proveedores" maxlength="160" required>
+                                                    <button type="submit"><i class="fa-solid fa-plus"></i> Añadir tarea</button>
+                                                </form>
+                                                <div class="admin-task-meta">
+                                                    <span id="admin-task-counter">0 pendientes · 0 completadas</span>
+                                                    <div class="admin-task-filters">
+                                                        <button type="button" data-filter="all" class="active">Todas</button>
+                                                        <button type="button" data-filter="pending">Pendientes</button>
+                                                        <button type="button" data-filter="done">Completadas</button>
+                                                    </div>
+                                                </div>
+                                                <ul id="admin-task-list" class="admin-task-list"></ul>
+                                                <div id="admin-task-empty" class="admin-task-empty" style="display: none;">
+                                                    <i class="fa-solid fa-clipboard-list"></i><br>
+                                                    Aún no has añadido tareas. Empieza con la prioridad más alta.
+                                                </div>
+                                                <div style="display: flex; justify-content: flex-end;">
+                                                    <button type="button" id="admin-task-clear" class="btn-secondary" style="background: #fee2e2; color: #b91c1c; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                                                        <i class="fa-solid fa-broom"></i> Borrar completadas
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="admin-task-panel">
+                                                <h3>Atajos de coordinación</h3>
+                                                <ul class="admin-task-list" style="gap: 16px;">
+                                                    <li class="admin-task-item" style="background: #f1f5f9; border-color: #e2e8f0;">
+                                                        <div class="admin-task-text" style="font-weight: 600; color: #0f172a;">Actualiza esta lista al inicio y cierre de jornada.</div>
+                                                    </li>
+                                                    <li class="admin-task-item" style="background: #f1f5f9; border-color: #e2e8f0;">
+                                                        <div class="admin-task-text">Prioriza vencimientos próximos (pagos, contratos, reportes regulatorios).</div>
+                                                    </li>
+                                                    <li class="admin-task-item" style="background: #f1f5f9; border-color: #e2e8f0;">
+                                                        <div class="admin-task-text">Comparte enlaces relevantes pegándolos directamente en la descripción.</div>
+                                                    </li>
+                                                    <li class="admin-task-item" style="background: #f1f5f9; border-color: #e2e8f0;">
+                                                        <div class="admin-task-text">Usa la sección Documentos para adjuntar soportes antes de marcar como finalizado.</div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                    <?php else: ?>
+                        <div class="card-empty">
+                            <i class="fa-solid fa-inbox"></i>
+                            <div>
+                                <strong>No hay solicitudes recientes.</strong>
+                                <p>Las nuevas peticiones aparecerán automáticamente cuando lleguen.</p>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    <div class="mini-status" style="align-self: flex-start; background: rgba(2, 177, 244, 0.12); color: #0369a1;">
+                        <i class="fa-solid fa-bolt"></i> <?php echo number_format($nuevasSolicitudesSecretaria); ?> nuevas hoy
+                    </div>
+                </div>
+            </div>
+
+            <div class="secretary-dashboard-card">
+                <div class="card-header">
+                    <span class="secretary-card-icon icon-emerald"><i class="fa-solid fa-user-plus"></i></span>
+                    <div class="card-title-group">
+                        <h3>Pacientes recientes</h3>
+                        <span class="card-subtitle">Registros aprobados</span>
+                    </div>
+                    <span class="card-highlight"><?php echo number_format($nuevosPacientesTotal); ?> <?php echo $nuevosPacientesTotal === 1 ? 'paciente nuevo' : 'pacientes nuevos'; ?></span>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($nuevosPacientesSecretaria)): ?>
+                        <ul class="dashboard-list">
+                            <?php foreach ($nuevosPacientesSecretaria as $pacienteNuevo): ?>
+                                <?php $fechaRegistro = !empty($pacienteNuevo['fecha_registro']) ? date('d/m', strtotime($pacienteNuevo['fecha_registro'])) : '--'; ?>
+                                <li class="dashboard-list-item">
+                                    <span class="time-badge emerald"><?php echo htmlspecialchars($fechaRegistro); ?></span>
+                                    <div class="list-content">
+                                        <strong><?php echo htmlspecialchars($pacienteNuevo['nombre_completo'] ?? 'Paciente'); ?></strong>
+                                        <p>Registrado recientemente</p>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php else: ?>
+                        <div class="card-empty">
+                            <i class="fa-solid fa-user-clock"></i>
+                            <div>
+                                <strong>Sin nuevos pacientes.</strong>
+                                <p>Cuando se aprueben nuevos registros aparecerán en este listado.</p>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
     <!-- VISTA 1: SOLICITUDES DE CITAS GENERALES (DISEÑO MEJORADO) -->
-<div id="vista-solicitudes-generales" class="panel-vista active">
+<div id="vista-solicitudes-generales" class="panel-vista">
     <div class="panel-seccion">
         <h2>Solicitudes de Cita Pendientes</h2>
         <p>Aquí se muestran todas las solicitudes de citas pendientes de asignar.</p>
         
         <div class="solicitudes-list">
             <?php
-            // CONSULTA ACTUALIZADA para incluir correo y edad
             $consulta_pendientes_gral = $conex->query("
                 SELECT 
-                    c.id, 
-                    c.motivo_consulta, 
-                    u.nombre_completo as paciente_nombre, 
-                    u.cedula as paciente_cedula,
-                    u.correo as paciente_correo,
-                    u.edad as paciente_edad
-                FROM citas c 
-                JOIN usuarios u ON c.paciente_id = u.id 
+                    c.id,
+                    c.motivo_consulta,
+                    c.fecha_solicitud,
+                    u.nombre_completo AS paciente_nombre,
+                    u.cedula AS paciente_cedula,
+                    u.correo AS paciente_correo,
+                    u.edad AS paciente_edad
+                FROM citas c
+                JOIN usuarios u ON c.paciente_id = u.id
                 WHERE c.estado = 'pendiente'
+                ORDER BY c.fecha_solicitud DESC
             ");
-            if ($consulta_pendientes_gral->num_rows > 0) {
+
+            if ($consulta_pendientes_gral && $consulta_pendientes_gral->num_rows > 0) {
                 while($solicitud = $consulta_pendientes_gral->fetch_assoc()) {
+                    $fechaSolicitudTimestamp = !empty($solicitud['fecha_solicitud']) ? strtotime($solicitud['fecha_solicitud']) : false;
+                    $fechaSolicitudTexto = $fechaSolicitudTimestamp ? 'Recibida el ' . date('d/m H:i', $fechaSolicitudTimestamp) : 'Fecha no registrada';
+
+                    $motivoBruto = trim((string)($solicitud['motivo_consulta'] ?? ''));
+                    if ($motivoBruto !== '' && strlen($motivoBruto) > 160) {
+                        $motivoBruto = substr($motivoBruto, 0, 157) . '...';
+                    }
+                    $motivoTexto = $motivoBruto !== '' ? $motivoBruto : 'Sin motivo registrado';
+
+                    $correoTexto = !empty($solicitud['paciente_correo']) ? $solicitud['paciente_correo'] : 'Sin correo registrado';
+
+                    $badges = [];
+                    if (!empty($solicitud['paciente_cedula'])) {
+                        $badges[] = '<span class="solicitud-badge"><i class="fa-solid fa-id-card"></i> C.I ' . htmlspecialchars($solicitud['paciente_cedula']) . '</span>';
+                    }
+                    if (!empty($solicitud['paciente_edad'])) {
+                        $badges[] = '<span class="solicitud-badge"><i class="fa-solid fa-cake-candles"></i> ' . htmlspecialchars($solicitud['paciente_edad']) . ' años</span>';
+                    }
+
                     echo '<div class="solicitud-card">';
-                    echo '  <div class="solicitud-info">';
-                    echo '      <h4>' . htmlspecialchars($solicitud['paciente_nombre']) . '</h4>';
-                    // --- NUEVA SECCIÓN DE DETALLES ---
-                    echo '      <div class="solicitud-details">';
-                    echo '          <span><strong>C.I:</strong> ' . htmlspecialchars($solicitud['paciente_cedula']) . '</span>';
-                    echo '          <span><strong>Edad:</strong> ' . htmlspecialchars($solicitud['paciente_edad']) . ' años</span>';
-                    echo '          <span><strong>Correo:</strong> ' . htmlspecialchars($solicitud['paciente_correo']) . '</span>';
+                    echo '  <div class="solicitud-card-header">';
+                    echo '      <span class="solicitud-card-icon"><i class="fa-solid fa-user-clock"></i></span>';
+                    echo '      <div class="solicitud-card-title">';
+                    echo '          <h4>' . htmlspecialchars($solicitud['paciente_nombre']) . '</h4>';
+                    echo '          <span class="solicitud-card-subtitle">' . htmlspecialchars($fechaSolicitudTexto) . '</span>';
                     echo '      </div>';
-                    echo '      <p class="solicitud-motivo"><strong>Motivo:</strong> ' . htmlspecialchars(substr($solicitud['motivo_consulta'], 0, 80)) . '...</p>';
                     echo '  </div>';
+
+                    if (!empty($badges)) {
+                        echo '  <div class="solicitud-card-badges">' . implode('', $badges) . '</div>';
+                    }
+
+                    echo '  <div class="solicitud-meta">';
+                    echo '      <span><i class="fa-solid fa-envelope"></i> ' . htmlspecialchars($correoTexto) . '</span>';
+                    echo '  </div>';
+
+                    echo '  <div class="solicitud-motivo-box"><strong>Motivo:</strong> ' . htmlspecialchars($motivoTexto) . '</div>';
+
                     echo '  <div class="solicitud-actions">';
-                    echo '      <button class="btn-view" onclick="abrirModalAsignarCita(' . $solicitud['id'] . ')">Asignar y Programar</button>';
+                    echo '      <button type="button" class="solicitud-action-primary" onclick="abrirModalAsignarCita(' . (int)$solicitud['id'] . ')"><i class="fa-solid fa-calendar-check"></i> Asignar y Programar</button>';
                     echo '  </div>';
                     echo '</div>';
                 }
-            } else { echo "<p>No hay solicitudes de cita pendientes.</p>"; }
+            } else {
+                echo '<p>No hay solicitudes de cita pendientes.</p>';
+            }
             ?>
         </div>
     </div>
 </div>
     
-    <!-- VISTA 2: AGENDA GENERAL DEL CONSULTORIO -->
-    <div id="vista-agenda-general" class="panel-vista">
-        <div class="panel-seccion">
-            <h2>Agenda General del Consultorio</h2>
-            <p>Calendario con las citas de todos los profesionales.</p>
-            <div id="calendario-general" style="height: 70vh;"></div>
-        </div>
-    </div>
-
     <!-- VISTA 3: GESTIÓN DE PACIENTES -->
     <div id="vista-gestion-pacientes" class="panel-vista">
         <div class="panel-seccion">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Gestión de Pacientes</h2>
-                <a href="crear_paciente.php" class="action-links approve" style="text-decoration: none;">
-                    <i class="fa-solid fa-user-plus"></i> Añadir Nuevo Paciente
-                </a>
+                <button class="btn-outline-primary" onclick="abrirModalCrearPaciente()">
+                    <i class="fa-solid fa-plus"></i> Añadir Paciente
+                </button>
             </div>
-            <p>Busca, consulta o añade nuevos pacientes al sistema.</p>
+
             <div class="search-container">
                 <i class="fa-solid fa-search"></i>
                 <input type="text" id="buscador-pacientes-secretaria" placeholder="Buscar paciente por nombre o cédula...">
             </div>
+
+            <p style="margin-top: 15px; margin-bottom: 20px; color: #777; font-size: 16px;">
+                Gestiona el directorio completo de pacientes para programar o asignar citas rápidamente.
+            </p>
+
             <div id="tabla-pacientes-secretaria-container">
-                <?php
-                $todos_los_pacientes = $conex->query("SELECT id, nombre_completo, cedula, correo FROM usuarios WHERE rol = 'paciente' AND estado = 'aprobado' ORDER BY nombre_completo ASC");
-                if ($todos_los_pacientes->num_rows > 0) {
-                    echo "<table class='approvals-table'><thead><tr><th>Nombre</th><th>Cédula</th><th>Correo</th><th>Acciones</th></tr></thead><tbody>";
-                    while($paciente = $todos_los_pacientes->fetch_assoc()) {
-                        echo "<tr><td>" . htmlspecialchars($paciente['nombre_completo']) . "</td><td>" . htmlspecialchars($paciente['cedula']) . "</td><td>" . htmlspecialchars($paciente['correo']) . "</td><td class='action-links'><a href='gestionar_paciente.php?paciente_id=" . $paciente['id'] . "' class='approve'>Gestionar</a></td></tr>";
-                    }
-                    echo "</tbody></table>";
-                } else { echo "<p>No hay pacientes registrados en el sistema.</p>"; }
-                ?>
+                <p>Cargando pacientes...</p>
             </div>
         </div>
     </div>
@@ -5102,16 +7195,25 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         <p>Lista de psicólogos activos en el sistema.</p>
         <?php
         // Consulta para obtener solo los psicólogos
-        $consulta_psicologos = $conex->query("SELECT nombre_completo, correo FROM usuarios WHERE rol = 'psicologo' AND estado = 'aprobado' ORDER BY nombre_completo ASC");
+        $consulta_psicologos = $conex->query("SELECT u.id, u.nombre_completo, u.correo, u.cedula, u.especialidades, u.fecha_registro,
+            (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.psicologo_id = u.id AND c.estado IN ('confirmada','completada')) AS pacientes_atendidos
+            FROM usuarios u WHERE u.rol = 'psicologo' AND u.estado = 'aprobado' ORDER BY u.nombre_completo ASC");
         
         if ($consulta_psicologos->num_rows > 0) {
             echo "<table class='approvals-table'>";
-            echo "<thead><tr><th>Nombre Completo</th><th>Correo</th></tr></thead>";
+            echo "<thead><tr><th>Nombre</th><th>Especialidad</th><th>Correo</th><th>Cédula</th><th>Pacientes Atendidos</th><th>Miembro Desde</th></tr></thead>";
             echo "<tbody>";
             while($profesional = $consulta_psicologos->fetch_assoc()) {
+                $especialidad = !empty($profesional['especialidades']) ? $profesional['especialidades'] : 'No especificada';
+                $fechaRegistro = !empty($profesional['fecha_registro']) ? date('d/m/Y', strtotime($profesional['fecha_registro'])) : 'Sin registro';
+                $pacientesAtendidos = isset($profesional['pacientes_atendidos']) ? (int)$profesional['pacientes_atendidos'] : 0;
                 echo "<tr>";
                 echo "<td>" . htmlspecialchars($profesional['nombre_completo']) . "</td>";
+                echo "<td>" . htmlspecialchars($especialidad) . "</td>";
                 echo "<td>" . htmlspecialchars($profesional['correo']) . "</td>";
+                echo "<td>" . htmlspecialchars($profesional['cedula'] ?? 'Sin dato') . "</td>";
+                echo "<td>" . $pacientesAtendidos . "</td>";
+                echo "<td>" . htmlspecialchars($fechaRegistro) . "</td>";
                 echo "</tr>";
             }
             echo "</tbody></table>";
@@ -5127,16 +7229,25 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         <p>Lista de psiquiatras activos en el sistema.</p>
         <?php
         // Consulta para obtener solo los psiquiatras
-        $consulta_psiquiatras = $conex->query("SELECT nombre_completo, correo FROM usuarios WHERE rol = 'psiquiatra' AND estado = 'aprobado' ORDER BY nombre_completo ASC");
+        $consulta_psiquiatras = $conex->query("SELECT u.id, u.nombre_completo, u.correo, u.cedula, u.especialidades, u.fecha_registro,
+            (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.psicologo_id = u.id AND c.estado IN ('confirmada','completada')) AS pacientes_atendidos
+            FROM usuarios u WHERE u.rol = 'psiquiatra' AND u.estado = 'aprobado' ORDER BY u.nombre_completo ASC");
         
         if ($consulta_psiquiatras->num_rows > 0) {
             echo "<table class='approvals-table'>";
-            echo "<thead><tr><th>Nombre Completo</th><th>Correo</th></tr></thead>";
+            echo "<thead><tr><th>Nombre</th><th>Especialidad</th><th>Correo</th><th>Cédula</th><th>Pacientes Atendidos</th><th>Miembro Desde</th></tr></thead>";
             echo "<tbody>";
             while($profesional = $consulta_psiquiatras->fetch_assoc()) {
+                $especialidad = !empty($profesional['especialidades']) ? $profesional['especialidades'] : 'No especificada';
+                $fechaRegistro = !empty($profesional['fecha_registro']) ? date('d/m/Y', strtotime($profesional['fecha_registro'])) : 'Sin registro';
+                $pacientesAtendidos = isset($profesional['pacientes_atendidos']) ? (int)$profesional['pacientes_atendidos'] : 0;
                 echo "<tr>";
                 echo "<td>" . htmlspecialchars($profesional['nombre_completo']) . "</td>";
+                echo "<td>" . htmlspecialchars($especialidad) . "</td>";
                 echo "<td>" . htmlspecialchars($profesional['correo']) . "</td>";
+                echo "<td>" . htmlspecialchars($profesional['cedula'] ?? 'Sin dato') . "</td>";
+                echo "<td>" . $pacientesAtendidos . "</td>";
+                echo "<td>" . htmlspecialchars($fechaRegistro) . "</td>";
                 echo "</tr>";
             }
             echo "</tbody></table>";
@@ -5186,6 +7297,18 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         <div class="modal-form-panel">
             <button type="button" class="modal-close-btn" onclick="cerrarModalCrearPaciente()"><i class="fa-solid fa-xmark"></i></button>
             <h4>Datos del Paciente</h4>
+            <?php
+                $profesionalesAsignables = [];
+                if ($rol_usuario === 'secretaria') {
+                    if ($resultadoProfesionales = $conex->query("SELECT id, nombre_completo, rol FROM usuarios WHERE rol IN ('psicologo','psiquiatra') AND estado = 'aprobado' ORDER BY nombre_completo ASC")) {
+                        while ($profesional = $resultadoProfesionales->fetch_assoc()) {
+                            $profesionalesAsignables[] = $profesional;
+                        }
+                        $resultadoProfesionales->free();
+                    }
+                }
+                $secretariaSinProfesionales = ($rol_usuario === 'secretaria' && empty($profesionalesAsignables));
+            ?>
             <form action="guardar_paciente.php" method="POST" id="form-crear-paciente">
                 <!-- Div para mostrar mensajes de error -->
                 <div id="modal-paciente-error" class="alert-box error" style="display: none; margin-bottom: 20px;"></div>
@@ -5223,11 +7346,31 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                     <i class="fa-solid fa-envelope"></i>
                     <input type="email" name="correo" id="correo_modal" placeholder="ejemplo@gmail.com" required>
                 </div>
+                    <?php if ($rol_usuario === 'secretaria'): ?>
+                    <div class="form-group full-width">
+                        <label for="profesional_asignado_modal" class="label-tight">Asignar profesional responsable:</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-user-doctor"></i>
+                            <select name="profesional_asignado" id="profesional_asignado_modal" <?php echo $secretariaSinProfesionales ? 'disabled' : 'required'; ?>>
+                                <option value="">Selecciona un profesional</option>
+                                <?php foreach ($profesionalesAsignables as $profesional): ?>
+                                    <option value="<?php echo (int)$profesional['id']; ?>">
+                                        <?php echo htmlspecialchars($profesional['nombre_completo']); ?>
+                                        (<?php echo $profesional['rol'] === 'psicologo' ? 'Psicólogo' : 'Psiquiatra'; ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <?php if ($secretariaSinProfesionales): ?>
+                            <p class="helper-text error-text">No hay profesionales aprobados disponibles. Registra o aprueba uno primero.</p>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
             </div>
                 
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="cerrarModalCrearPaciente()">Cancelar</button>
-                    <button type="submit" class="btn-submit">Crear Paciente</button>
+                    <button type="submit" class="btn-submit" <?php echo $secretariaSinProfesionales ? 'disabled' : ''; ?>><?php echo $secretariaSinProfesionales ? 'Sin profesionales disponibles' : 'Crear Paciente'; ?></button>
                 </div>
             </form>
         </div>
@@ -7576,6 +9719,235 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             });
         }
 
+    // --- NOTAS RÁPIDAS PARA ADMINISTRACIÓN Y SECRETARÍA ---
+        const quickNotesForm = document.getElementById('nota-rapida-form');
+        const quickNotesTextarea = document.getElementById('nota-rapida-texto');
+        const quickNotesList = document.getElementById('lista-notas-rapidas');
+        const quickNotesEmptyState = document.getElementById('estado-notas-vacio');
+        const quickNotesEmptyTitle = document.getElementById('quick-notes-empty-title');
+        const quickNotesEmptyMessage = document.getElementById('quick-notes-empty-message');
+        const quickNotesTotalIndicator = document.getElementById('quick-notes-total');
+        const quickNotesPendingIndicator = document.getElementById('quick-notes-pending');
+        const quickNotesCompletedIndicator = document.getElementById('quick-notes-completed');
+        const quickNotesFilterButtons = document.querySelectorAll('.quick-notes-tab');
+    const QUICK_NOTES_KEY = 'quickNotes_' + <?php echo (int)$usuario_id; ?>;
+    const LEGACY_QUICK_NOTES_KEY = 'secretariaQuickNotes';
+        let quickNotesData = [];
+        let quickNotesFilter = 'all';
+
+        const saveQuickNotes = () => {
+            try {
+                localStorage.setItem(QUICK_NOTES_KEY, JSON.stringify(quickNotesData));
+            } catch (error) {
+                console.error('No se pudo guardar las notas rápidas:', error);
+            }
+        };
+
+        const updateQuickNotesStats = () => {
+            if (!quickNotesTotalIndicator) return;
+            const total = quickNotesData.length;
+            const completed = quickNotesData.filter(note => note.completed).length;
+            const pending = total - completed;
+            quickNotesTotalIndicator.textContent = total;
+            if (quickNotesPendingIndicator) quickNotesPendingIndicator.textContent = pending;
+            if (quickNotesCompletedIndicator) quickNotesCompletedIndicator.textContent = completed;
+        };
+
+        const getSortedNotes = () => {
+            return [...quickNotesData].sort((a, b) => {
+                if (a.completed === b.completed) {
+                    return b.createdAt - a.createdAt;
+                }
+                return a.completed ? 1 : -1;
+            });
+        };
+
+        const getFilteredNotes = () => {
+            const sortedNotes = getSortedNotes();
+            return sortedNotes.filter(note => {
+                if (quickNotesFilter === 'completed') return note.completed;
+                if (quickNotesFilter === 'pending') return !note.completed;
+                return true; // 'all'
+            });
+        };
+
+        const renderQuickNotes = () => {
+            if (!quickNotesList) return;
+
+            quickNotesList.innerHTML = '';
+            updateQuickNotesStats();
+
+            const filteredNotes = getFilteredNotes();
+
+            if (!filteredNotes.length) {
+                if (quickNotesEmptyState) {
+                    quickNotesEmptyState.style.display = 'flex';
+                    if (quickNotesEmptyTitle) {
+                        quickNotesEmptyTitle.textContent = quickNotesFilter === 'completed'
+                            ? 'Sin notas completadas'
+                            : quickNotesFilter === 'pending'
+                            ? 'Todo al día'
+                            : 'No tienes notas todavía';
+                    }
+                    if (quickNotesEmptyMessage) {
+                        quickNotesEmptyMessage.textContent = quickNotesFilter === 'completed'
+                            ? 'Marca alguna nota como completada para verla aquí.'
+                            : quickNotesFilter === 'pending'
+                            ? 'Cuando agregues un recordatorio pendiente aparecerá en este listado.'
+                            : 'Agrega un recordatorio y aparecerá aquí.';
+                    }
+                }
+                return;
+            }
+
+            if (quickNotesEmptyState) {
+                quickNotesEmptyState.style.display = 'none';
+            }
+
+            filteredNotes.forEach(note => {
+                const listItem = document.createElement('li');
+                listItem.className = 'quick-note-item' + (note.completed ? ' is-completed' : '');
+                listItem.dataset.id = String(note.id);
+
+                const mainRow = document.createElement('div');
+                mainRow.className = 'quick-note-main';
+
+                const label = document.createElement('label');
+                label.className = 'quick-note-toggle';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'quick-note-toggle-input';
+                checkbox.dataset.action = 'toggle';
+                checkbox.checked = Boolean(note.completed);
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'quick-note-text';
+                textSpan.textContent = note.text;
+
+                label.appendChild(checkbox);
+                label.appendChild(textSpan);
+                mainRow.appendChild(label);
+
+                const metaRow = document.createElement('div');
+                metaRow.className = 'quick-note-meta';
+
+                const statusBadge = document.createElement('span');
+                statusBadge.className = 'quick-note-badge';
+                statusBadge.textContent = note.completed ? 'Completada' : 'Pendiente';
+
+                const timestamp = document.createElement('span');
+                timestamp.className = 'quick-note-timestamp';
+                const fecha = new Date(note.createdAt);
+                timestamp.innerHTML = `<i class="fa-solid fa-clock"></i> ${fecha.toLocaleString('es-VE', { dateStyle: 'medium', timeStyle: 'short' })}`;
+
+                const actionsRow = document.createElement('div');
+                actionsRow.className = 'quick-note-actions-row';
+
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'quick-note-delete';
+                deleteButton.dataset.action = 'delete';
+                deleteButton.innerHTML = '<i class="fa-solid fa-trash-can"></i> Eliminar';
+
+                actionsRow.appendChild(deleteButton);
+
+                metaRow.appendChild(statusBadge);
+                metaRow.appendChild(timestamp);
+                metaRow.appendChild(actionsRow);
+
+                listItem.appendChild(mainRow);
+                listItem.appendChild(metaRow);
+
+                quickNotesList.appendChild(listItem);
+            });
+        };
+
+        const loadQuickNotes = () => {
+            try {
+                const stored = localStorage.getItem(QUICK_NOTES_KEY);
+                if (stored) {
+                    quickNotesData = JSON.parse(stored) || [];
+                } else {
+                    const legacyStored = localStorage.getItem(LEGACY_QUICK_NOTES_KEY);
+                    if (legacyStored) {
+                        quickNotesData = JSON.parse(legacyStored) || [];
+                        saveQuickNotes();
+                        localStorage.removeItem(LEGACY_QUICK_NOTES_KEY);
+                    } else {
+                        quickNotesData = [];
+                    }
+                }
+            } catch (error) {
+                console.warn('No se pudieron recuperar las notas rápidas guardadas:', error);
+                quickNotesData = [];
+            }
+            renderQuickNotes();
+        };
+
+        if (quickNotesForm && quickNotesTextarea && quickNotesList) {
+            loadQuickNotes();
+
+            if (quickNotesFilterButtons.length) {
+                quickNotesFilterButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const targetFilter = button.dataset.quickNotesFilter || 'all';
+                        if (quickNotesFilter === targetFilter) return;
+                        quickNotesFilter = targetFilter;
+                        quickNotesFilterButtons.forEach(btn => btn.classList.toggle('is-active', btn === button));
+                        renderQuickNotes();
+                    });
+                });
+            }
+
+            quickNotesForm.addEventListener('submit', event => {
+                event.preventDefault();
+                const noteText = quickNotesTextarea.value.trim();
+                if (!noteText) {
+                    quickNotesTextarea.focus();
+                    return;
+                }
+
+                const timestamp = Date.now();
+                quickNotesData.push({
+                    id: timestamp,
+                    text: noteText,
+                    createdAt: timestamp,
+                    completed: false
+                });
+
+                saveQuickNotes();
+                renderQuickNotes();
+                quickNotesForm.reset();
+                quickNotesTextarea.focus();
+            });
+
+            quickNotesList.addEventListener('change', event => {
+                const target = event.target;
+                if (!(target instanceof HTMLInputElement)) return;
+                if (target.dataset.action !== 'toggle') return;
+
+                const noteId = Number(target.closest('li')?.dataset.id);
+                if (!noteId) return;
+
+                quickNotesData = quickNotesData.map(note => note.id === noteId ? { ...note, completed: target.checked } : note);
+                saveQuickNotes();
+                renderQuickNotes();
+            });
+
+            quickNotesList.addEventListener('click', event => {
+                const button = event.target instanceof HTMLElement ? event.target.closest('button') : null;
+                if (!button || button.dataset.action !== 'delete') return;
+
+                const noteId = Number(button.closest('li')?.dataset.id);
+                if (!noteId) return;
+
+                quickNotesData = quickNotesData.filter(note => note.id !== noteId);
+                saveQuickNotes();
+                renderQuickNotes();
+            });
+        }
+
         // --- LÓGICA DEL BUSCADOR DE HISTORIAL DE CITAS (SECRETARIA) ---
         const buscadorHistorialSecretaria = document.getElementById('buscador-historial-secretaria');
         const contenedorTablaHistorialSecretaria = document.getElementById('tabla-historial-secretaria-container');
@@ -7872,6 +10244,9 @@ if (formCrearHistoria) {
                         if (window.buscarMisPacientes) {
                             window.buscarMisPacientes(''); // Refrescar la lista de pacientes
                         }
+                        if (typeof buscarPacientesSecretaria === 'function') {
+                            buscarPacientesSecretaria('');
+                        }
                     } else {
                         if(modalErrorDiv) {
                             modalErrorDiv.textContent = data.message;
@@ -7880,7 +10255,7 @@ if (formCrearHistoria) {
                     }
                 })
                 .finally(() => {
-                    submitButton.textContent = 'Guardar Paciente';
+                    submitButton.textContent = 'Crear Paciente';
                     submitButton.disabled = false;
                 });
             });
@@ -7952,6 +10327,209 @@ if (formCrearHistoria) {
             if (event.target == modalSeleccionarHistoria) cerrarModalSeleccionarHistoria();
             if (event.target == modalProfesionalDetalle) cerrarModalProfesionalDetalle();
             if (event.target == modalConflictoCita) cerrarModalConflicto();
+        });
+
+        // --- BUSCADOR DE ESPECIALIDADES (ADMINISTRADOR) ---
+        const specialtySearchInput = document.getElementById('specialty-search-input');
+        if (specialtySearchInput) {
+            specialtySearchInput.addEventListener('input', function() {
+                const termino = this.value.trim().toLowerCase();
+                document.querySelectorAll('.specialty-row').forEach(function(row) {
+                    const contenido = (row.getAttribute('data-search') || '').toLowerCase();
+                    row.style.display = termino === '' || contenido.includes(termino) ? '' : 'none';
+                });
+            });
+        }
+
+        const documentSearchInput = document.getElementById('document-search-input');
+        if (documentSearchInput) {
+            documentSearchInput.addEventListener('input', function() {
+                const termino = this.value.trim().toLowerCase();
+                document.querySelectorAll('.document-row').forEach(function(row) {
+                    const contenido = (row.getAttribute('data-search') || '').toLowerCase();
+                    row.style.display = termino === '' || contenido.includes(termino) ? '' : 'none';
+                });
+            });
+        }
+
+        document.addEventListener('click', function(event) {
+            const copyButton = event.target.closest('.document-copy-link');
+            if (!copyButton) return;
+
+            event.preventDefault();
+            const urlRelativa = copyButton.getAttribute('data-url');
+            if (!urlRelativa) return;
+
+            const basePath = window.location.origin + window.location.pathname.replace(/[^\\\/]*$/, '');
+
+        const adminTaskForm = document.getElementById('admin-task-form');
+        if (adminTaskForm) {
+            const adminTaskInput = document.getElementById('admin-task-input');
+            const adminTaskList = document.getElementById('admin-task-list');
+            const adminTaskEmpty = document.getElementById('admin-task-empty');
+            const adminTaskCounter = document.getElementById('admin-task-counter');
+            const adminTaskClear = document.getElementById('admin-task-clear');
+            const adminTaskFilterButtons = document.querySelectorAll('.admin-task-filters button');
+            const adminTaskStorageKey = 'adminTasks_' + <?php echo (int)$usuario_id; ?>;
+            let adminTaskFilterState = 'all';
+            let adminTasks = [];
+
+            try {
+                const storedTasks = localStorage.getItem(adminTaskStorageKey);
+                if (storedTasks) {
+                    adminTasks = JSON.parse(storedTasks) || [];
+                }
+            } catch (error) {
+                console.error('No se pudieron cargar las tareas del administrador:', error);
+            }
+
+            const guardarTareas = () => {
+                try {
+                    localStorage.setItem(adminTaskStorageKey, JSON.stringify(adminTasks));
+                } catch (error) {
+                    console.error('No se pudieron guardar las tareas del administrador:', error);
+                }
+            };
+
+            const actualizarFiltrosActivos = () => {
+                adminTaskFilterButtons.forEach((boton) => {
+                    boton.classList.toggle('active', boton.dataset.filter === adminTaskFilterState);
+                });
+            };
+
+            const renderizarTareas = () => {
+                const totalPendientes = adminTasks.filter((tarea) => !tarea.completada).length;
+                const totalCompletadas = adminTasks.filter((tarea) => tarea.completada).length;
+                const totalTareas = adminTasks.length;
+
+                adminTaskCounter.textContent = `${totalPendientes} pendientes · ${totalCompletadas} completadas`;
+
+                let tareasFiltradas = adminTasks;
+                if (adminTaskFilterState === 'pending') {
+                    tareasFiltradas = adminTasks.filter((tarea) => !tarea.completada);
+                } else if (adminTaskFilterState === 'done') {
+                    tareasFiltradas = adminTasks.filter((tarea) => tarea.completada);
+                }
+
+                adminTaskList.innerHTML = '';
+
+                if (tareasFiltradas.length === 0) {
+                    adminTaskEmpty.style.display = totalTareas === 0 ? 'block' : 'none';
+                } else {
+                    adminTaskEmpty.style.display = 'none';
+                    tareasFiltradas.forEach((tarea) => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'admin-task-item' + (tarea.completada ? ' completed' : '');
+                        listItem.dataset.id = tarea.id;
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.checked = tarea.completada;
+                        checkbox.setAttribute('aria-label', 'Cambiar estado de la tarea');
+
+                        const texto = document.createElement('span');
+                        texto.className = 'admin-task-text';
+                        texto.textContent = tarea.descripcion;
+
+                        const acciones = document.createElement('div');
+                        acciones.className = 'admin-task-actions';
+
+                        const eliminarBtn = document.createElement('button');
+                        eliminarBtn.type = 'button';
+                        eliminarBtn.className = 'delete-task';
+                        eliminarBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Quitar';
+
+                        acciones.appendChild(eliminarBtn);
+                        listItem.appendChild(checkbox);
+                        listItem.appendChild(texto);
+                        listItem.appendChild(acciones);
+                        adminTaskList.appendChild(listItem);
+                    });
+                }
+            };
+
+            renderizarTareas();
+
+            adminTaskForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const descripcion = adminTaskInput.value.trim();
+                if (descripcion === '') {
+                    adminTaskInput.focus();
+                    return;
+                }
+
+                const nuevaTarea = {
+                    id: Date.now().toString(),
+                    descripcion,
+                    completada: false,
+                    creada: new Date().toISOString()
+                };
+
+                adminTasks.unshift(nuevaTarea);
+                guardarTareas();
+                adminTaskInput.value = '';
+                adminTaskInput.focus();
+                renderizarTareas();
+            });
+
+            adminTaskList.addEventListener('change', function(event) {
+                if (event.target.type === 'checkbox') {
+                    const tareaId = event.target.closest('.admin-task-item')?.dataset.id;
+                    if (!tareaId) return;
+
+                    adminTasks = adminTasks.map((tarea) => tarea.id === tareaId ? { ...tarea, completada: event.target.checked } : tarea);
+                    guardarTareas();
+                    renderizarTareas();
+                }
+            });
+
+            adminTaskList.addEventListener('click', function(event) {
+                if (event.target.closest('.delete-task')) {
+                    const listItem = event.target.closest('.admin-task-item');
+                    if (!listItem) return;
+                    const tareaId = listItem.dataset.id;
+                    adminTasks = adminTasks.filter((tarea) => tarea.id !== tareaId);
+                    guardarTareas();
+                    renderizarTareas();
+                }
+            });
+
+            adminTaskClear.addEventListener('click', function() {
+                if (adminTasks.some((tarea) => tarea.completada) && confirm('¿Eliminar todas las tareas completadas?')) {
+                    adminTasks = adminTasks.filter((tarea) => !tarea.completada);
+                    guardarTareas();
+                    renderizarTareas();
+                }
+            });
+
+            adminTaskFilterButtons.forEach((boton) => {
+                boton.addEventListener('click', function() {
+                    adminTaskFilterState = this.dataset.filter || 'all';
+                    actualizarFiltrosActivos();
+                    renderizarTareas();
+                });
+            });
+
+            actualizarFiltrosActivos();
+        }
+
+            const urlCompleta = new URL(urlRelativa, basePath).href;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(urlCompleta)
+                    .then(() => {
+                        const contenidoOriginal = copyButton.innerHTML;
+                        copyButton.innerHTML = '<i class="fa-solid fa-check"></i> Copiado';
+                        setTimeout(() => {
+                            copyButton.innerHTML = contenidoOriginal;
+                        }, 2000);
+                    })
+                    .catch(() => {
+                        alert('No se pudo copiar el enlace. Copia manualmente: ' + urlCompleta);
+                    });
+            } else {
+                alert('Copia manualmente este enlace: ' + urlCompleta);
+            }
         });
 
         // --- LÓGICA PARA EL FORMULARIO MODAL DE GUARDAR NOTA ---
@@ -8425,20 +11003,35 @@ if (newPatientsCanvas) {
         // LÓGICA DEL BUSCADOR DE PACIENTES (SECRETARIA)
         const buscadorSecretaria = document.getElementById('buscador-pacientes-secretaria');
         const contenedorTablaSecretaria = document.getElementById('tabla-pacientes-secretaria-container');
-        if (buscadorSecretaria) {
-            buscadorSecretaria.addEventListener('keyup', function() {
-                const query = this.value;
-                fetch('buscar_pacientes_secretaria.php', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: 'query=' + encodeURIComponent(query)
-                })
-                .then(response => response.text())
-                .then(data => {
-                    contenedorTablaSecretaria.innerHTML = data;
-                })
-                .catch(error => console.error('Error en la búsqueda:', error));
+
+        function buscarPacientesSecretaria(query) {
+            if (!contenedorTablaSecretaria) return;
+            contenedorTablaSecretaria.innerHTML = '<p>Cargando pacientes...</p>';
+            fetch('buscar_pacientes_secretaria.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'query=' + encodeURIComponent(query)
+            })
+            .then(response => response.text())
+            .then(data => {
+                contenedorTablaSecretaria.innerHTML = data;
+                if (typeof makeTableSortable === 'function') {
+                    makeTableSortable(contenedorTablaSecretaria);
+                }
+            })
+            .catch(error => {
+                console.error('Error en la búsqueda:', error);
+                contenedorTablaSecretaria.innerHTML = '<p style="color: #dc3545;">No se pudo cargar la lista de pacientes.</p>';
             });
+        }
+
+        if (buscadorSecretaria) {
+            buscarPacientesSecretaria('');
+            buscadorSecretaria.addEventListener('keyup', function() {
+                buscarPacientesSecretaria(this.value);
+            });
+        } else if (contenedorTablaSecretaria) {
+            buscarPacientesSecretaria('');
         }
 
         // --- LÓGICA DEL GRÁFICO DE EDAD DE PACIENTES (DISEÑO PREMIUM) ---

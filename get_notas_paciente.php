@@ -5,13 +5,14 @@ include 'conexion.php';
 header('Content-Type: application/json');
 
 // Seguridad
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra']) || !isset($_GET['paciente_id'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador', 'secretaria']) || !isset($_GET['paciente_id'])) {
     http_response_code(403);
     echo json_encode(['error' => 'Acceso no autorizado']);
     exit();
 }
 
-$psicologo_id = $_SESSION['usuario_id'];
+$usuario_id = $_SESSION['usuario_id'];
+$rol_usuario = $_SESSION['rol'];
 $paciente_id = (int)$_GET['paciente_id'];
 
 $response = [];
@@ -24,8 +25,13 @@ $paciente = $stmt_paciente->get_result()->fetch_assoc();
 $response['paciente_nombre'] = $paciente['nombre_completo'] ?? 'Paciente no encontrado';
 
 // Obtener notas existentes
-$stmt_notas = $conex->prepare("SELECT id, fecha_sesion, nota FROM notas_sesion WHERE paciente_id = ? AND psicologo_id = ? ORDER BY fecha_sesion DESC");
-$stmt_notas->bind_param("ii", $paciente_id, $psicologo_id);
+if ($rol_usuario === 'secretaria' || $rol_usuario === 'administrador') {
+    $stmt_notas = $conex->prepare("SELECT id, fecha_sesion, nota FROM notas_sesion WHERE paciente_id = ? ORDER BY fecha_sesion DESC");
+    $stmt_notas->bind_param("i", $paciente_id);
+} else {
+    $stmt_notas = $conex->prepare("SELECT id, fecha_sesion, nota FROM notas_sesion WHERE paciente_id = ? AND psicologo_id = ? ORDER BY fecha_sesion DESC");
+    $stmt_notas->bind_param("ii", $paciente_id, $usuario_id);
+}
 $stmt_notas->execute();
 $notas_result = $stmt_notas->get_result();
 

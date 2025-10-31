@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 $response = ['success' => false, 'message' => 'Ocurrió un error.'];
 
 // Seguridad
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador', 'secretaria'])) {
     $response['message'] = 'Acceso no autorizado.';
     http_response_code(403);
     echo json_encode($response);

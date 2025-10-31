@@ -5,7 +5,7 @@ include 'conexion.php';
 header('Content-Type: application/json');
 
 // Seguridad: Solo roles autorizados
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador', 'secretaria'])) {
     http_response_code(403);
     echo json_encode(['error' => 'Acceso no autorizado']);
     exit();

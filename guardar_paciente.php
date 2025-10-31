@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 $response = ['success' => false, 'message' => 'Ocurrió un error inesperado.'];
 
 // Seguridad
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador', 'secretaria'])) {
     $response['message'] = 'Acceso no autorizado.';
     http_response_code(403);
     echo json_encode($response);
@@ -26,7 +26,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $correo = $_POST['correo'];
     $cedula_tipo = $_POST['cedula_tipo'];
     $cedula_numero = $_POST['cedula_numero'];
-    $psicologo_id = $_SESSION['usuario_id'];
+
+    $usuarioActualId = $_SESSION['usuario_id'];
+    $rolUsuario = $_SESSION['rol'];
+    $psicologo_id = $usuarioActualId;
+
+    if ($rolUsuario === 'secretaria') {
+        if (empty($_POST['profesional_asignado'])) {
+            $response['message'] = 'Selecciona el profesional responsable para este paciente.';
+            http_response_code(400);
+            echo json_encode($response);
+            exit();
+        }
+
+        $psicologo_id = (int)$_POST['profesional_asignado'];
+
+        $validarProfesional = $conex->prepare("SELECT id FROM usuarios WHERE id = ? AND rol IN ('psicologo','psiquiatra') AND estado = 'aprobado'");
+        $validarProfesional->bind_param("i", $psicologo_id);
+        $validarProfesional->execute();
+        if ($validarProfesional->get_result()->num_rows === 0) {
+            $response['message'] = 'El profesional seleccionado no es válido.';
+            $validarProfesional->close();
+            http_response_code(400);
+            echo json_encode($response);
+            exit();
+        }
+        $validarProfesional->close();
+    }
 
     if (strlen($cedula_numero) < 7 || strlen($cedula_numero) > 8) {
         $response['message'] = 'El número de cédula debe tener entre 7 y 8 dígitos.';
