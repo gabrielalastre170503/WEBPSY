@@ -1090,8 +1090,6 @@ if ($rol_usuario == 'administrador') {
 
 
 
-
-
 /* Contenedor para los gráficos para controlar su tamaño */
 .chart-container {
     position: relative;
@@ -3247,7 +3245,11 @@ body.fade-out {
     opacity: 0;
     transition: opacity 0.3s ease;
 }
-.solicitud-card:hover::before { opacity: 1; }
+.solicitud-card:hover::before {
+    opacity: 0.85;
+    background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+    z-index: 1;
+}
 
 /* --- ESTILOS PARA NOTAS RÁPIDAS (SECRETARIA) --- */
 .quick-notes-container {
@@ -4893,101 +4895,300 @@ body.fade-out {
 }
 
 /* --- ESTILOS PREMIUM PARA LA SECCIÓN 'MI PERFIL' --- */
-.profile-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Dos columnas */
-    gap: 30px;
-    margin-top: 30px;
-}
-
-.profile-card {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    padding: 30px;
-}
-
-.profile-card h4 {
-    margin-top: 0;
-    margin-bottom: 25px;
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-}
-
-.profile-card .form-group {
-    margin-bottom: 20px;
-}
-
-.profile-card .form-group label {
+.perfil-hero {
     display: flex;
     align-items: center;
-    font-size: 14px;
-    font-weight: 500;
-    color: #555;
-    margin-bottom: 8px;
+    justify-content: space-between;
+    gap: 14px;
+    background: linear-gradient(135deg, #0ea5e9, #6366f1);
+    border-radius: 16px;
+    padding: 16px 20px;
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(14, 165, 233, 0.18);
+}
+.perfil-hero-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+.perfil-hero-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: left;
+    margin-right: auto;
+}
+.perfil-hero-texto h2 {
+    margin: 0 0 3px 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+.perfil-hero-texto p {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+}
+.perfil-hero-estado {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.82);
+}
+.perfil-estado-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 8px 14px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
-.profile-card .form-group i {
-    margin-right: 10px;
-    color: #02b1f4;
-    width: 20px;
-    text-align: center;
+.perfil-detalle {
+    margin-top: 28px;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+    padding: 24px 48px 24px 32px;
+}
+.perfil-summary {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.perfil-avatar {
+    width: 62px;
+    height: 62px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+}
+.perfil-summary-text h3 {
+    margin: 0;
+    font-size: 19px;
+    color: #0f172a;
+    font-weight: 700;
+}
+.perfil-summary-text p {
+    margin: 2px 0 0 0;
+    color: #64748b;
+    font-size: 12.5px;
+}
+.perfil-summary-meta {
+    margin-left: auto;
+    display: flex;
+    gap: 14px;
+}
+.perfil-summary-meta .meta-label {
+    display: block;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+.perfil-summary-meta .meta-value {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0f172a;
+}
+.meta-badge.activo {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(34, 197, 94, 0.12);
+    color: #15803d;
+    font-weight: 600;
+    font-size: 11.5px;
 }
 
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 28px;
+}
+.profile-card {
+    background: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 14px;
+    padding: 30px 42px 22px 22px;
+    position: relative;
+    overflow: hidden;
+}
+.profile-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 55%);
+    pointer-events: none;
+}
+.profile-card h4 {
+    margin: 0 0 18px 0;
+    font-size: 18px;
+    color: #0f172a;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.profile-card .form-group {
+    margin-bottom: 18px;
+}
+.profile-card .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+}
 .profile-card .form-group input {
     width: 100%;
-    padding: 10px !important;
-    font-size: 15px;
-    font-family: "Poppins", sans-serif;
-    border: 1px solid #ced4da;
-    border-radius: 8px;
-    box-sizing: border-box;
+    padding: 10px 12px !important;
+    font-size: 14px;
+    border: 1px solid #cbd5f5;
+    border-radius: 10px;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
+.profile-card .form-group input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18);
+}
 .profile-card .form-group small {
     font-size: 12px;
-    color: #777;
-    margin-top: 5px;
+    color: #64748b;
 }
-
 .profile-card .btn-submit {
     width: 100%;
     padding: 12px;
-    margin-top: 10px;
+    margin-top: 4px;
     font-size: 15px;
     font-weight: 600;
     color: #fff;
-    background: linear-gradient(45deg, #02b1f4, #00c2ff);
+    background: linear-gradient(135deg, #0ea5e9, #6366f1);
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .profile-card .btn-submit:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(2, 177, 244, 0.3);
+    box-shadow: 0 12px 20px rgba(99, 102, 241, 0.28);
 }
-
-/* --- ESTILO PARA CAMPOS DE SOLO LECTURA --- */
 .profile-card .form-group input[readonly] {
-    background-color: #e9ecef; /* Un gris claro */
-    cursor: not-allowed;
-    opacity: 0.8;
+    background: #eef2ff;
+    border-color: rgba(99, 102, 241, 0.18);
+    color: #475569;
 }
 
-/* --- AJUSTE DE ALTURA ESPECÍFICO PARA CAMPOS DE CONTRASEÑA --- */
-#nueva_contrasena,
-#confirmar_nueva_contrasena {
-    padding-top: 9px !important;    /* Reduce el relleno superior */
-    padding-bottom: 9px !important; /* Reduce el relleno inferior */
+.perfil-checklist {
+    margin: 0 0 18px 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    color: #475569;
+}
+.perfil-checklist i {
+    color: #10b981;
+    margin-right: 8px;
 }
 
-/* --- LÍNEA DIVISORIA ELEGANTE PARA LA SECCIÓN DE PERFIL --- */
-#vista-perfil .profile-grid {
-    padding-bottom: 0px; /* Espacio entre las tarjetas y la línea */
-    margin-bottom: 40px;  /* Espacio debajo de la línea */
-    border-bottom: 1px solid #e9ecef; /* La línea divisoria sutil */
+.perfil-form .form-group input {
+    background: #fff;
+}
+
+.perfil-actividad ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px 0;
+    display: grid;
+    gap: 12px;
+    color: #475569;
+}
+.perfil-actividad ul li i {
+    color: #0ea5e9;
+    margin-right: 8px;
+}
+.perfil-action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #0ea5e9;
+    font-weight: 600;
+}
+.perfil-action-link:hover {
+    text-decoration: underline;
+}
+
+.perfil-consejos {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(99, 102, 241, 0.12));
+    border-radius: 16px;
+    padding: 24px 28px;
+}
+.perfil-consejos h4 {
+    margin: 0 0 6px 0;
+    font-size: 16px;
+    color: #0f172a;
+}
+.perfil-consejos p {
+    margin: 0;
+    color: #475569;
+    font-size: 14px;
+}
+.perfil-consejos a {
+    color: #0ea5e9;
+    font-weight: 600;
+}
+
+@media (max-width: 992px) {
+    .perfil-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+    .perfil-hero-estado {
+        text-align: left;
+    }
+    .perfil-summary {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .perfil-summary-meta {
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
+    }
+    .perfil-detalle {
+        padding: 20px 26px;
+    }
+    .profile-card {
+        padding: 18px 24px 18px 18px;
+    }
 }
 
 /* === Overrides: Unificar estilo de Crear Historia con Editar Historia/Informe === */
@@ -5336,55 +5537,163 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 <!-- VISTA UNIVERSAL PARA EL PERFIL DE USUARIO (DISEÑO MEJORADO) -->
 <div id="vista-perfil" class="panel-vista">
     <div class="panel-seccion">
-        <h2>Mi Perfil</h2>
-        <p>Este es tu espacio personal. En la sección de la izquierda puedes revisar tu información de contacto. En la sección de la derecha, puedes actualizar tu contraseña para mantener tu cuenta segura. Te recomendamos usar una combinación de letras, números y símbolos.</p>
-
         <?php
-        if (isset($_GET['status']) && $_GET['status'] == 'perfil_actualizado') {
-            echo '<div class="alert-box success"><span><strong>¡Éxito!</strong> Tu contraseña ha sido actualizada.</span></div>';
-        }
-        if (isset($_GET['error'])) {
-            $error_msg = 'Ocurrió un error. Inténtalo de nuevo.';
-            if ($_GET['error'] == 'pass_no_coincide') {
-                $error_msg = 'La nueva contraseña y su confirmación no coinciden.';
-            } elseif ($_GET['error'] == 'pass_no_segura') {
-                $error_msg = 'La nueva contraseña no cumple con los requisitos de seguridad.';
+            $correoUsuario = $_SESSION['correo'] ?? '';
+            $telefonoUsuario = $_SESSION['telefono'] ?? null;
+            $fechaRegistro = $_SESSION['fecha_registro'] ?? null;
+            if (empty($fechaRegistro) && isset($_SESSION['usuario_id'])) {
+                $usuarioIdPerfil = (int)$_SESSION['usuario_id'];
+                if ($usuarioIdPerfil > 0 && isset($conex) && $conex instanceof mysqli) {
+                    if ($stmtFechaPerfil = $conex->prepare("SELECT fecha_registro FROM usuarios WHERE id = ? LIMIT 1")) {
+                        $stmtFechaPerfil->bind_param("i", $usuarioIdPerfil);
+                        if ($stmtFechaPerfil->execute()) {
+                            $stmtFechaPerfil->bind_result($fechaRegistroDb);
+                            if ($stmtFechaPerfil->fetch()) {
+                                $fechaRegistro = $fechaRegistroDb;
+                                if (!empty($fechaRegistroDb)) {
+                                    $_SESSION['fecha_registro'] = $fechaRegistroDb;
+                                }
+                            }
+                        }
+                        $stmtFechaPerfil->close();
+                    }
+                }
             }
-            echo '<div class="alert-box error"><span><strong>Error:</strong> ' . htmlspecialchars($error_msg) . '</span></div>';
-        }
+            $fechaRegistroTexto = '—';
+            if (!empty($fechaRegistro)) {
+                $timestampRegistro = strtotime($fechaRegistro);
+                if ($timestampRegistro !== false && $timestampRegistro > 0) {
+                    $fechaRegistroTexto = date('d/m/Y', $timestampRegistro);
+                } else {
+                    $fechaRegistroTexto = (string)$fechaRegistro;
+                }
+            }
+
+            $ultimaActividad = $_SESSION['ultima_actividad'] ?? null;
+            $ultimaActividadTexto = 'Registro reciente verificado';
+            if (!empty($ultimaActividad)) {
+                $timestampActividad = strtotime($ultimaActividad);
+                if ($timestampActividad !== false && $timestampActividad > 0) {
+                    $ultimaActividadTexto = date('d/m/Y H:i', $timestampActividad);
+                } else {
+                    $ultimaActividadTexto = (string)$ultimaActividad;
+                }
+            }
+            $nombreUsuarioPlano = (string)($nombre_usuario ?? '');
+            $avatarInicial = $nombreUsuarioPlano !== '' ? strtoupper(substr($nombreUsuarioPlano, 0, 1)) : '?';
         ?>
 
-        <div class="profile-grid">
-            <div class="profile-card">
-                <h4>Información de Contacto</h4>
-                <div class="form-group">
-                    <label for="nombre_completo_perfil"><i class="fa-solid fa-user"></i> Nombre Completo:</label>
-                    <input type="text" id="nombre_completo_perfil" value="<?php echo htmlspecialchars($nombre_usuario); ?>" readonly>
+        <?php
+            if (isset($_GET['status']) && $_GET['status'] === 'perfil_actualizado') {
+                echo '<div class="alert-box success"><span><strong>¡Éxito!</strong> Tu contraseña ha sido actualizada.</span></div>';
+            } elseif (isset($_GET['error'])) {
+                $error_msg = 'Ocurrió un error. Inténtalo de nuevo.';
+                if ($_GET['error'] === 'pass_no_coincide') {
+                    $error_msg = 'La nueva contraseña y su confirmación no coinciden.';
+                } elseif ($_GET['error'] === 'pass_no_segura') {
+                    $error_msg = 'La nueva contraseña no cumple con los requisitos de seguridad.';
+                }
+                echo '<div class="alert-box error"><span><strong>Error:</strong> ' . htmlspecialchars($error_msg) . '</span></div>';
+            }
+        ?>
+
+        <div class="perfil-hero">
+            <div class="perfil-hero-icon">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <div class="perfil-hero-texto">
+                <h2>Hola, <?php echo htmlspecialchars($nombre_usuario); ?></h2>
+                <p>Gestiona tu información personal, refuerza la seguridad de tu cuenta y mantente al día con tus datos principales.</p>
+            </div>
+            <div class="perfil-hero-estado">
+                <span class="perfil-estado-badge"><i class="fa-solid fa-circle-check"></i> Perfil activo</span>
+                <span>Rol: <?php echo htmlspecialchars(ucfirst($rol_usuario)); ?></span>
+                <span>Miembro desde: <?php echo htmlspecialchars($fechaRegistroTexto); ?></span>
+            </div>
+        </div>
+
+        <div class="perfil-detalle">
+            <div class="perfil-summary">
+                <div class="perfil-avatar">
+                    <span><?php echo htmlspecialchars($avatarInicial); ?></span>
                 </div>
-                <div class="form-group">
-                    <label for="correo_perfil"><i class="fa-solid fa-envelope"></i> Correo Electrónico:</label>
-                    <input type="email" id="correo_perfil" value="<?php echo htmlspecialchars($_SESSION['correo']); ?>" readonly>
+                <div class="perfil-summary-text">
+                    <h3><?php echo htmlspecialchars($nombre_usuario); ?></h3>
+                    <p><?php echo htmlspecialchars($correoUsuario); ?></p>
+                </div>
+                <div class="perfil-summary-meta">
+                    <div>
+                        <span class="meta-label">Rol</span>
+                        <span class="meta-value"><?php echo htmlspecialchars(ucfirst($rol_usuario)); ?></span>
+                    </div>
+                    <div>
+                        <span class="meta-label">Miembro desde</span>
+                        <span class="meta-value"><?php echo htmlspecialchars($fechaRegistroTexto); ?></span>
+                    </div>
+                    <div>
+                        <span class="meta-label">Estado</span>
+                        <span class="meta-badge activo"><i class="fa-solid fa-circle-check"></i> Activo</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="profile-card">
-                <form action="actualizar_perfil.php" method="POST" id="form-cambiar-pass">
-                    <input type="hidden" name="accion" value="cambiar_contrasena">
-                    <h4>Cambiar Contraseña</h4>
+            <div class="profile-grid">
+                <div class="profile-card">
+                    <h4><i class="fa-solid fa-address-card"></i> Información de contacto</h4>
                     <div class="form-group">
-                        <label for="nueva_contrasena"><i class="fa-solid fa-lock"></i> Nueva Contraseña:</label>
-                        <input type="password" name="nueva_contrasena" id="nueva_contrasena" required 
-                               minlength="8" 
-                               pattern="(?=.*[A-Z])(?=.*[\W_]).{8,}" 
-                               title="Mínimo 8 caracteres, una mayúscula y un símbolo.">
-                        <small></small>
+                        <label><i class="fa-solid fa-user"></i> Nombre completo</label>
+                        <input type="text" value="<?php echo htmlspecialchars($nombre_usuario); ?>" readonly>
                     </div>
                     <div class="form-group">
-                        <label for="confirmar_nueva_contrasena"><i class="fa-solid fa-lock"></i> Confirmar Nueva Contraseña:</label>
-                        <input type="password" name="confirmar_nueva_contrasena" id="confirmar_nueva_contrasena" required>
+                        <label><i class="fa-solid fa-envelope"></i> Correo electrónico</label>
+                        <input type="email" value="<?php echo htmlspecialchars($correoUsuario); ?>" readonly>
                     </div>
-                    <button type="submit" class="btn-submit">Actualizar Contraseña</button>
-                </form>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-phone"></i> Teléfono registrado</label>
+                        <input type="text" value="<?php echo htmlspecialchars($telefonoUsuario ?? 'No registrado'); ?>" readonly>
+                    </div>
+                </div>
+
+                <div class="profile-card">
+                    <h4><i class="fa-solid fa-lock"></i> Seguridad de la cuenta</h4>
+                    <ul class="perfil-checklist">
+                        <li><i class="fa-solid fa-check-circle"></i> Evita compartir tus datos.</li>
+                    </ul>
+
+                    <form action="actualizar_perfil.php" method="POST" class="perfil-form">
+                        <input type="hidden" name="accion" value="cambiar_contrasena">
+                        <div class="form-group">
+                            <label for="nueva_contrasena_perfil"><i class="fa-solid fa-shield-halved"></i> Nueva contraseña</label>
+                            <input type="password" name="nueva_contrasena" id="nueva_contrasena_perfil" required minlength="8" pattern="(?=.*[A-Z])(?=.*[\W_]).{8,}" oninvalid="this.setCustomValidity('Requiere mínimo 8 caracteres, una mayúscula y un símbolo.')" oninput="this.setCustomValidity('')">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmar_contrasena_perfil"><i class="fa-solid fa-shield-heart"></i> Confirmar nueva contraseña</label>
+                            <input type="password" name="confirmar_nueva_contrasena" id="confirmar_contrasena_perfil" required>
+                        </div>
+                        <button type="submit" class="btn-submit">Actualizar contraseña</button>
+                    </form>
+                </div>
+
+                <div class="profile-card perfil-actividad">
+                    <h4><i class="fa-solid fa-timeline"></i> Actividad reciente</h4>
+                    <ul>
+                        <li><i class="fa-solid fa-clock-rotate-left"></i> Último acceso: <?php echo htmlspecialchars($ultimaActividadTexto); ?></li>
+                        <li><i class="fa-solid fa-envelope-circle-check"></i> Correo verificado.</li>
+                        <li><i class="fa-solid fa-shield"></i> Autenticación base reforzada.</li>
+                    </ul>
+                    <a href="#" class="perfil-action-link"><i class="fa-solid fa-download"></i> Descargar historial</a>
+                </div>
+            </div>
+
+            <div class="perfil-consejos">
+                <div>
+                    <h4><i class="fa-solid fa-lightbulb"></i> Buenas prácticas</h4>
+                    <p>Actualiza tu contraseña periódicamente y evita reutilizarla en otros sistemas.</p>
+                </div>
+                <div>
+                    <h4><i class="fa-solid fa-headset"></i> Soporte</h4>
+                    <p>¿Necesitas ayuda? Escríbenos a <a href="mailto:soporte@webpsy.com">soporte@webpsy.com</a>.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -5438,8 +5747,18 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 <span>Sección "Nosotros"</span>
             </div>
             <div class="shortcut-actions">
-                <a href="index.php#nosotros" target="_blank" class="btn-view">Ver Página</a>
+                <a href="index.php#nosotros" target="_blank" class="btn-view">Ver página</a>
                 <a href="gestionar_textos.php" class="btn-manage">Gestionar</a>
+            </div>
+        </li>
+        <li class="shortcut-item">
+            <div class="shortcut-info">
+                <i class="fa-solid fa-circle-question"></i>
+                <span>Preguntas Frecuentes</span>
+            </div>
+            <div class="shortcut-actions">
+                <a href="index.php#faq" target="_blank" class="btn-view">Ver página</a>
+                <a href="gestionar_faq.php" class="btn-manage">Gestionar</a>
             </div>
         </li>
         <li class="shortcut-item">
@@ -5448,7 +5767,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 <span>Terapias</span>
             </div>
             <div class="shortcut-actions">
-                <a href="terapias.php" target="_blank" class="btn-view">Ver Página</a>
+                <a href="terapias.php" target="_blank" class="btn-view">Ver página</a>
                 <a href="gestionar_terapias.php" class="btn-manage">Gestionar</a>
             </div>
         </li>
@@ -5458,18 +5777,8 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 <span>Fármacos</span>
             </div>
             <div class="shortcut-actions">
-                <a href="farmacologia.php" target="_blank" class="btn-view">Ver Página</a>
+                <a href="farmacologia.php" target="_blank" class="btn-view">Ver página</a>
                 <a href="gestionar_farmacos.php" class="btn-manage">Gestionar</a>
-            </div>
-        </li>
-        <li class="shortcut-item">
-            <div class="shortcut-info">
-                <i class="fa-solid fa-circle-question"></i>
-                <span>Preguntas Frecuentes</span>
-            </div>
-            <div class="shortcut-actions">
-                <a href="index.php#faq" target="_blank" class="btn-view">Ver Página</a> <!-- Asumiendo que tendrás una sección #faq en el index -->
-                <a href="gestionar_faq.php" class="btn-manage">Gestionar</a>
             </div>
         </li>
     </ul>
@@ -5822,29 +6131,37 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             <h2>Repositorio de Documentos</h2>
             <p>Administra contratos, reglamentos y manuales internos desde un espacio centralizado. Mantén al equipo sincronizado con la información más reciente.</p>
 
-            <?php if (!empty($documentos_data['feedback'])): ?>
-                <?php $feedbackClass = $documentos_data['feedback']['type'] === 'success' ? 'success' : 'error'; ?>
+            <?php
+                $documentFeedback = isset($documentos_data['feedback']) && is_array($documentos_data['feedback']) ? $documentos_data['feedback'] : null;
+                $documentStats = isset($documentos_data['stats']) && is_array($documentos_data['stats']) ? $documentos_data['stats'] : [];
+                $documentCategories = isset($documentStats['por_categoria']) && is_array($documentStats['por_categoria']) ? $documentStats['por_categoria'] : [];
+                $documentItems = isset($documentos_data['items']) && is_array($documentos_data['items']) ? $documentos_data['items'] : [];
+                $documentBaseUrl = isset($documentos_data['base_url']) ? $documentos_data['base_url'] : '';
+                $carpetaDisponibleDocs = (bool)($documentos_data['carpeta_disponible'] ?? true);
+                $totalCategoriasDoc = count($documentCategories);
+            ?>
+
+            <?php if ($documentFeedback): ?>
+                <?php $feedbackClass = ($documentFeedback['type'] ?? '') === 'success' ? 'success' : 'error'; ?>
                 <div class="alert-box <?php echo $feedbackClass; ?>">
-                    <span><strong><?php echo $documentos_data['feedback']['type'] === 'success' ? 'Listo' : 'Ups'; ?>:</strong> <?php echo htmlspecialchars($documentos_data['feedback']['message']); ?></span>
+                    <span><strong><?php echo ($documentFeedback['type'] ?? '') === 'success' ? 'Listo' : 'Ups'; ?>:</strong> <?php echo htmlspecialchars($documentFeedback['message'] ?? ''); ?></span>
                 </div>
             <?php endif; ?>
 
-            <?php if (!$documentos_data['carpeta_disponible']): ?>
+            <?php if (!$carpetaDisponibleDocs): ?>
                 <div class="alert-box error" style="margin-bottom: 18px;">
                     <span><strong>Permisos insuficientes:</strong> No se puede escribir en la carpeta <code>documentos/</code>. Ajusta los permisos para habilitar la subida de archivos.</span>
                 </div>
             <?php endif; ?>
-
-            <?php $totalCategoriasDoc = count($documentos_data['stats']['por_categoria']); ?>
             <div class="document-stats-grid">
                 <div class="document-stat-card">
                     <span class="metric-label">Documentos disponibles</span>
-                    <span class="metric-value"><?php echo $documentos_data['stats']['total_archivos']; ?></span>
+                    <span class="metric-value"><?php echo (int)($documentStats['total_archivos'] ?? 0); ?></span>
                     <span class="metric-hint">Archivos almacenados en el repositorio.</span>
                 </div>
                 <div class="document-stat-card">
                     <span class="metric-label">Espacio ocupado</span>
-                    <span class="metric-value"><?php echo htmlspecialchars($documentos_data['stats']['tamano_total_legible']); ?></span>
+                    <span class="metric-value"><?php echo htmlspecialchars($documentStats['tamano_total_legible'] ?? '0 B'); ?></span>
                     <span class="metric-hint">Uso total de almacenamiento.</span>
                 </div>
                 <div class="document-stat-card">
@@ -5856,9 +6173,9 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 
             <?php if ($totalCategoriasDoc > 0): ?>
                 <div class="document-category-pills">
-                    <?php foreach ($documentos_data['stats']['por_categoria'] as $categoriaResumen): ?>
+                    <?php foreach ($documentCategories as $categoriaResumen): ?>
                         <span class="document-category-pill">
-                            <?php echo htmlspecialchars($categoriaResumen['nombre']); ?> · <?php echo (int)$categoriaResumen['total']; ?> docs
+                            <?php echo htmlspecialchars($categoriaResumen['nombre'] ?? ''); ?> · <?php echo (int)($categoriaResumen['total'] ?? 0); ?> docs
                         </span>
                     <?php endforeach; ?>
                 </div>
@@ -5871,8 +6188,8 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 <p>Arrastra tu archivo al botón o selecciónalo manualmente. Formatos admitidos: PDF, Word, Excel, PowerPoint, TXT, CSV, ZIP y RAR (máx. 10 MB).</p>
                 <form method="POST" enctype="multipart/form-data" class="document-upload-form">
                     <input type="hidden" name="documento_action" value="upload">
-                    <input type="file" name="documento_archivo" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" <?php echo $documentos_data['carpeta_disponible'] ? '' : 'disabled'; ?> required>
-                    <button type="submit" <?php echo $documentos_data['carpeta_disponible'] ? '' : 'disabled'; ?>><i class="fa-solid fa-cloud-arrow-up"></i> Subir documento</button>
+                    <input type="file" name="documento_archivo" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" <?php echo $carpetaDisponibleDocs ? '' : 'disabled'; ?> required>
+                    <button type="submit" <?php echo $carpetaDisponibleDocs ? '' : 'disabled'; ?>><i class="fa-solid fa-cloud-arrow-up"></i> Subir documento</button>
                 </form>
                 <small style="color: #64748b;">Consejo: utiliza nombres descriptivos (p. ej. <em>Contrato-clínica-2025.pdf</em>) para encontrarlos rápido.</small>
             </div>
@@ -5887,7 +6204,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 <span class="specialty-empty-text">Los enlaces se abren en nueva pestaña.</span>
             </div>
 
-            <?php if (!empty($documentos_data['items'])): ?>
+            <?php if (!empty($documentItems)): ?>
                 <table class="document-list-table">
                     <thead>
                         <tr>
@@ -5899,26 +6216,30 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($documentos_data['items'] as $documento): ?>
-                            <tr class="document-row" data-search="<?php echo htmlspecialchars($documento['search_text']); ?>">
+                        <?php foreach ($documentItems as $documento): ?>
+                            <?php
+                                $docNombre = $documento['nombre'] ?? '';
+                                $docUrl = $documentBaseUrl . rawurlencode($docNombre);
+                            ?>
+                            <tr class="document-row" data-search="<?php echo htmlspecialchars($documento['search_text'] ?? ''); ?>">
                                 <td>
-                                    <strong><?php echo htmlspecialchars($documento['nombre']); ?></strong><br>
-                                    <small>.<?php echo htmlspecialchars($documento['extension']); ?></small>
+                                    <strong><?php echo htmlspecialchars($docNombre); ?></strong><br>
+                                    <small>.<?php echo htmlspecialchars($documento['extension'] ?? ''); ?></small>
                                 </td>
-                                <td><?php echo htmlspecialchars($documento['categoria']); ?></td>
-                                <td><?php echo htmlspecialchars($documento['tamano_legible']); ?></td>
-                                <td><?php echo htmlspecialchars($documento['modificado_legible']); ?></td>
+                                <td><?php echo htmlspecialchars($documento['categoria'] ?? ''); ?></td>
+                                <td><?php echo htmlspecialchars($documento['tamano_legible'] ?? ''); ?></td>
+                                <td><?php echo htmlspecialchars($documento['modificado_legible'] ?? ''); ?></td>
                                 <td>
                                     <div class="document-actions">
-                                        <a class="download-link" href="<?php echo htmlspecialchars($documentos_data['base_url'] . rawurlencode($documento['nombre'])); ?>" target="_blank" rel="noopener">
+                                        <a class="download-link" href="<?php echo htmlspecialchars($docUrl); ?>" target="_blank" rel="noopener">
                                             <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir
                                         </a>
-                                        <button type="button" class="copy-link document-copy-link" data-url="<?php echo htmlspecialchars($documentos_data['base_url'] . rawurlencode($documento['nombre'])); ?>">
+                                        <button type="button" class="copy-link document-copy-link" data-url="<?php echo htmlspecialchars($docUrl); ?>">
                                             <i class="fa-solid fa-link"></i> Copiar enlace
                                         </button>
                                         <form method="POST" onsubmit="return confirm('¿Eliminar este documento?');">
                                             <input type="hidden" name="documento_action" value="delete">
-                                            <input type="hidden" name="documento_nombre" value="<?php echo htmlspecialchars($documento['nombre']); ?>">
+                                            <input type="hidden" name="documento_nombre" value="<?php echo htmlspecialchars($docNombre); ?>">
                                             <button type="submit" class="delete-link"><i class="fa-solid fa-trash"></i> Eliminar</button>
                                         </form>
                                     </div>
@@ -6381,9 +6702,16 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             <div class="dashboard-card primary-card">
                 <div class="card-icon"><i class="fa-solid fa-calendar-star"></i></div>
                 <h4>Próxima Cita</h4>
-                <?php if ($dashboard_data['proxima_cita']): ?>
-                    <p class="main-data"><?php echo date('d \d\e F, Y', strtotime($dashboard_data['proxima_cita']['fecha_cita'])); ?></p>
-                    <p class="sub-data"><?php echo date('h:i A', strtotime($dashboard_data['proxima_cita']['fecha_cita'])); ?> con <?php echo htmlspecialchars($dashboard_data['proxima_cita']['profesional_nombre']); ?></p>
+                <?php $nextAppointment = is_array($dashboard_data['proxima_cita']) ? $dashboard_data['proxima_cita'] : null; ?>
+                <?php if ($nextAppointment): ?>
+                    <?php $nextDate = isset($nextAppointment['fecha_cita']) ? strtotime($nextAppointment['fecha_cita']) : null; ?>
+                    <p class="main-data"><?php echo $nextDate ? date('d \d\e F, Y', $nextDate) : 'Fecha por confirmar'; ?></p>
+                    <p class="sub-data">
+                        <?php echo $nextDate ? date('h:i A', $nextDate) : '--:--'; ?>
+                        <?php if (!empty($nextAppointment['profesional_nombre'])): ?>
+                            con <?php echo htmlspecialchars($nextAppointment['profesional_nombre']); ?>
+                        <?php endif; ?>
+                    </p>
                 <?php else: ?>
                     <p class="main-data">Sin citas próximas</p>
                     <p class="sub-data">Puedes solicitar una nueva cuando quieras.</p>
@@ -6394,12 +6722,12 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             <div class="dashboard-card">
                 <div class="card-icon"><i class="fa-solid fa-user-doctor"></i></div>
                 <h4>Profesional Principal</h4>
-                <p class="main-data"><?php echo htmlspecialchars($dashboard_data['profesional_principal']); ?></p>
+                <p class="main-data"><?php echo htmlspecialchars($dashboard_data['profesional_principal'] ?? 'No asignado'); ?></p>
             </div>
             <div class="dashboard-card">
                 <div class="card-icon"><i class="fa-solid fa-check-double"></i></div>
                 <h4>Citas Completadas</h4>
-                <p class="main-data"><?php echo $dashboard_data['citas_totales']; ?></p>
+                <p class="main-data"><?php echo (int)($dashboard_data['citas_totales'] ?? 0); ?></p>
             </div>
 
             <!-- Tarjeta de Acción -->
