@@ -44,6 +44,25 @@ if ($response['tipo'] === null) {
     $stmt_infantil->close();
 }
 
+if ($response['datos'] !== null && isset($response['datos']['entrevistador_id'])) {
+    $entrevistadorId = (int)$response['datos']['entrevistador_id'];
+    if ($entrevistadorId > 0) {
+        $stmtProfesional = $conex->prepare("SELECT nombre_completo FROM usuarios WHERE id = ? LIMIT 1");
+        if ($stmtProfesional) {
+            $stmtProfesional->bind_param("i", $entrevistadorId);
+            $stmtProfesional->execute();
+            $resultadoProfesional = $stmtProfesional->get_result();
+            if ($resultadoProfesional && $resultadoProfesional->num_rows > 0) {
+                $profesional = $resultadoProfesional->fetch_assoc();
+                $nombreProfesional = $profesional['nombre_completo'] ?? null;
+                $response['profesional_nombre'] = $nombreProfesional;
+                $response['datos']['entrevistador_nombre'] = $nombreProfesional;
+            }
+            $stmtProfesional->close();
+        }
+    }
+}
+
 echo json_encode($response);
 $conex->close();
 ?>

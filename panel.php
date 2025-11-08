@@ -3137,18 +3137,75 @@ body.fade-out {
     margin-right: 8px;
 }
 
+.historia-print-container {
+    display: none;
+    font-family: "Poppins", Arial, sans-serif;
+    color: #333;
+    font-size: 13px;
+}
+
+.historia-print-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 16px 28px;
+}
+
+.historia-print-header {
+    margin-bottom: 12px;
+}
+
+.historia-print-profesional {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0c3b8c;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin: 0 0 2px;
+}
+
+.historia-print-title {
+    font-size: 18px;
+    margin: 0 0 4px;
+    color: #0c3b8c;
+}
+
+.historia-print-paciente {
+    margin: 0 0 10px;
+    font-size: 12.5px;
+    color: #555;
+}
+
+.historia-print-body {
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+@page {
+    margin: 0;
+}
+
 /* --- ESTILOS PARA LA IMPRESIÓN --- */
 @media print {
-    /* Oculta todo lo que no sea la modal del informe */
-    body > *:not(#modal-informe-detalle) {
+    /* Oculta todo lo que no sea la modal del informe o el contenido imprimible de historia */
+    body > *:not(#modal-informe-detalle):not(.historia-print-container) {
         display: none !important;
     }
     
-    /* Asegura que la modal ocupe toda la página de impresión */
-    #modal-informe-detalle, #modal-informe-detalle .modal-overlay {
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+    }
+
+    /* Asegura que los contenedores imprimibles ocupen la página */
+    #modal-informe-detalle,
+    #modal-informe-detalle .modal-overlay,
+    .historia-print-container {
         position: static !important;
         display: block !important;
         background: none !important;
+        width: 100% !important;
     }
     
     #modal-informe-detalle .modal-content-premium-header {
@@ -3169,6 +3226,47 @@ body.fade-out {
     #modal-informe-detalle .modal-body-premium {
         overflow: visible !important;
         max-height: none !important;
+    }
+
+    .historia-print-container {
+        padding: 10mm !important;
+        margin: 0 !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+    }
+
+    .historia-print-wrapper {
+        padding: 0 !important;
+        position: static !important;
+        margin: 0 auto !important;
+    }
+
+    .historia-print-profesional {
+        font-size: 13px;
+        margin: 0 0 2px 0 !important;
+    }
+
+    .historia-print-title {
+        font-size: 18px;
+        margin: 0 0 2px 0 !important;
+    }
+
+    .historia-print-paciente {
+        font-size: 12px;
+        margin: 0 0 6px 0 !important;
+    }
+
+    .historia-print-body .dato-item {
+        margin-bottom: 7px;
+    }
+
+    .historia-print-body .dato-item strong {
+        display: inline-block;
+        min-width: 150px;
+        font-weight: 600;
     }
 }
 
@@ -9130,9 +9228,14 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             const pacienteNombreDisplay = document.getElementById('ver-historia-paciente-nombre');
             const modalHeader = modalVerHistoria.querySelector('.modal-header-premium');
 
-            // Limpiar cualquier botón de acción anterior (borrar/editar) para evitar duplicados
-            const oldActionBtn = document.getElementById('btn-borrar-historia') || document.getElementById('btn-editar-historia');
-            if (oldActionBtn) oldActionBtn.remove();
+            // Limpiar acciones previas para evitar duplicados
+            const existingActions = modalHeader.querySelector('.modal-header-actions');
+            if (existingActions) {
+                existingActions.remove();
+            } else {
+                const legacyButtons = modalHeader.querySelectorAll('#btn-editar-historia, #btn-imprimir-historia, #btn-borrar-historia');
+                legacyButtons.forEach((btn) => btn.remove());
+            }
 
             modalBody.innerHTML = '<p>Cargando historial...</p>';
             modalTitulo.textContent = 'Historia Clínica';
@@ -9150,8 +9253,27 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                     
                     const datos = data.datos;
                     const nombrePaciente = document.getElementById('gestion-paciente-nombre').textContent;
+                    const headerActions = document.createElement('div');
+                    headerActions.className = 'modal-header-actions';
 
-                    // --- LÓGICA PARA AÑADIR EL BOTÓN DE EDITAR ---
+                    // --- LÓGICA PARA AÑADIR LOS BOTONES DE ACCIÓN ---
+                    const profesionalNombre = datos.entrevistador_nombre || data.profesional_nombre || 'No especificado';
+                    const printButton = document.createElement('a');
+                    printButton.id = 'btn-imprimir-historia';
+                    printButton.className = 'btn-edit-historia';
+                    printButton.href = '#';
+                    printButton.innerHTML = '<i class="fa-solid fa-print"></i> Imprimir';
+                    printButton.onclick = function(event) {
+                        event.preventDefault();
+                        imprimirHistoriaClinica({
+                            contenidoHtml: modalBody.innerHTML,
+                            titulo: modalTitulo.textContent,
+                            pacienteInfo: pacienteNombreDisplay.textContent,
+                            profesionalNombre
+                        });
+                    };
+                    headerActions.appendChild(printButton);
+
                     const editButton = document.createElement('a');
                     editButton.id = 'btn-editar-historia';
                     editButton.className = 'btn-edit-historia';
@@ -9167,7 +9289,14 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                             pacienteEdad: pacienteEdad || null
                         });
                     };
-                    modalHeader.appendChild(editButton);
+                    headerActions.appendChild(editButton);
+
+                    const closeButton = modalHeader.querySelector('.modal-close-btn');
+                    if (closeButton) {
+                        modalHeader.insertBefore(headerActions, closeButton);
+                    } else {
+                        modalHeader.appendChild(headerActions);
+                    }
 
                     // Construimos el texto del encabezado, añadiendo la edad solo si existe
                     let displayText = `Paciente: ${nombrePaciente}`;
@@ -9290,6 +9419,56 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 });
         }
     }
+
+    function imprimirHistoriaClinica({ contenidoHtml, titulo, pacienteInfo, profesionalNombre }) {
+        const escapeHtml = (valor) => {
+            if (valor === null || valor === undefined) {
+                return '';
+            }
+            return valor.toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        };
+
+        const safeProfesional = profesionalNombre ? escapeHtml(profesionalNombre) : '';
+        const safePacienteInfo = pacienteInfo ? escapeHtml(pacienteInfo) : '';
+
+        const printContainer = document.createElement('div');
+        printContainer.className = 'historia-print-container';
+        printContainer.style.display = 'block';
+        printContainer.innerHTML = `
+            <div class="historia-print-wrapper">
+                <div class="historia-print-header">
+                    <p class="historia-print-profesional">Profesional a cargo: ${safeProfesional || 'No especificado'}</p>
+                    <h2 class="historia-print-title">${escapeHtml(titulo || 'Historia Clínica')}</h2>
+                    ${safePacienteInfo ? `<p class="historia-print-paciente">${safePacienteInfo}</p>` : ''}
+                </div>
+                <div class="historia-print-body">
+                    ${contenidoHtml || ''}
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(printContainer);
+
+        const cleanup = () => {
+            if (printContainer.parentNode) {
+                printContainer.parentNode.removeChild(printContainer);
+            }
+            window.removeEventListener('afterprint', cleanup);
+        };
+
+        window.addEventListener('afterprint', cleanup);
+
+        setTimeout(() => {
+            window.print();
+            setTimeout(cleanup, 400);
+        }, 50);
+    }
+
     function cerrarModalVerHistoria() {
         if (modalVerHistoria) {
             modalVerHistoria.style.display = 'none';
