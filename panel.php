@@ -2525,6 +2525,10 @@ body.fade-out {
     margin-top: 15px !important; /* Sin margen extra para el primer título */
 }
 
+#modal-informe-detalle .modal-body-premium h3:first-of-type {
+    margin-top: -30px !important;
+}
+
 .modal-body-premium .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr; /* <-- CAMBIADO A TRES COLUMNAS */
@@ -3210,7 +3214,7 @@ body.fade-out {
     
     #modal-informe-detalle .modal-content-premium-header {
         box-shadow: none !important;
-        border: 1px solid #ccc;
+        border: none !important;
         max-width: 100% !important;
         height: auto !important;
         max-height: none !important;
@@ -3226,10 +3230,23 @@ body.fade-out {
     #modal-informe-detalle .modal-body-premium {
         overflow: visible !important;
         max-height: none !important;
+        padding: 8mm 12mm 12mm 12mm !important;
+    }
+
+    #modal-informe-detalle .modal-body-premium p,
+    #modal-informe-detalle .modal-body-premium li,
+    #modal-informe-detalle .modal-body-premium div,
+    #modal-informe-detalle .modal-body-premium span,
+    #modal-informe-detalle .modal-body-premium strong {
+        font-size: 11px !important;
+    }
+
+    #modal-informe-detalle .modal-body-premium h3 {
+        font-size: 13px !important;
     }
 
     .historia-print-container {
-        padding: 10mm !important;
+        padding: 10mm 10mm 10mm 8mm !important;
         margin: 0 !important;
         position: absolute !important;
         top: 0 !important;
@@ -3260,13 +3277,57 @@ body.fade-out {
     }
 
     .historia-print-body .dato-item {
-        margin-bottom: 7px;
+        margin-bottom: 3px;
+        break-inside: avoid;
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        overflow-wrap: anywhere;
     }
 
     .historia-print-body .dato-item strong {
-        display: inline-block;
-        min-width: 150px;
+        display: block;
+        min-width: auto;
+        margin-bottom: 1px;
         font-weight: 600;
+    }
+
+    .historia-print-body .dato-item p {
+        margin: 0;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        hyphens: auto;
+    }
+    .historia-print-body .dato-item span,
+    .historia-print-body .dato-item div {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        hyphens: auto;
+    }
+
+    .historia-print-body {
+        font-size: 10.5px;
+        column-count: 3;
+        column-gap: 10mm;
+        column-fill: balance;
+        orphans: 2;
+        widows: 2;
+    }
+
+    .historia-print-body h3 {
+        -webkit-column-span: all;
+        column-span: all;
+        margin-top: 8px;
+        margin-bottom: 4px;
+    }
+
+    .historia-print-body ul,
+    .historia-print-body ol {
+        break-inside: avoid;
+        padding-left: 18px;
+        margin-top: 1px;
+        margin-bottom: 3px;
     }
 }
 
@@ -9317,6 +9378,36 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                     // Función auxiliar para mostrar los datos de forma segura
                     const mostrar = (valor) => valor ? htmlspecialchars(valor) : 'No especificado';
                     const mostrarLargo = (valor) => valor ? nl2br(htmlspecialchars(valor)) : 'No especificado';
+                    const formatearDireccion = (valor) => {
+                        if (!valor) {
+                            return 'No especificado';
+                        }
+
+                        const textoSeguro = htmlspecialchars(valor);
+                        const partes = textoSeguro.split(/,\s*/);
+
+                        if (partes.length > 1) {
+                            const puntoCorte = Math.ceil(partes.length / 2);
+                            const primeraLinea = partes.slice(0, puntoCorte).join(', ');
+                            const segundaLinea = partes.slice(puntoCorte).join(', ');
+                            return `${primeraLinea}<br>${segundaLinea}`;
+                        }
+
+                        if (textoSeguro.length > 40) {
+                            const mitad = Math.floor(textoSeguro.length / 2);
+                            let indiceEspacio = textoSeguro.indexOf(' ', mitad);
+                            if (indiceEspacio === -1) {
+                                indiceEspacio = textoSeguro.lastIndexOf(' ', mitad);
+                            }
+                            if (indiceEspacio > 0) {
+                                const primeraParte = textoSeguro.slice(0, indiceEspacio);
+                                const segundaParte = textoSeguro.slice(indiceEspacio + 1);
+                                return `${primeraParte}<br>${segundaParte}`;
+                            }
+                        }
+
+                        return textoSeguro;
+                    };
 
                     function htmlspecialchars(str) {
                         return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
@@ -9342,7 +9433,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                             <div class="dato-item"><strong>Religión:</strong> <p>${mostrar(datos.religion)}</p></div>
                             <div class="dato-item"><strong>Grado de Instrucción:</strong> <p>${mostrar(datos.grado_instruccion)}</p></div>
                             <div class="dato-item"><strong>Ocupación:</strong> <p>${mostrar(datos.ocupacion)}</p></div>
-                            <div class="dato-item"><strong>Dirección:</strong> <p>${mostrarLargo(datos.direccion)}</p></div>
+                            <div class="dato-item"><strong>Dirección:</strong> <p>${formatearDireccion(datos.direccion)}</p></div>
                             <h3>Motivo y Antecedentes</h3>
                             <div class="dato-item"><strong>Motivo de Consulta:</strong> <p>${mostrarLargo(datos.motivo_consulta)}</p></div>
                             <div class="dato-item"><strong>Antecedentes Personales:</strong> <p>${mostrarLargo(datos.antecedentes_personales)}</p></div>
@@ -9386,7 +9477,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                             <div class="dato-item"><strong>Grado de Instrucción:</strong> <p>${mostrar(datos.padre_instruccion)}</p></div>
                             <div class="dato-item"><strong>Ocupación:</strong> <p>${mostrar(datos.padre_ocupacion)}</p></div>
                             <div class="dato-item"><strong>Teléfono:</strong> <p>${mostrar(datos.padre_telefono)}</p></div>
-                            <div class="dato-item"><strong>Dirección:</strong> <p>${mostrarLargo(datos.padre_direccion)}</p></div>
+                            <div class="dato-item"><strong>Dirección:</strong> <p>${formatearDireccion(datos.padre_direccion)}</p></div>
                             <h3>Datos de la Madre</h3>
                             <div class="dato-item"><strong>Nombre:</strong> <p>${mostrar(datos.madre_nombre)}</p></div>
                             <div class="dato-item"><strong>Edad:</strong> <p>${mostrar(datos.madre_edad)}</p></div>
@@ -9396,7 +9487,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                             <div class="dato-item"><strong>Grado de Instrucción:</strong> <p>${mostrar(datos.madre_instruccion)}</p></div>
                             <div class="dato-item"><strong>Ocupación:</strong> <p>${mostrar(datos.madre_ocupacion)}</p></div>
                             <div class="dato-item"><strong>Teléfono:</strong> <p>${mostrar(datos.madre_telefono)}</p></div>
-                            <div class="dato-item"><strong>Dirección:</strong> <p>${mostrarLargo(datos.madre_direccion)}</p></div>
+                            <div class="dato-item"><strong>Dirección:</strong> <p>${formatearDireccion(datos.madre_direccion)}</p></div>
                             <h3>Dinámica Familiar</h3>
                             <div class="dato-item"><strong>¿Padres viven juntos?:</strong> <p>${mostrar(datos.padres_viven_juntos)}</p></div>
                             <div class="dato-item"><strong>¿Están casados?:</strong> <p>${mostrar(datos.estan_casados)}</p></div>
