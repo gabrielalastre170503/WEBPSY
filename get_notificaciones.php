@@ -3,19 +3,14 @@
  * Lista las notificaciones del usuario en sesion + contador sin leer (Fase 4A).
  * La campana del topbar lo consulta periodicamente.
  */
-session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/notificaciones.php';
 
-header('Content-Type: application/json; charset=utf-8');
+api_json();
+api_require_login();
 
-if (!isset($_SESSION['usuario_id'])) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'No autenticado.']);
-    exit();
-}
-
-$uid = (int)$_SESSION['usuario_id'];
+$uid = api_uid();
 $items = [];
 foreach (eco_notificaciones_listar($conex, $uid, 15) as $n) {
     $items[] = [
@@ -30,8 +25,7 @@ foreach (eco_notificaciones_listar($conex, $uid, 15) as $n) {
     ];
 }
 
-echo json_encode([
-    'success'   => true,
+api_ok([
     'no_leidas' => eco_notificaciones_no_leidas($conex, $uid),
     'items'     => $items,
 ]);

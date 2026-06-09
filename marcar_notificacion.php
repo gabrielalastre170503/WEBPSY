@@ -4,35 +4,25 @@
  *   - todas=1            -> marca todas las del usuario
  *   - id=<n>             -> marca una
  */
-session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/notificaciones.php';
 
-header('Content-Type: application/json; charset=utf-8');
+api_json();
+api_require_login();
+api_require_post();
+api_require_csrf();
 
-if (!isset($_SESSION['usuario_id'])) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'No autenticado.']);
-    exit();
-}
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'message' => 'Metodo no permitido.']);
-    exit();
-}
-require_csrf();
+$uid = api_uid();
 
-$uid = (int)$_SESSION['usuario_id'];
-
-if (!empty($_POST['todas'])) {
+if (api_param('todas')) {
     $n = eco_notificaciones_marcar_todas($conex, $uid);
-    echo json_encode(['success' => true, 'marcadas' => $n, 'no_leidas' => 0]);
-    exit();
+    api_ok(['marcadas' => $n, 'no_leidas' => 0]);
 }
 
-$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+$id = api_int('id');
 if ($id <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Notificacion no valida.']);
-    exit();
+    api_fail('Notificacion no valida.');
 }
 eco_notificacion_marcar($conex, $id, $uid);
-echo json_encode(['success' => true, 'no_leidas' => eco_notificaciones_no_leidas($conex, $uid)]);
+api_ok(['no_leidas' => eco_notificaciones_no_leidas($conex, $uid)]);
