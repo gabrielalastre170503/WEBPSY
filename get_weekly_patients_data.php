@@ -1,17 +1,17 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
 header('Content-Type: application/json');
 
 // Seguridad: Solo para psicólogos
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista'])) {
     http_response_code(403);
     echo json_encode(['error' => 'Acceso denegado']);
     exit();
 }
 
-$psicologo_id = $_SESSION['usuario_id'];
+$ecografista_id = $_SESSION['usuario_id'];
 
 // --- CÓDIGO CORREGIDO PARA MOSTRAR DÍAS EN ESPAÑOL ---
 
@@ -40,12 +40,12 @@ for ($i = 6; $i >= 0; $i--) {
 $una_semana_atras = date('Y-m-d 00:00:00', strtotime('-6 days'));
 $sql = "SELECT DATE(fecha_registro) as dia, COUNT(id) as total 
         FROM usuarios 
-        WHERE creado_por_psicologo_id = ? 
+        WHERE creado_por_id = ? 
         AND fecha_registro >= ?
         GROUP BY dia";
 
 $stmt = $conex->prepare($sql);
-$stmt->bind_param("is", $psicologo_id, $una_semana_atras);
+$stmt->bind_param("is", $ecografista_id, $una_semana_atras);
 $stmt->execute();
 $resultado = $stmt->get_result();
 

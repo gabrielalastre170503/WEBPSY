@@ -1,35 +1,23 @@
 <?php
 session_start();
 include 'conexion.php';
+header('Content-Type: application/json; charset=utf-8');
 
-header('Content-Type: application/json');
-$response = ['success' => false, 'message' => 'Ocurrió un error.'];
-
-// Seguridad
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra'])) {
-    $response['message'] = 'Acceso no autorizado.';
+if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'ecografista') {
     http_response_code(403);
-    echo json_encode($response);
-    exit();
+    echo json_encode(['ok' => false, 'error' => 'Acceso denegado']); exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['paciente_id'])) {
-    $paciente_id = $_POST['paciente_id'];
-    $psicologo_id = $_SESSION['usuario_id'];
-
-    // Preparamos la consulta para borrar las notas de este paciente Y este psicólogo
-    $stmt = $conex->prepare("DELETE FROM notas_sesion WHERE paciente_id = ? AND psicologo_id = ?");
-    $stmt->bind_param("ii", $paciente_id, $psicologo_id);
-
-    if ($stmt->execute()) {
-        $response['success'] = true;
-        $response['message'] = 'Todas las notas del paciente han sido eliminadas.';
-    } else {
-        $response['message'] = 'Error al eliminar las notas de la base de datos.';
-    }
-    $stmt->close();
+$paciente_id = (int)($_POST['paciente_id'] ?? 0);
+if ($paciente_id <= 0) {
+    echo json_encode(['ok' => false, 'error' => 'Paciente inválido']); exit;
 }
 
-$conex->close();
-echo json_encode($response);
-?>
+if ($s = $conex->prepare("DELETE FROM notas_clinicas WHERE paciente_id=? AND ecografista_id=?")) {
+    $s->bind_param('ii', $paciente_id, $_SESSION['usuario_id']);
+    $s->execute();
+    echo json_encode(['ok' => true, 'eliminadas' => $s->affected_rows]);
+    $s->close();
+} else {
+    echo json_encode(['ok' => false, 'error' => 'Error de base de datos']);
+}

@@ -1,42 +1,42 @@
 <?php
 session_start();
 include 'conexion.php';
+header('Content-Type: application/json; charset=utf-8');
 
-header('Content-Type: application/json'); // ¡Muy importante!
-$response = ['success' => false, 'message' => 'Ocurrió un error inesperado.'];
-
-// Seguridad
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra'])) {
-    $response['message'] = 'Acceso no autorizado.';
+if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'ecografista') {
     http_response_code(403);
-    echo json_encode($response);
-    exit();
+    echo json_encode(['ok' => false, 'error' => 'Acceso denegado']); exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['paciente_id'], $_POST['fecha_sesion'], $_POST['nota'])) {
-    $paciente_id = $_POST['paciente_id'];
-    $fecha_sesion = $_POST['fecha_sesion'];
-    $nota = $_POST['nota'];
-    $psicologo_id = $_SESSION['usuario_id'];
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['ok' => false, 'error' => 'Método inválido']); exit;
+}
 
-    if (empty($nota)) {
-        $response['message'] = 'El campo de la nota no puede estar vacío.';
-        echo json_encode($response);
-        exit();
-    }
+$paciente_id  = (int)($_POST['paciente_id'] ?? 0);
+$fecha_sesion = trim($_POST['fecha_sesion'] ?? '');
+$contenido    = trim($_POST['contenido'] ?? '');
+$ecografista_id = (int)$_SESSION['usuario_id'];
 
-    $stmt = $conex->prepare("INSERT INTO notas_sesion (paciente_id, psicologo_id, fecha_sesion, nota) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("iiss", $paciente_id, $psicologo_id, $fecha_sesion, $nota);
+if ($paciente_id <= 0 || $contenido === '') {
+    echo json_encode(['ok' => false, 'error' => 'Faltan datos requeridos']); exit;
+}
 
-    if ($stmt->execute()) {
-        $response['success'] = true;
-        $response['message'] = '¡Nota guardada con éxito!';
+if ($fecha_sesion === '') {
+    $fecha_sesion = date('Y-m-d H:i:s');
+} else {
+    $fecha_sesion = str_replace('T', ' ', $fecha_sesion);
+    if (strlen($fecha_sesion) === 16) $fecha_sesion .= ':00';
+}
+
+if ($s = $conex->prepare("INSERT INTO notas_clinicas (paciente_id, ecografista_id, fecha_sesion, contenido) VALUES (?,?,?,?)")) {
+    $s->bind_param('iiss', $paciente_id, $ecografista_id, $fecha_sesion, $contenido);
+    if ($s->execute()) {
+        echo json_encode(['ok' => true, 'id' => $s->insert_id]);
     } else {
-        $response['message'] = 'Error al guardar la nota en la base de datos.';
+        error_log('guardar_nota: ' . $s->error);
+        echo json_encode(['ok' => false, 'error' => 'No se pudo guardar la nota.']);
     }
-    $stmt->close();
+    $s->close();
+} else {
+    echo json_encode(['ok' => false, 'error' => 'Error de base de datos']);
 }
-
-$conex->close();
-echo json_encode($response);
-?>

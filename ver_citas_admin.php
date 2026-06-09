@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
@@ -18,7 +18,7 @@ $sql = "SELECT
             psicologo.nombre_completo as psicologo_nombre
         FROM citas c
         JOIN usuarios paciente ON c.paciente_id = paciente.id
-        LEFT JOIN usuarios psicologo ON c.psicologo_id = psicologo.id
+        LEFT JOIN usuarios psicologo ON c.ecografista_id = psicologo.id
         ORDER BY c.fecha_solicitud DESC";
 
 $resultado = $conex->query($sql);
@@ -27,7 +27,7 @@ $resultado = $conex->query($sql);
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Historial de Citas - WebPSY</title>
+    <title>Historial de Citas - EcoMadelleine</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -50,10 +50,10 @@ $resultado = $conex->query($sql);
         .status-cancelada { background-color: #dc3545; }
         .status-completada { background-color: #28a745; }
         .status-reprogramada { background-color: #fd7e14; }
-        .action-links a { text-decoration: none; padding: 6px 12px; border-radius: 5px; font-weight: 500; color: white !important; display: inline-block; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.2s; font-size: 13px; margin-right: 8px; }
+        .action-links a, .action-links button { text-decoration: none; padding: 6px 12px; border-radius: 5px; font-weight: 500; color: white !important; display: inline-block; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.2s; font-size: 13px; margin-right: 8px; border: none; cursor: pointer; font-family: inherit; }
         .action-links a:last-child { margin-right: 0; }
-        .action-links a:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .action-links a.reject { background-color: #dc3545; }
+        .action-links a:hover, .action-links button:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .action-links a.reject, .action-links button.reject { background-color: #dc3545; }
         
         /* --- ESTILOS PARA LA TABLA ORDENABLE --- */
         .sortable-header {
@@ -115,11 +115,12 @@ $resultado = $conex->query($sql);
                 <td><?php echo $cita['fecha_cita'] ? htmlspecialchars(date('d/m/Y h:i A', strtotime($cita['fecha_cita']))) : 'N/A'; ?></td>
                 <td><span class="status-badge status-<?php echo htmlspecialchars($cita['estado']); ?>"><?php echo htmlspecialchars(ucfirst($cita['estado'])); ?></span></td>
                 <td class="action-links">
-                    <a href="borrar_cita_admin.php?id=<?php echo $cita['id']; ?>" 
-                       class="reject" 
-                       onclick="return confirm('¿Estás seguro de que quieres eliminar esta cita permanentemente?');">
-                       <i class="fa-solid fa-trash"></i> Eliminar
-                    </a>
+                    <form method="post" action="borrar_cita_admin.php" style="display:inline"
+                          onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta cita permanentemente?');">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="id" value="<?php echo (int)$cita['id']; ?>">
+                        <button type="submit" class="reject"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                    </form>
                 </td>
             </tr>
         <?php endwhile; ?>

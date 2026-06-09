@@ -1,21 +1,36 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
 // Seguridad: Solo psicólogos y roles autorizados
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
     header('Location: login.php');
     exit();
 }
 if (!isset($_GET['paciente_id'])) { die("Error: No se especificó un paciente."); }
 
-$paciente_id = $_GET['paciente_id'];
+$paciente_id = (int)$_GET['paciente_id'];
 $stmt = $conex->prepare("SELECT nombre_completo FROM usuarios WHERE id = ?");
 $stmt->bind_param("i", $paciente_id);
 $stmt->execute();
 $paciente = $stmt->get_result()->fetch_assoc();
 
 if (!$paciente) { die("Error: Paciente no encontrado."); }
+
+$rol_usuario = $_SESSION['rol'] ?? '';
+$ecografistas_prog = [];
+if ($rol_usuario === 'recepcionista') {
+    $ex = $conex->query("SELECT id, nombre_completo FROM usuarios WHERE rol = 'ecografista' AND estado = 'aprobado' ORDER BY nombre_completo ASC");
+    if ($ex) {
+        while ($r = $ex->fetch_assoc()) {
+            $ecografistas_prog[] = $r;
+        }
+        $ex->free();
+    }
+}
+
+$tipos_eco = $conex->query("SELECT id, nombre, categoria FROM tipos_ecografias WHERE activo = 1 ORDER BY categoria, nombre");
+$href_volver = ($rol_usuario === 'recepcionista') ? 'recepcion_gestion_pacientes.php' : (($rol_usuario === 'ecografista') ? 'mis_pacientes.php' : 'panel.php?vista=pacientes');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -138,20 +153,45 @@ if (!$paciente) { die("Error: Paciente no encontrado."); }
         
         <form action="guardar_cita_directa.php" method="POST">
             <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
-            
+
+            <?php if ($rol_usuario === 'recepcionista'): ?>
+            <div class="form-group">
+                <label for="ecografista_prog">Ecografista responsable:</label>
+                <select name="ecografista_id" id="ecografista_prog" required style="width:100%;padding:12px;border:1px solid #ccc;border-radius:8px;font-size:15px;background:white;font-family:inherit;">
+                    <option value="">— Seleccione —</option>
+                    <?php foreach ($ecografistas_prog as $eco): ?>
+                        <option value="<?php echo (int)$eco['id']; ?>"><?php echo htmlspecialchars($eco['nombre_completo']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+
+            <div class="form-group">
+                <label for="tipo_ecografia_id">Tipo de Ecografía:</label>
+                <i class="fa-solid fa-wave-square"></i>
+                <select name="tipo_ecografia_id" id="tipo_ecografia_id" required style="width:100%;padding:12px 15px 12px 45px;border:1px solid #ccc;border-radius:8px;font-size:15px;background:white;">
+                    <option value="">-- Selecciona el estudio --</option>
+                    <?php while ($t = $tipos_eco->fetch_assoc()): ?>
+                        <option value="<?php echo (int)$t['id']; ?>">
+                            <?php echo htmlspecialchars(($t['categoria'] ? $t['categoria'] . ' - ' : '') . $t['nombre']); ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+
             <div class="form-group">
                 <label for="calendario">Fecha y Hora de la Cita:</label>
                 <i class="fa-solid fa-calendar-alt"></i>
                 <input type="text" id="calendario" name="fecha_cita" placeholder="Haz clic para seleccionar..." required>
             </div>
-            
+
             <div class="form-group">
-                <label for="motivo_consulta">Motivo de la consulta:</label>
-                <textarea name="motivo_consulta" id="motivo_consulta" rows="4" required placeholder="Ej: Cita de seguimiento, revisión de progreso, etc."></textarea>
+                <label for="motivo_consulta">Antecedentes médicos y detalles:</label>
+                <textarea name="motivo_consulta" id="motivo_consulta" rows="4" placeholder="Ej: Control de embarazo, dolor abdominal, evaluación de nódulos..."></textarea>
             </div>
-            
+
             <button type="submit" class="btn-submit">Guardar Cita</button>
-            <a href="panel.php?vista=pacientes" class="back-link">Cancelar y Volver</a>
+            <a href="<?php echo htmlspecialchars($href_volver); ?>" class="back-link">Cancelar y Volver</a>
         </form>
     </div>
 

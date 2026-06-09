@@ -1,9 +1,10 @@
 <?php
 session_start();
 include 'conexion.php';
+require_once __DIR__ . '/lib/seguridad.php';
 
 // Seguridad: Solo roles autorizados pueden crear pacientes
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
     header('Location: login.php');
     exit();
 }
@@ -11,11 +12,14 @@ if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo',
 $mensaje = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    require_csrf();
     $nombre_completo = trim($_POST['nombre_completo']);
     $fecha_nacimiento = $_POST['fecha_nacimiento'];
     $cedula_tipo = $_POST['cedula_tipo'];
     $cedula_numero = trim($_POST['cedula_numero']);
     $cedula = $cedula_tipo . $cedula_numero;
+    $direccion = trim($_POST['direccion'] ?? '');
+    $telefono = trim($_POST['telefono'] ?? '');
     $correo = trim($_POST['correo']);
     $contrasena = $_POST['contrasena'];
     $confirmar_contrasena = $_POST['confirmar_contrasena'];
@@ -45,11 +49,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mensaje = "El correo electrónico o la cédula ya están registrados.";
         } else {
             $contrasena_hasheada = password_hash($contrasena, PASSWORD_DEFAULT);
-            
-            $insert_stmt = $conex->prepare("INSERT INTO usuarios (nombre_completo, fecha_nacimiento, edad, cedula, correo, contrasena, rol, estado, creado_por_psicologo_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $insert_stmt->bind_param("ssisssssi", $nombre_completo, $fecha_nacimiento, $edad, $cedula, $correo, $contrasena_hasheada, $rol, $estado, $creado_por_id);
+            $email_verificado = 1; // creado por un profesional → cuenta de confianza
+
+            $insert_stmt = $conex->prepare("INSERT INTO usuarios (nombre_completo, fecha_nacimiento, cedula, direccion, telefono, correo, contrasena, rol, estado, email_verificado, creado_por_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $insert_stmt->bind_param("sssssssssii", $nombre_completo, $fecha_nacimiento, $cedula, $direccion, $telefono, $correo, $contrasena_hasheada, $rol, $estado, $email_verificado, $creado_por_id);
             
             if ($insert_stmt->execute()) {
+                eco_auditar($conex, 'paciente_creado', ['entidad' => 'usuario', 'entidad_id' => $insert_stmt->insert_id, 'detalle' => ['correo' => $correo]]);
                 $_SESSION['mensaje_exito'] = "¡Paciente " . htmlspecialchars($nombre_completo) . " creado con éxito!";
                 header('Location: panel.php?vista=pacientes');
                 exit();
@@ -97,6 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <?php endif; ?>
 
         <form method="POST" action="crear_paciente.php">
+            <?= csrf_field() ?>
             <div class="input-group">
                 <i class="fa-solid fa-user"></i>
                 <input type="text" name="nombre_completo" placeholder="Nombre Completo" required>
@@ -127,8 +134,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <input type="email" name="correo" placeholder="Correo Electrónico" required>
             </div>
             <div class="input-group">
+                <i class="fa-solid fa-location-dot"></i>
+                <input type="text" name="direccion" placeholder="Dirección física (estado, sector)" required maxlength="255">
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-phone"></i>
+                <input type="tel" name="telefono" placeholder="Teléfono" required maxlength="30">
+            </div>
+            <div class="input-group">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" name="contrasena" id="contrasena" placeholder="Contraseña" required 
+                <input type="password" name="contrasena" id="contrasena" placeholder="Contraseña" required
                        minlength="8" 
                        pattern="(?=.*[A-Z])(?=.*[\W_]).{8,}" 
                        title="Mínimo 8 caracteres, una mayúscula y un símbolo.">

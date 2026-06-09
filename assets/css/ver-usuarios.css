@@ -1,0 +1,459 @@
+/* Gestión de usuarios — Administrador (shell premium) */
+
+body.ver-usuarios-page .page-header {
+    align-items: center;
+    margin-bottom: 14px;
+    gap: 12px;
+}
+
+body.ver-usuarios-page .page-header h1 {
+    margin: 0 0 2px;
+    font-size: 22px;
+}
+
+body.ver-usuarios-page .page-header p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+/* Filtros rápidos */
+.vu-filter-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.vu-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border-soft);
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vu-filter-chip i {
+    font-size: 11px;
+    opacity: 0.85;
+}
+
+.vu-filter-chip:hover {
+    border-color: rgba(2, 177, 244, 0.4);
+    color: var(--accent-text);
+    background: var(--bg-muted);
+}
+
+.vu-filter-chip.is-active {
+    color: var(--accent-text);
+    background: var(--accent-soft);
+    border-color: rgba(2, 177, 244, 0.45);
+    box-shadow: 0 2px 8px rgba(2, 177, 244, 0.1);
+}
+
+/* Buscador + total */
+.vu-controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+@media (max-width: 768px) {
+    .vu-controls-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.vu-controls-grid .card {
+    padding: 14px 18px;
+}
+
+.vu-search-wrap {
+    position: relative;
+}
+
+.vu-search-wrap .fa-magnifying-glass {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.vu-search-input {
+    width: 100%;
+    padding: 11px 14px 11px 40px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13.5px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vu-search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.vu-total-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.vu-total-card__icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+}
+
+.vu-total-card__label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.vu-total-card__value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+/* Tabla */
+#vu-users-list-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.vu-users-wrap.data-table {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+}
+
+.vu-users-wrap .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+.vu-users-wrap .rx-pac-table {
+    width: 100%;
+    min-width: 980px;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+}
+
+.vu-users-wrap .rx-pac-table th,
+.vu-users-wrap .rx-pac-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    vertical-align: middle;
+    text-align: left;
+    overflow: hidden;
+}
+
+.vu-users-wrap .rx-pac-table col.col-usuario { width: 20%; }
+.vu-users-wrap .rx-pac-table col.col-cedula { width: 11%; }
+.vu-users-wrap .rx-pac-table col.col-correo { width: 20%; }
+.vu-users-wrap .rx-pac-table col.col-rol { width: 11%; }
+.vu-users-wrap .rx-pac-table col.col-estado { width: 10%; }
+.vu-users-wrap .rx-pac-table col.col-acciones { width: 28%; }
+
+.vu-users-wrap .rx-pac-table thead th {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 700;
+    background: var(--bg-muted);
+    border-bottom: 1px solid var(--border);
+}
+
+.vu-users-wrap .rx-sort-th {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.vu-users-wrap .rx-sort-th:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.vu-users-wrap .rx-sort-th__inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.vu-users-wrap .rx-sort-icons {
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 0.55;
+    gap: 1px;
+}
+
+.vu-users-wrap .rx-sort-icon {
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0.3;
+}
+
+.vu-users-wrap .rx-sort-th--asc .rx-sort-up,
+.vu-users-wrap .rx-sort-th--desc .rx-sort-down {
+    color: var(--accent-text);
+    opacity: 1;
+}
+
+.vu-users-wrap .rx-pac-table tbody tr:hover {
+    background: var(--bg-muted);
+}
+
+.vu-users-wrap .rx-pac-cell-nombre {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.vu-users-wrap .rx-pac-avatar {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+    color: #fff;
+}
+
+.vu-users-wrap .rx-pac-avatar--eco {
+    background: linear-gradient(135deg, var(--accent), #38bdf8);
+}
+
+.vu-users-wrap .rx-pac-avatar--rx {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+}
+
+.vu-users-wrap .rx-pac-avatar--pat {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.vu-users-wrap .rx-pac-avatar--admin {
+    background: linear-gradient(135deg, #64748b, #94a3b8);
+}
+
+.vu-users-wrap .rx-pac-td-nombre {
+    text-transform: capitalize;
+}
+
+.vu-users-wrap .rx-pac-td-nombre strong {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.vu-users-wrap .vu-rol-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: var(--bg-muted);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-soft);
+}
+
+.vu-users-wrap .vu-rol-badge--eco {
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    border-color: transparent;
+}
+
+.vu-users-wrap .vu-rol-badge--rx {
+    background: rgba(99, 102, 241, 0.12);
+    color: #6366f1;
+    border-color: transparent;
+}
+
+.vu-users-wrap .vu-estado-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.vu-users-wrap .vu-estado-badge--aprobado {
+    background: rgba(34, 197, 94, 0.12);
+    color: #15803d;
+}
+
+.vu-users-wrap .vu-estado-badge--inhabilitado {
+    background: rgba(100, 116, 139, 0.15);
+    color: #475569;
+}
+
+.vu-users-wrap .vu-estado-badge--pendiente {
+    background: rgba(234, 179, 8, 0.15);
+    color: #a16207;
+}
+
+.vu-users-wrap .rx-pac-table th.rx-th-acciones,
+.vu-users-wrap .rx-pac-table td.rx-td-acciones {
+    text-align: right;
+    overflow: visible;
+    min-width: 240px;
+}
+
+.vu-users-wrap .acciones-wrapper {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: flex-end;
+    align-items: center;
+    white-space: nowrap;
+    width: auto;
+    max-width: 100%;
+}
+
+.vu-users-wrap .vu-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.vu-users-wrap .vu-btn i {
+    font-size: 11px;
+}
+
+.vu-users-wrap .vu-btn--reset {
+    background: rgba(2, 177, 244, 0.07);
+    border: 1px solid rgba(2, 177, 244, 0.4);
+    color: var(--accent-text);
+}
+
+.vu-users-wrap .vu-btn--reset:hover {
+    background: rgba(2, 177, 244, 0.14);
+}
+
+.vu-users-wrap .vu-btn--warn {
+    background: #fff;
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    color: #64748b;
+}
+
+.vu-users-wrap .vu-btn--warn:hover {
+    border-color: rgba(185, 28, 28, 0.35);
+    color: #9f1239;
+}
+
+.vu-users-wrap .vu-btn--ok {
+    background: #fff;
+    border: 1px solid rgba(34, 197, 94, 0.45);
+    color: #15803d;
+}
+
+.vu-users-wrap .vu-btn--ok:hover {
+    background: rgba(34, 197, 94, 0.08);
+}
+
+.vu-users-wrap .vu-btn--approve {
+    background: var(--accent-soft);
+    border: 1px solid rgba(2, 177, 244, 0.45);
+    color: var(--accent-text);
+}
+
+.vu-users-wrap .vu-btn--approve:hover {
+    background: rgba(2, 177, 244, 0.18);
+}
+
+.vu-users-empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 14px;
+}
+
+.vu-users-empty i {
+    display: block;
+    font-size: 28px;
+    margin-bottom: 10px;
+    opacity: 0.45;
+}
+
+/* Modal contraseña temporal */
+#eco-modal-vu-temp-pass .eco-modal__dialog {
+    max-width: 440px;
+    text-align: center;
+}
+
+.vu-temp-pass-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.12);
+    color: #15803d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+}
+
+.vu-temp-pass-box {
+    background: var(--bg-muted);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+.vu-temp-pass-box code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--text-primary);
+}

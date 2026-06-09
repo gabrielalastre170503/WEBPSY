@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -93,17 +93,17 @@
     <div class="main-container">
         <h2>Únete a nuestra comunidad</h2>
         <div class="roles-grid">
-            <a href="registro.php?rol=psicologo" class="rol-card">
+            <a href="registro.php?rol=ecografista" class="rol-card">
                 <i class="fa-solid fa-user-doctor"></i>
                 <span>Psicólogo</span>
             </a>
             
-            <a href="registro.php?rol=psiquiatra" class="rol-card">
+            <a href="registro.php?rol=ecografista" class="rol-card">
                 <i class="fa-solid fa-brain"></i>
                 <span>Psiquiatra</span>
             </a>
 
-            <a href="registro.php?rol=secretaria" class="rol-card">
+            <a href="registro.php?rol=recepcionista" class="rol-card">
                 <i class="fa-solid fa-user-nurse"></i>
                 <span>Secretario/a</span>
             </a>

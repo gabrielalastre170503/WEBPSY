@@ -1,6 +1,7 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
+require_once __DIR__ . '/lib/citas.php';
 
 // Seguridad: Solo pacientes pueden solicitar
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
@@ -10,13 +11,13 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Validar que todos los datos necesarios llegaron
-    if (empty($_POST['psicologo_id']) || empty($_POST['fecha_seleccionada']) || empty($_POST['hora_seleccionada']) || empty($_POST['motivo_consulta'])) {
-        header('Location: panel.php?vista=solicitar&error=faltan_datos');
+    if (empty($_POST['ecografista_id']) || empty($_POST['fecha_seleccionada']) || empty($_POST['hora_seleccionada']) || empty($_POST['motivo_consulta'])) {
+        header('Location: solicitar_cita_paciente.php?error=faltan_datos');
         exit();
     }
 
     $paciente_id = $_SESSION['usuario_id'];
-    $psicologo_id = $_POST['psicologo_id'];
+    $ecografista_id = $_POST['ecografista_id'];
     $motivo = $_POST['motivo_consulta'];
     
     // Nuevos campos
@@ -24,6 +25,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $modalidad = $_POST['modalidad'];
     $motivo_principal = $_POST['motivo_principal'];
     $notas_paciente = $_POST['notas_paciente'];
+    // Tipo de ecografía elegido en el selector visual (puede ir nulo si no se eligió)
+    $tipo_ecografia_id = !empty($_POST['tipo_ecografia_id']) ? (int)$_POST['tipo_ecografia_id'] : null;
+
+    // Cargo inicial: el "Total $X" acordado en el resumen de servicios (incluye todo
+    // el bundle); si no hay total en el texto, el precio del estudio seleccionado.
+    require_once __DIR__ . '/lib/facturacion.php';
+    $monto_total = eco_total_desde_texto($motivo_principal);
+    if ($monto_total === null && $tipo_ecografia_id) {
+        if ($pst = $conex->prepare("SELECT precio FROM tipos_ecografias WHERE id = ?")) {
+            $pst->bind_param('i', $tipo_ecografia_id);
+            $pst->execute();
+            $prow = $pst->get_result()->fetch_assoc();
+            $pst->close();
+            if ($prow && (float)$prow['precio'] > 0) {
+                $monto_total = (float)$prow['precio'];
+            }
+        }
+    }
 
     // Combinar la fecha y la hora seleccionadas
     $fecha_cita_str = $_POST['fecha_seleccionada'] . ' ' . $_POST['hora_seleccionada'];
@@ -31,15 +50,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Insertar la cita con todos los nuevos detalles
     $stmt = $conex->prepare("
-        INSERT INTO citas (paciente_id, psicologo_id, motivo_consulta, tipo_cita, modalidad, motivo_principal, notas_paciente, fecha_cita, estado) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')
+        INSERT INTO citas (paciente_id, ecografista_id, tipo_ecografia_id, motivo_consulta, tipo_cita, modalidad, motivo_principal, notas_paciente, fecha_cita, estado, monto_total)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente', ?)
     ");
-    $stmt->bind_param("iissssss", $paciente_id, $psicologo_id, $motivo, $tipo_cita, $modalidad, $motivo_principal, $notas_paciente, $fecha_cita);
+    $stmt->bind_param("iiissssssd", $paciente_id, $ecografista_id, $tipo_ecografia_id, $motivo, $tipo_cita, $modalidad, $motivo_principal, $notas_paciente, $fecha_cita, $monto_total);
     
     if ($stmt->execute()) {
-        header('Location: panel.php?vista=miscitas&status=cita_creada');
+        eco_cita_evento($conex, (int)$stmt->insert_id, 'solicitada', ['estado_nuevo' => 'pendiente', 'detalle' => ['tipo_ecografia_id' => $tipo_ecografia_id, 'fecha' => $fecha_cita]]);
+        header('Location: mis_citas_paciente.php?status=cita_creada');
     } else {
-        header('Location: panel.php?vista=solicitar&error=error_guardar');
+        header('Location: solicitar_cita_paciente.php?error=error_guardar');
     }
     $stmt->close();
 }

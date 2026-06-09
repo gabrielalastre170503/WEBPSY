@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
@@ -11,21 +11,21 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
     exit();
 }
 
-if (!isset($_GET['psicologo_id']) || !isset($_GET['fecha'])) {
+if (!isset($_GET['ecografista_id']) || !isset($_GET['fecha'])) {
     http_response_code(400);
     echo json_encode(['error' => 'Faltan parámetros']);
     exit();
 }
 
-$psicologo_id = (int)$_GET['psicologo_id'];
+$ecografista_id = (int)$_GET['ecografista_id'];
 $fecha_seleccionada = $_GET['fecha'];
 $horas_disponibles = [];
 
 try {
     // 1. Obtener el horario semanal para el día seleccionado
     $dia_semana = date('N', strtotime($fecha_seleccionada)); // 1 (Lunes) a 7 (Domingo)
-    $stmt_horario = $conex->prepare("SELECT hora_inicio, hora_fin FROM horarios_recurrentes WHERE psicologo_id = ? AND dia_semana = ?");
-    $stmt_horario->bind_param("ii", $psicologo_id, $dia_semana);
+    $stmt_horario = $conex->prepare("SELECT hora_inicio, hora_fin FROM horarios_recurrentes WHERE ecografista_id = ? AND dia_semana = ?");
+    $stmt_horario->bind_param("ii", $ecografista_id, $dia_semana);
     $stmt_horario->execute();
     $resultado_horario = $stmt_horario->get_result();
     
@@ -40,8 +40,8 @@ try {
 
     // 2. Si hay horario, obtener las citas ya confirmadas para ESE DÍA
     $citas_confirmadas = [];
-    $stmt_citas = $conex->prepare("SELECT fecha_cita FROM citas WHERE psicologo_id = ? AND DATE(fecha_cita) = ? AND estado IN ('confirmada', 'reprogramada')");
-    $stmt_citas->bind_param("is", $psicologo_id, $fecha_seleccionada);
+    $stmt_citas = $conex->prepare("SELECT fecha_cita FROM citas WHERE ecografista_id = ? AND DATE(fecha_cita) = ? AND estado IN ('confirmada', 'reprogramada')");
+    $stmt_citas->bind_param("is", $ecografista_id, $fecha_seleccionada);
     $stmt_citas->execute();
     $resultado_citas = $stmt_citas->get_result();
     while ($fila = $resultado_citas->fetch_assoc()) {

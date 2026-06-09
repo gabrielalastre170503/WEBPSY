@@ -20,7 +20,7 @@ $rangos = [
 ];
 
 // Consulta para obtener las edades de todos los pacientes activos
-$sql = "SELECT edad FROM usuarios WHERE rol = 'paciente' AND estado = 'aprobado' AND edad IS NOT NULL";
+$sql = "SELECT TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad FROM usuarios WHERE rol = 'paciente' AND estado = 'aprobado' AND fecha_nacimiento IS NOT NULL";
 $resultado = $conex->query($sql);
 
 if ($resultado) {

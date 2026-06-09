@@ -2,165 +2,274 @@
 session_start();
 include 'conexion.php';
 
-// Seguridad: Solo psicólogos pueden acceder
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra'])) {
+if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'ecografista') {
     header('Location: login.php');
-    exit();
+    exit;
 }
 
-$psicologo_id = $_SESSION['usuario_id'];
+$ecografista_id = (int)$_SESSION['usuario_id'];
+$nombre_usuario = $_SESSION['nombre_completo'] ?? $_SESSION['nombre_usuario'] ?? '';
 
-// Obtener el horario recurrente guardado
 $horario_recurrente = [];
-$stmt = $conex->prepare("SELECT dia_semana, hora_inicio, hora_fin FROM horarios_recurrentes WHERE psicologo_id = ?");
-$stmt->bind_param("i", $psicologo_id);
+$stmt = $conex->prepare('SELECT dia_semana, hora_inicio, hora_fin FROM horarios_recurrentes WHERE ecografista_id = ?');
+$stmt->bind_param('i', $ecografista_id);
 $stmt->execute();
 $resultado = $stmt->get_result();
 while ($fila = $resultado->fetch_assoc()) {
-    $horario_recurrente[$fila['dia_semana']] = [
-        'inicio' => date("H:i", strtotime($fila['hora_inicio'])),
-        'fin' => date("H:i", strtotime($fila['hora_fin']))
+    $horario_recurrente[(int)$fila['dia_semana']] = [
+        'inicio' => date('H:i', strtotime($fila['hora_inicio'])),
+        'fin'    => date('H:i', strtotime($fila['hora_fin'])),
     ];
 }
 $stmt->close();
-?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Gestionar Mi Disponibilidad - WebPSY</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <style>
-        /* (Tus estilos existentes para la página se mantienen igual) */
-        body { background-color: #f0f2f5; font-family: "Poppins", sans-serif; margin: 0; padding: 30px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .panel { background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.07); margin-bottom: 30px; }
-    h1, h2 { color: #333; margin-top: 0; }
-    .section-title { display: flex; align-items: center; gap: 12px; font-size: 22px; }
-    .section-title .back-arrow { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; border: 1px solid #d0d6fd; color: #0c3b8c; text-decoration: none; font-size: 16px; transition: all 0.25s ease; background: linear-gradient(135deg, rgba(12,59,140,0.08), rgba(2,177,244,0.12)); }
-    .section-title .back-arrow:hover { background: linear-gradient(135deg, rgba(12,59,140,0.18), rgba(2,177,244,0.22)); transform: translateX(-2px); }
-        h1 { margin-bottom: 5px; }
-        .page-subtitle { color: #777; margin-top: 0; margin-bottom: 20px; }
-        .back-link { text-decoration: none; color: #555; font-weight: 500; display: inline-block; margin-bottom: 20px; }
-        .management-grid {
-    display: grid;
-    /* Columna 1 (Horario) fija en 450px, Columna 2 (Calendario) en 600px */
-    grid-template-columns: 550px 720px; /* <-- LÍNEA CORREGIDA */
-    gap: 30px;
-    justify-content: center; /* Centra la rejilla si sobra espacio */
-}
-        .schedule-form h2 { font-size: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
-        .day-schedule { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #f0f0f0; }
-        .day-schedule:last-of-type { border-bottom: none; }
-        .day-schedule label.day-name { font-weight: 500; color: #333; }
-        .time-inputs { display: flex; align-items: center; gap: 8px; color: #777; }
-        .time-inputs input.time-picker { width: 110px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-family: "Poppins", sans-serif; font-size: 14px; text-align: center; cursor: pointer; }
-        .btn-save { cursor: pointer; border: none; padding: 12px 25px; border-radius: 8px; background: linear-gradient(45deg, #02b1f4, #00c2ff); color: white; font-weight: 600; font-size: 16px; transition: all 0.3s ease; width: 100%; margin-top: 20px; }
-        .btn-save:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(2, 177, 244, 0.4); }
-        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #28a745; }
-        input:checked + .slider:before { transform: translateX(22px); }
-        #calendar-container { height: 70vh; }
-        .fc-daygrid-day.fc-day-today { background-color: #e9f7fe; }
-        .calendar-legend { display: flex; justify-content: center; gap: 20px; margin-top: 15px; font-size: 13px; }
-        .legend-item { display: flex; align-items: center; }
-        .legend-color { width: 15px; height: 15px; border-radius: 4px; margin-right: 8px; }
-        @media (max-width: 991px) { .management-grid { grid-template-columns: 1fr; } }
-    </style>
-</head>
-<body>
-    <div class="container">
-        
 
-        <div class="management-grid">
-            <!-- Columna Izquierda: Horario Semanal -->
-            <div class="panel schedule-form">
-                <h2 class="section-title">
-                    <a href="panel.php" class="back-arrow" title="Volver al panel"><i class="fa-solid fa-arrow-left"></i></a>
-                    Horario Semanal Fijo
-                </h2>
-                <form action="guardar_disponibilidad.php" method="POST">
-                    <input type="hidden" name="accion" value="guardar_recurrente">
-                    <?php
-                    $dias = ["1" => "Lunes", "2" => "Martes", "3" => "Miércoles", "4" => "Jueves", "5" => "Viernes", "6" => "Sábado", "7" => "Domingo"];
-                    foreach ($dias as $num => $nombre):
-                        $checked = isset($horario_recurrente[$num]) ? 'checked' : '';
+$dias_activos = count($horario_recurrente);
+$horas_semanales = 0.0;
+foreach ($horario_recurrente as $h) {
+    $ini = strtotime($h['inicio']);
+    $fin = strtotime($h['fin']);
+    if ($fin > $ini) {
+        $horas_semanales += ($fin - $ini) / 3600;
+    }
+}
+$horas_semanales = round($horas_semanales, 1);
+
+// Fechas bloqueadas (excepciones) para pintarlas en el calendario
+$blocked_dates = [];
+if ($s = $conex->prepare("SELECT fecha FROM disponibilidad_excepciones WHERE ecografista_id = ? AND tipo = 'no_disponible'")) {
+    $s->bind_param('i', $ecografista_id);
+    $s->execute();
+    $rs = $s->get_result();
+    while ($row = $rs->fetch_assoc()) {
+        $blocked_dates[] = date('Y-m-d', strtotime($row['fecha']));
+    }
+    $s->close();
+}
+$excepciones_count = count($blocked_dates);
+
+// Días laborables en numeración JS (0=Domingo … 6=Sábado) para marcar los círculos
+$working_js_days = [];
+foreach (array_keys($horario_recurrente) as $d) {
+    $working_js_days[] = ((int)$d === 7) ? 0 : (int)$d;
+}
+
+$status = isset($_GET['status']) ? (string)$_GET['status'] : '';
+$dias = [
+    1 => ['nombre' => 'Lunes',     'inicial' => 'L'],
+    2 => ['nombre' => 'Martes',    'inicial' => 'M'],
+    3 => ['nombre' => 'Miércoles', 'inicial' => 'X'],
+    4 => ['nombre' => 'Jueves',    'inicial' => 'J'],
+    5 => ['nombre' => 'Viernes',   'inicial' => 'V'],
+    6 => ['nombre' => 'Sábado',    'inicial' => 'S'],
+    7 => ['nombre' => 'Domingo',   'inicial' => 'D'],
+];
+
+$browser_title   = 'Mi Disponibilidad';
+$page_title      = '';
+$page_subtitle   = '';
+$active_section  = 'disponibilidad';
+$body_class      = 'disp-page';
+// Cache-busting con filemtime: el navegador refresca el CSS al cambiar el archivo.
+$disp_css_ver = @filemtime(__DIR__ . '/assets/css/gestionar-disponibilidad.css') ?: time();
+$page_head_extra = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">'
+    . '<link rel="stylesheet" href="assets/css/gestionar-disponibilidad.css?v=' . $disp_css_ver . '">';
+$page_header_actions = '';
+
+ob_start();
+?>
+
+<?php if ($status === 'ok'): ?>
+    <div class="disp-feedback disp-feedback--ok" role="status">
+        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+        <span>Disponibilidad actualizada correctamente.</span>
+    </div>
+<?php endif; ?>
+
+<div class="stats-grid disp-stats">
+    <div class="stat-card disp-stat-enhanced">
+        <div class="stat-card-icon" style="background:var(--accent-soft);color:var(--accent-text);">
+            <i class="fa-solid fa-calendar-check"></i>
+        </div>
+        <p class="stat-card-label">Días activos</p>
+        <p class="stat-card-value accent" id="stat-dias-activos"><?= $dias_activos ?></p>
+        <p class="stat-card-sub">de 7 días de la semana</p>
+        <div class="disp-stat-bar"><span class="disp-stat-bar__fill disp-stat-bar__fill--accent" id="stat-bar-dias" style="width:<?= ($dias_activos / 7) * 100 ?>%"></span></div>
+    </div>
+    <div class="stat-card disp-stat-enhanced">
+        <div class="stat-card-icon" style="background:rgba(34,197,94,.12);color:#15803d;">
+            <i class="fa-solid fa-business-time"></i>
+        </div>
+        <p class="stat-card-label">Horas semanales</p>
+        <p class="stat-card-value success"><span id="stat-horas-semanales"><?= number_format($horas_semanales, 1) ?></span> h</p>
+        <p class="stat-card-sub">según horario configurado</p>
+        <div class="disp-stat-bar"><span class="disp-stat-bar__fill disp-stat-bar__fill--success" id="stat-bar-horas" style="width:<?= min(100, ($horas_semanales / 56) * 100) ?>%"></span></div>
+    </div>
+    <div class="stat-card disp-stat-enhanced">
+        <div class="stat-card-icon" style="background:rgba(239,68,68,.1);color:#dc2626;">
+            <i class="fa-solid fa-calendar-xmark"></i>
+        </div>
+        <p class="stat-card-label">Días bloqueados</p>
+        <p class="stat-card-value danger"><?= $excepciones_count ?></p>
+        <p class="stat-card-sub">excepciones en calendario</p>
+        <div class="disp-stat-bar"><span class="disp-stat-bar__fill disp-stat-bar__fill--danger" style="width:<?= min(100, ($excepciones_count / 30) * 100) ?>%"></span></div>
+    </div>
+</div>
+
+<div class="disp-layout">
+    <section class="disp-panel disp-schedule-card" aria-labelledby="disp-schedule-title">
+        <header class="disp-panel__head">
+            <div class="disp-panel__title">
+                <span class="disp-panel__icon" aria-hidden="true"><i class="fa-solid fa-repeat"></i></span>
+                <div>
+                    <h3 id="disp-schedule-title">Horario semanal fijo</h3>
+                    <p class="disp-panel__subtitle">Activa los días que trabajas y define tu jornada.</p>
+                </div>
+            </div>
+            <span class="disp-badge">Recurrente</span>
+        </header>
+
+        <div class="disp-panel__body">
+
+            <div class="disp-quick-bar" role="group" aria-label="Plantillas rápidas">
+                <span class="disp-quick-bar__label"><i class="fa-solid fa-wand-magic-sparkles"></i> Plantillas:</span>
+                <button type="button" class="disp-quick-btn" data-template="lv-9-17"><i class="fa-solid fa-briefcase"></i> L-V 9 a 17</button>
+                <button type="button" class="disp-quick-btn" data-template="ls-8-14"><i class="fa-solid fa-sun"></i> L-S 8 a 14</button>
+                <button type="button" class="disp-quick-btn" data-template="todos-9-13"><i class="fa-solid fa-calendar-week"></i> Todos 9 a 13</button>
+                <button type="button" class="disp-quick-btn disp-quick-btn--ghost" data-template="limpiar"><i class="fa-solid fa-eraser"></i> Limpiar</button>
+            </div>
+
+            <form action="guardar_disponibilidad.php" method="POST" class="disp-schedule-form" id="form-horario-recurrente">
+                <?= csrf_field() ?>
+                <input type="hidden" name="accion" value="guardar_recurrente">
+
+                <div class="disp-days">
+                    <?php foreach ($dias as $num => $info):
+                        $nombre = $info['nombre'];
+                        $inicial = $info['inicial'];
+                        $activo = isset($horario_recurrente[$num]);
                         $inicio = $horario_recurrente[$num]['inicio'] ?? '09:00';
-                        $fin = $horario_recurrente[$num]['fin'] ?? '17:00';
+                        $fin    = $horario_recurrente[$num]['fin'] ?? '17:00';
+                        $horas_dia = 0;
+                        if ($activo) {
+                            $ini = strtotime($inicio);
+                            $f   = strtotime($fin);
+                            if ($f > $ini) $horas_dia = round(($f - $ini) / 3600, 1);
+                        }
                     ?>
-                    <div class="day-schedule">
-                        <label class="switch">
-                            <input type="checkbox" name="dias[<?php echo $num; ?>][activo]" id="dia_<?php echo $num; ?>" <?php echo $checked; ?>>
-                            <span class="slider"></span>
-                        </label>
-                        <label for="dia_<?php echo $num; ?>" class="day-name"><?php echo $nombre; ?></label>
-                        <div class="time-inputs">
-                            De <input type="text" name="dias[<?php echo $num; ?>][inicio]" value="<?php echo $inicio; ?>" class="time-picker">
-                            a <input type="text" name="dias[<?php echo $num; ?>][fin]" value="<?php echo $fin; ?>" class="time-picker">
+                    <div class="disp-day-row<?= $activo ? ' is-active' : '' ?>" data-day="<?= (int)$num ?>">
+                        <div class="disp-day-row__left">
+                            <label class="disp-switch" title="Activar <?= htmlspecialchars($nombre) ?>">
+                                <input type="checkbox"
+                                       name="dias[<?= (int)$num ?>][activo]"
+                                       id="dia_<?= (int)$num ?>"
+                                       class="disp-day-toggle"
+                                       <?= $activo ? 'checked' : '' ?>>
+                                <span class="disp-switch-slider" aria-hidden="true"></span>
+                            </label>
+                            <span class="disp-day-circle" aria-hidden="true"><?= $inicial ?></span>
+                            <label for="dia_<?= (int)$num ?>" class="disp-day-name">
+                                <?= htmlspecialchars($nombre) ?>
+                                <span class="disp-day-hours" data-hours-label><?= $activo ? number_format($horas_dia, 1) . ' h' : '—' ?></span>
+                            </label>
+                        </div>
+
+                        <div class="contenedor-rango-horas" aria-label="Horario de <?= htmlspecialchars($nombre) ?>">
+                            <span class="disp-hora-connector disp-hora-connector--de">De</span>
+                            <span class="disp-time-slot">
+                                <input type="time"
+                                       name="dias[<?= (int)$num ?>][inicio]"
+                                       value="<?= htmlspecialchars($inicio) ?>"
+                                       class="input-hora-premium"
+                                       <?= $activo ? '' : 'disabled' ?>>
+                            </span>
+                            <span class="disp-hora-connector disp-hora-connector--a">a</span>
+                            <span class="disp-time-slot">
+                                <input type="time"
+                                       name="dias[<?= (int)$num ?>][fin]"
+                                       value="<?= htmlspecialchars($fin) ?>"
+                                       class="input-hora-premium"
+                                       <?= $activo ? '' : 'disabled' ?>>
+                            </span>
                         </div>
                     </div>
                     <?php endforeach; ?>
-                    <button type="submit" class="btn-save">Guardar Horario</button>
-                </form>
-            </div>
+                </div>
 
-            <!-- Columna Derecha: Calendario de Excepciones -->
-            <div class="panel">
-                <h2>Excepciones y Días Libres</h2>
-                
-                <div id="calendar-container"></div>
-                <div class="calendar-legend">
-                    <div class="legend-item"><span class="legend-color" style="background-color: #d4edda;"></span> Día Laborable</div>
-                    <div class="legend-item"><span class="legend-color" style="background-color: #f8d7da;"></span> Día No Disponible</div>
+                <div class="disp-panel__footer">
+                    <button type="submit" class="btn-primary disp-btn-save">
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                        Guardar horario semanal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="disp-panel disp-calendar-card" aria-labelledby="disp-calendar-title">
+        <header class="disp-panel__head">
+            <div class="disp-panel__title">
+                <span class="disp-panel__icon disp-panel__icon--calendar" aria-hidden="true"><i class="fa-solid fa-calendar-day"></i></span>
+                <div>
+                    <h3 id="disp-calendar-title">Excepciones y días libres</h3>
+                    <p class="disp-panel__subtitle">Click en un día para bloquearlo. Click sobre uno bloqueado para reactivarlo.</p>
                 </div>
             </div>
+            <span class="disp-badge disp-badge--muted">Calendario</span>
+        </header>
+
+        <div class="disp-panel__body">
+            <div class="disp-calendar-frame">
+                <div id="disp-calendar" class="disp-calendar-wrap"
+                     data-working-days="<?= htmlspecialchars(implode(',', $working_js_days), ENT_QUOTES) ?>"
+                     data-blocked-dates="<?= htmlspecialchars(implode(',', $blocked_dates), ENT_QUOTES) ?>"></div>
+            </div>
+
+            <div class="disp-legend" role="list" aria-label="Leyenda del calendario">
+                <span class="disp-legend__item" role="listitem">
+                    <span class="disp-legend__dot disp-legend__dot--work"><i class="fa-solid fa-check"></i></span>
+                    Día disponible
+                </span>
+                <span class="disp-legend__item" role="listitem">
+                    <span class="disp-legend__dot disp-legend__dot--off"><i class="fa-solid fa-xmark"></i></span>
+                    Día no disponible
+                </span>
+                <span class="disp-legend__item" role="listitem">
+                    <span class="disp-legend__dot disp-legend__dot--today"><i class="fa-solid fa-circle"></i></span>
+                    Hoy
+                </span>
+            </div>
+        </div>
+    </section>
+</div>
+
+<section class="disp-tips" aria-label="Consejos rápidos">
+    <div class="disp-tips__head">
+        <span class="disp-tips__icon"><i class="fa-solid fa-lightbulb"></i></span>
+        <h4>Consejos para gestionar tu disponibilidad</h4>
+    </div>
+    <div class="disp-tips__grid">
+        <div class="disp-tip">
+            <span class="disp-tip__icon"><i class="fa-solid fa-bolt"></i></span>
+            <p><strong>Plantillas rápidas:</strong> aplica un horario típico con un solo click y ajusta lo que necesites.</p>
+        </div>
+        <div class="disp-tip">
+            <span class="disp-tip__icon"><i class="fa-solid fa-toggle-on"></i></span>
+            <p><strong>Activa/desactiva días:</strong> usa el switch para incluir o excluir un día sin perder la hora configurada.</p>
+        </div>
+        <div class="disp-tip">
+            <span class="disp-tip__icon"><i class="fa-solid fa-calendar-xmark"></i></span>
+            <p><strong>Días puntuales:</strong> haz click en una fecha del calendario para marcarla como no disponible (vacaciones, eventos).</p>
+        </div>
+        <div class="disp-tip">
+            <span class="disp-tip__icon"><i class="fa-solid fa-floppy-disk"></i></span>
+            <p><strong>Guarda los cambios:</strong> recuerda pulsar "Guardar horario semanal" tras cualquier modificación.</p>
         </div>
     </div>
+</section>
 
-    <!-- JS de Flatpickr para el nuevo selector de hora -->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Lógica del calendario de excepciones
-        var calendarEl = document.getElementById('calendar-container');
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            locale: 'es',
-            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth' },
-            events: 'get_eventos_disponibilidad.php',
-            dateClick: function(info) {
-                if (confirm("¿Quieres marcar el " + info.dateStr + " como día no disponible?")) {
-                    window.location.href = `guardar_disponibilidad.php?accion=alternar_dia_libre&fecha=${info.dateStr}`;
-                }
-            },
-            eventClick: function(info) {
-                if (info.event.extendedProps.tipo === 'no_disponible') {
-                    if (confirm("¿Quieres eliminar este día libre y reactivar tu horario normal?")) {
-                        window.location.href = `guardar_disponibilidad.php?accion=eliminar_excepcion&id=${info.event.id}`;
-                    }
-                }
-            }
-        });
-        calendar.render();
-
-        // --- LÓGICA CORREGIDA PARA LOS CAMPOS DE HORA (FORMATO 12 HORAS) ---
-        flatpickr(".time-picker", {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: "H:i",      // Formato para guardar (24h, es mejor para la base de datos)
-            altInput: true,         // Muestra un input visible diferente
-            altFormat: "h:i K",     // Formato visible para el usuario (ej: 05:30 PM)
-            time_24hr: false,       // Usa el formato de 12 horas
-            minuteIncrement: 15
-        });
-    });
-    </script>
-</body>
-</html>
+<?php
+$page_content = ob_get_clean();
+$disp_js_ver = @filemtime(__DIR__ . '/assets/js/gestionar-disponibilidad.js') ?: time();
+$page_scripts_extra = '<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>'
+    . '<script src="assets/js/gestionar-disponibilidad.js?v=' . $disp_js_ver . '"></script>';
+include __DIR__ . '/layouts/shell.php';

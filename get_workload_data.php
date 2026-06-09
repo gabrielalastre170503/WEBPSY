@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
@@ -17,8 +17,8 @@ $data = [];
 // Consulta para contar citas (confirmadas o completadas) por cada profesional
 $sql = "SELECT u.nombre_completo, COUNT(c.id) as total_citas
         FROM usuarios u
-        JOIN citas c ON u.id = c.psicologo_id
-        WHERE u.rol IN ('psicologo', 'psiquiatra') AND c.estado IN ('confirmada', 'completada')
+        JOIN citas c ON u.id = c.ecografista_id
+        WHERE u.rol IN ('ecografista') AND c.estado IN ('confirmada', 'completada')
         GROUP BY u.id, u.nombre_completo
         ORDER BY total_citas DESC";
 

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
@@ -18,7 +18,7 @@ $sql = "SELECT
             psicologo.nombre_completo as psicologo_nombre
         FROM citas c
         JOIN usuarios paciente ON c.paciente_id = paciente.id
-        LEFT JOIN usuarios psicologo ON c.psicologo_id = psicologo.id
+        LEFT JOIN usuarios psicologo ON c.ecografista_id = psicologo.id
         WHERE paciente.nombre_completo LIKE ? OR psicologo.nombre_completo LIKE ? OR paciente.cedula LIKE ?
         ORDER BY c.fecha_solicitud DESC";
 
@@ -37,7 +37,7 @@ if ($resultado->num_rows > 0) {
         echo "<td>" . htmlspecialchars($cita['psicologo_nombre'] ?? 'No Asignado') . "</td>";
         echo "<td>" . ($cita['fecha_cita'] ? htmlspecialchars(date('d/m/Y h:i A', strtotime($cita['fecha_cita']))) : 'N/A') . "</td>";
         echo "<td><span class='status-badge status-" . htmlspecialchars($cita['estado']) . "'>" . htmlspecialchars(ucfirst($cita['estado'])) . "</span></td>";
-        echo "<td class='action-links'><a href='borrar_cita_admin.php?id=" . $cita['id'] . "' class='reject' onclick=\"return confirm('¿Estás seguro de que quieres eliminar esta cita permanentemente?');\"><i class='fa-solid fa-trash'></i> Eliminar</a></td>";
+        echo "<td class='action-links'><form method='post' action='borrar_cita_admin.php' style='display:inline' onsubmit=\"return confirm('¿Estás seguro de que quieres eliminar esta cita permanentemente?');\">" . csrf_field() . "<input type='hidden' name='id' value='" . (int)$cita['id'] . "'><button type='submit' class='reject'><i class='fa-solid fa-trash'></i> Eliminar</button></form></td>";
         echo "</tr>";
     }
     echo "</tbody></table>";

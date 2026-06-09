@@ -2,100 +2,118 @@
 session_start();
 include 'conexion.php';
 
-// Seguridad: Solo administradores
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
+if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'administrador') {
     header('Location: login.php');
-    exit();
+    exit;
 }
 
-// Lógica para obtener todas las FAQs existentes
-$faqs = $conex->query("SELECT * FROM faqs ORDER BY orden ASC, id ASC");
+$faqRows = [];
+if ($r = $conex->query('SELECT id, pregunta, respuesta, orden FROM faqs ORDER BY orden ASC, id ASC')) {
+    while ($row = $r->fetch_assoc()) {
+        $faqRows[] = $row;
+    }
+    $r->free();
+}
+$totalFaqs = count($faqRows);
+
+$status = isset($_GET['status']) ? (string)$_GET['status'] : '';
+
+$page_title    = 'Preguntas frecuentes';
+$page_subtitle = 'Administra las FAQ visibles en el sitio público';
+$active_section = 'admin-contenido';
+$body_class    = 'cw-gestion-page';
+$page_head_extra = '<link rel="stylesheet" href="assets/css/admin-gestion-contenido.css">';
+
+$page_header_actions = '
+    <a href="admin_contenido.php" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Contenido web</a>
+    <a href="index.php#faq" target="_blank" rel="noopener" class="btn-secondary"><i class="fa-solid fa-eye"></i> Ver en sitio</a>';
+
+ob_start();
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Gestionar Preguntas Frecuentes</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Estilos consistentes con las otras páginas de gestión */
-        body { background-color: #f0f2f5; font-family: "Poppins", sans-serif; margin: 0; padding: 30px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .panel-header { margin-bottom: 20px; }
-        .panel-header h1 { margin: 0; color: #333; }
-        .back-link { text-decoration: none; color: #555; font-weight: 500; display: inline-block; margin-bottom: 20px; }
-        .back-link i { margin-right: 5px; }
-        .management-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; }
-        .panel { background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.07); }
-        .panel h2 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 15px; font-size: 20px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 14px; color: #555; }
-        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; box-sizing: border-box; font-family: "Poppins", sans-serif; transition: border-color 0.3s, box-shadow 0.3s; }
-        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #02b1f4; box-shadow: 0 0 0 3px rgba(2, 177, 244, 0.2); }
-        .btn { cursor: pointer; border: none; padding: 12px 25px; border-radius: 8px; background: linear-gradient(45deg, #02b1f4, #00c2ff); color: white; font-weight: 600; font-size: 16px; width: 100%; transition: all 0.3s ease; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(2, 177, 244, 0.3); }
-        .content-list { list-style: none; padding: 0; }
-        .content-item { display: flex; align-items: flex-start; padding: 15px 0; border-bottom: 1px solid #f0f0f0; }
-        .content-item:last-child { border-bottom: none; }
-        .content-item .info { flex-grow: 1; }
-        .content-item h4 { margin: 0 0 5px 0; font-weight: 600; }
-        .content-item p { margin: 0; font-size: 14px; color: #777; }
-        .action-links { flex-shrink: 0; margin-left: 20px; }
-        .action-links a { text-decoration: none; color: #dc3545; font-size: 14px; }
-        @media (max-width: 991px) { .management-grid { grid-template-columns: 1fr; } }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="panel-header">
-            <a href="panel.php?vista=admin-contenido" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al Panel de Contenido</a>
-            <h1>Gestionar Preguntas Frecuentes (FAQ)</h1>
-        </div>
 
-        <div class="management-grid">
-            <!-- Columna Izquierda: Formulario para Añadir -->
-            <div class="panel">
-                <h2>Añadir Nueva Pregunta</h2>
-                <form action="acciones_contenido.php" method="POST">
-                    <input type="hidden" name="tipo" value="faq">
-                    <div class="form-group">
-                        <label for="pregunta">Pregunta</label>
-                        <textarea name="pregunta" id="pregunta" rows="3" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="respuesta">Respuesta</label>
-                        <textarea name="respuesta" id="respuesta" rows="6" required></textarea>
-                    </div>
-                    <button type="submit" name="accion" value="agregar" class="btn">Añadir Pregunta</button>
-                </form>
+<?php if ($status === 'added'): ?>
+    <div class="cw-feedback cw-feedback--ok" role="status">
+        <i class="fa-solid fa-circle-check"></i> Pregunta añadida correctamente.
+    </div>
+<?php elseif ($status === 'deleted'): ?>
+    <div class="cw-feedback cw-feedback--ok" role="status">
+        <i class="fa-solid fa-circle-check"></i> Pregunta eliminada.
+    </div>
+<?php elseif ($status === 'error'): ?>
+    <div class="cw-feedback cw-feedback--err" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i> No se pudo completar la operación. Intente de nuevo.
+    </div>
+<?php endif; ?>
+
+<div class="cw-faq-grid">
+    <div class="card cw-panel">
+        <div class="cw-panel__head">
+            <div class="cw-panel__head-icon cw-panel__head-icon--faq" aria-hidden="true">
+                <i class="fa-solid fa-plus"></i>
             </div>
+            <div class="cw-panel__head-text">
+                <h3>Nueva pregunta</h3>
+                <p>Añade entradas al listado público</p>
+            </div>
+        </div>
+        <div class="cw-panel__body">
+            <form action="acciones_contenido.php" method="POST" class="cw-form">
+                <input type="hidden" name="tipo" value="faq">
+                <div class="cw-field">
+                    <label for="pregunta"><i class="fa-solid fa-circle-question"></i> Pregunta</label>
+                    <textarea name="pregunta" id="pregunta" class="cw-input" rows="3" required placeholder="Ej. ¿Cómo solicito una cita?"></textarea>
+                </div>
+                <div class="cw-field">
+                    <label for="respuesta"><i class="fa-solid fa-comment-dots"></i> Respuesta</label>
+                    <textarea name="respuesta" id="respuesta" class="cw-input" rows="6" required placeholder="Redacta la respuesta completa…"></textarea>
+                </div>
+                <div class="cw-form__actions">
+                    <button type="submit" name="accion" value="agregar" class="btn-primary">
+                        <i class="fa-solid fa-plus"></i> Añadir pregunta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-            <!-- Columna Derecha: Lista de FAQs Existentes -->
-            <div class="panel">
-                <h2>Preguntas Actuales</h2>
-                <ul class="content-list">
-                    <?php if ($faqs && $faqs->num_rows > 0): ?>
-                        <?php while($faq = $faqs->fetch_assoc()): ?>
-                        <li class="content-item">
-                            <div class="info">
-                                <h4><?php echo htmlspecialchars($faq['pregunta']); ?></h4>
-                                <p><?php echo htmlspecialchars(substr($faq['respuesta'], 0, 120)) . '...'; ?></p>
+    <div class="card cw-panel">
+        <div class="cw-panel__head">
+            <div class="cw-panel__head-icon cw-panel__head-icon--faq" aria-hidden="true">
+                <i class="fa-solid fa-list"></i>
+            </div>
+            <div class="cw-panel__head-text">
+                <h3>Preguntas actuales</h3>
+                <p>Ordenadas según configuración del sitio</p>
+            </div>
+            <span class="cw-panel__badge"><?= (int)$totalFaqs ?></span>
+        </div>
+        <div class="cw-panel__body">
+            <?php if ($totalFaqs === 0): ?>
+                <p class="cw-empty"><i class="fa-solid fa-inbox"></i>No hay preguntas registradas.</p>
+            <?php else: ?>
+                <ul class="cw-faq-list">
+                    <?php foreach ($faqRows as $i => $faq): ?>
+                        <li class="cw-faq-item">
+                            <span class="cw-faq-item__num"><?= $i + 1 ?></span>
+                            <div class="cw-faq-item__body">
+                                <h4 class="cw-faq-item__q"><?= htmlspecialchars($faq['pregunta']) ?></h4>
+                                <p class="cw-faq-item__a"><?= htmlspecialchars($faq['respuesta']) ?></p>
                             </div>
-                            <div class="action-links">
-                                <a href="acciones_contenido.php?tipo=faq&accion=borrar&id=<?php echo $faq['id']; ?>" onclick="return confirm('¿Estás seguro de que quieres borrar esta pregunta?');">
-                                    <i class="fa-solid fa-trash"></i> Borrar
+                            <div class="cw-faq-item__actions">
+                                <a href="acciones_contenido.php?tipo=faq&amp;accion=borrar&amp;id=<?= (int)$faq['id'] ?>"
+                                   class="cw-btn-delete"
+                                   onclick="return confirm('¿Eliminar esta pregunta?');">
+                                    <i class="fa-solid fa-trash-can"></i> Borrar
                                 </a>
                             </div>
                         </li>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <p>No hay preguntas frecuentes registradas.</p>
-                    <?php endif; ?>
+                    <?php endforeach; ?>
                 </ul>
-            </div>
+            <?php endif; ?>
         </div>
     </div>
-</body>
-</html>
+</div>
+
+<?php
+$page_content = ob_get_clean();
+include __DIR__ . '/layouts/shell.php';

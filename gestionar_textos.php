@@ -1,90 +1,165 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
-// Seguridad: Solo administradores
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
+if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'administrador') {
     header('Location: login.php');
-    exit();
+    exit;
 }
 
-// Obtener los textos actuales de la base de datos
-$contenido = [];
-$resultado = $conex->query("SELECT clave, valor FROM contenido_web WHERE clave IN ('mision', 'vision', 'valores')");
-while ($fila = $resultado->fetch_assoc()) {
-    $contenido[$fila['clave']] = $fila['valor'];
+$contenido = ['mision' => '', 'vision' => '', 'valores' => ''];
+if ($r = $conex->query("SELECT clave, valor FROM contenido_web WHERE clave IN ('mision', 'vision', 'valores')")) {
+    while ($fila = $r->fetch_assoc()) {
+        $contenido[$fila['clave']] = (string)$fila['valor'];
+    }
+    $r->free();
 }
+
+$status = isset($_GET['status']) ? (string)$_GET['status'] : '';
+
+$charsMision  = mb_strlen($contenido['mision']);
+$charsVision  = mb_strlen($contenido['vision']);
+$charsValores = mb_strlen($contenido['valores']);
+
+$page_title    = 'Textos «Nosotros»';
+$page_subtitle = 'Edita misión, visión y valores con vista previa en tiempo real';
+$active_section = 'admin-contenido';
+$body_class    = 'cw-gestion-page cw-textos-page';
+$page_head_extra = '<link rel="stylesheet" href="assets/css/admin-gestion-contenido.css">'
+    . '<link rel="stylesheet" href="assets/css/gestionar-textos.css">'
+    . '<link rel="stylesheet" href="assets/css/estilos.css">';
+
+$page_header_actions = '
+    <a href="admin_contenido.php" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Contenido web</a>
+    <a href="index.php#nosotros" target="_blank" rel="noopener" class="btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir sitio</a>';
+
+ob_start();
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Gestionar Contenido - WebPSY</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { background-color: #f0f2f5; font-family: "Poppins", sans-serif; margin: 0; padding: 30px; }
-        .container { max-width: 900px; margin: 0 auto; }
-        .panel { background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.07); }
-        h1 { margin-top: 0; color: #333; }
-        .back-link { text-decoration: none; color: #555; font-weight: 500; display: inline-block; margin-bottom: 20px; }
-        .form-group { margin-bottom: 25px; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 16px; color: #333; }
-        .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; box-sizing: border-box; font-family: "Poppins", sans-serif; resize: vertical; min-height: 120px; }
-                .btn {
-            cursor: pointer;
-            border: none;
-            padding: 12px 40px; /* Tamaño del botón */
-            border-radius: 8px;
-            background: linear-gradient(45deg, #02b1f4, #00c2ff); /* Color azul claro */
-            color: white;
-            font-weight: 500;
-            font-size: 16px;
-            width: auto; /* Para que no ocupe el 100% */
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(2, 177, 244, 0.3);
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(2, 177, 244, 0.4);
-        }
-        .form-actions {
-            text-align: center; /* Centra el botón */
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <a href="panel.php?vista=admin-contenido" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al Panel</a>
-        <div class="panel">
-            <h1>Editar Contenido de la Sección "Nosotros"</h1>
-            <p>Los cambios que realices aquí se reflejarán inmediatamente en la página principal.</p>
-            
-            <form action="acciones_contenido.php" method="POST">
-                <input type="hidden" name="tipo" value="textos_web">
-                
-                <div class="form-group">
-                    <label for="mision">Misión:</label>
-                    <textarea name="mision" id="mision" rows="5"><?php echo htmlspecialchars($contenido['mision'] ?? ''); ?></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="vision">Visión:</label>
-                    <textarea name="vision" id="vision" rows="5"><?php echo htmlspecialchars($contenido['vision'] ?? ''); ?></textarea>
+
+<?php if ($status === 'updated'): ?>
+    <div class="cw-feedback cw-feedback--ok" role="status">
+        <i class="fa-solid fa-circle-check"></i> Contenido publicado correctamente en la landing.
+    </div>
+<?php elseif ($status === 'error'): ?>
+    <div class="cw-feedback cw-feedback--err" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i> No se pudo guardar. Intente de nuevo.
+    </div>
+<?php endif; ?>
+
+<form action="acciones_contenido.php" method="POST" id="form-textos-nosotros" class="cw-textos-form">
+    <input type="hidden" name="tipo" value="textos_web">
+
+    <div class="cw-textos-layout">
+        <div class="cw-textos-editor">
+            <div class="card cw-textos-editor-card">
+                <div class="cw-textos-editor-card__head">
+                    <h3><i class="fa-solid fa-pen-to-square"></i> Editor de contenido</h3>
+                    <nav class="cw-textos-jump" aria-label="Ir a bloque">
+                        <a href="#bloque-mision" class="cw-textos-jump__link cw-textos-jump__link--mision">Misión</a>
+                        <a href="#bloque-vision" class="cw-textos-jump__link cw-textos-jump__link--vision">Visión</a>
+                        <a href="#bloque-valores" class="cw-textos-jump__link cw-textos-jump__link--valores">Valores</a>
+                    </nav>
                 </div>
 
-                <div class="form-group">
-                    <label for="valores">Valores:</label>
-                    <textarea name="valores" id="valores" rows="3"><?php echo htmlspecialchars($contenido['valores'] ?? ''); ?></textarea>
-                </div>
+                <article class="cw-texto-card cw-texto-card--mision" id="bloque-mision">
+                    <header class="cw-texto-card__header">
+                        <span class="cw-texto-card__icon" aria-hidden="true"><i class="fa-solid fa-bullseye"></i></span>
+                        <div class="cw-texto-card__titles">
+                            <h4>Misión</h4>
+                            <p>¿Qué hacemos y para quién?</p>
+                        </div>
+                        <span class="cw-texto-card__count" data-count-for="mision"><?= (int)$charsMision ?> / 1200</span>
+                    </header>
+                    <div class="cw-texto-card__field">
+                        <textarea name="mision" id="mision" class="cw-texto-card__input" maxlength="1200" required
+                                  placeholder="Describe el propósito central de EcoMadelleine…"
+                                  data-preview="preview-mision"><?= htmlspecialchars($contenido['mision']) ?></textarea>
+                    </div>
+                </article>
 
-                <div class="form-actions">
-    <button type="submit" name="accion" value="actualizar" class="btn">Guardar Cambios</button>
-</div>
-            </form>
+                <article class="cw-texto-card cw-texto-card--vision" id="bloque-vision">
+                    <header class="cw-texto-card__header">
+                        <span class="cw-texto-card__icon" aria-hidden="true"><i class="fa-solid fa-binoculars"></i></span>
+                        <div class="cw-texto-card__titles">
+                            <h4>Visión</h4>
+                            <p>¿Hacia dónde nos dirigimos?</p>
+                        </div>
+                        <span class="cw-texto-card__count" data-count-for="vision"><?= (int)$charsVision ?> / 1200</span>
+                    </header>
+                    <div class="cw-texto-card__field">
+                        <textarea name="vision" id="vision" class="cw-texto-card__input" maxlength="1200" required
+                                  placeholder="Define la meta institucional a futuro…"
+                                  data-preview="preview-vision"><?= htmlspecialchars($contenido['vision']) ?></textarea>
+                    </div>
+                </article>
+
+                <article class="cw-texto-card cw-texto-card--valores" id="bloque-valores">
+                    <header class="cw-texto-card__header">
+                        <span class="cw-texto-card__icon" aria-hidden="true"><i class="fa-solid fa-gem"></i></span>
+                        <div class="cw-texto-card__titles">
+                            <h4>Valores</h4>
+                            <p>Principios que nos distinguen</p>
+                        </div>
+                        <span class="cw-texto-card__count" data-count-for="valores"><?= (int)$charsValores ?> / 600</span>
+                    </header>
+                    <div class="cw-texto-card__field">
+                        <textarea name="valores" id="valores" class="cw-texto-card__input" maxlength="600" required
+                                  placeholder="Ej. ética, calidez humana, excelencia clínica…"
+                                  data-preview="preview-valores"><?= htmlspecialchars($contenido['valores']) ?></textarea>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <aside class="cw-textos-preview-wrap">
+            <div class="card cw-textos-preview-card">
+                <div class="cw-textos-preview-card__head">
+                    <h3><i class="fa-solid fa-display"></i> Vista previa</h3>
+                    <span class="cw-textos-preview-badge">Landing pública</span>
+                </div>
+                <div class="cw-textos-preview-mock">
+                    <div class="cw-textos-preview-mock__img" aria-hidden="true">
+                        <i class="fa-solid fa-user-doctor"></i>
+                    </div>
+                    <div class="cw-textos-preview-mock__body">
+                        <h2>Sobre Nosotros</h2>
+                        <div class="cw-textos-preview-block">
+                            <span class="cw-textos-preview-block__tag cw-textos-preview-block__tag--mision">Misión</span>
+                            <p id="preview-mision"><?= $contenido['mision'] !== '' ? nl2br(htmlspecialchars($contenido['mision'])) : '<em class="cw-preview-placeholder">Escribe la misión…</em>' ?></p>
+                        </div>
+                        <div class="cw-textos-preview-block">
+                            <span class="cw-textos-preview-block__tag cw-textos-preview-block__tag--vision">Visión</span>
+                            <p id="preview-vision"><?= $contenido['vision'] !== '' ? nl2br(htmlspecialchars($contenido['vision'])) : '<em class="cw-preview-placeholder">Escribe la visión…</em>' ?></p>
+                        </div>
+                        <div class="cw-textos-preview-block">
+                            <span class="cw-textos-preview-block__tag cw-textos-preview-block__tag--valores">Valores</span>
+                            <p id="preview-valores"><?= $contenido['valores'] !== '' ? nl2br(htmlspecialchars($contenido['valores'])) : '<em class="cw-preview-placeholder">Escribe los valores…</em>' ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="cw-textos-savebar">
+        <div class="cw-textos-savebar__inner card">
+            <p class="cw-textos-savebar__hint">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                Los cambios se publican al guardar en la sección <strong>#nosotros</strong>.
+            </p>
+            <div class="cw-textos-savebar__actions">
+                <a href="index.php#nosotros" target="_blank" rel="noopener" class="btn-secondary">
+                    <i class="fa-solid fa-eye"></i> Previsualizar en sitio
+                </a>
+                <button type="submit" name="accion" value="actualizar" class="btn-primary" id="btn-guardar-textos">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
+                </button>
+            </div>
         </div>
     </div>
-</body>
-</html>
+</form>
+
+<?php
+$page_content = ob_get_clean();
+$page_scripts_extra = '<script src="assets/js/gestionar-textos.js"></script>';
+include __DIR__ . '/layouts/shell.php';

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
@@ -10,7 +10,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
 // Validar entradas
 $termino_busqueda = isset($_POST['query']) ? trim($_POST['query']) : '';
 $rol_busqueda = isset($_POST['rol']) ? trim($_POST['rol']) : '';
-$roles_permitidos = ['psicologo', 'psiquiatra', 'secretaria'];
+$roles_permitidos = ['ecografista', 'recepcionista'];
 
 if (empty($rol_busqueda) || !in_array($rol_busqueda, $roles_permitidos)) {
     exit('<p>Error: Rol no válido.</p>');
@@ -40,8 +40,8 @@ if ($resultado->num_rows > 0) {
         echo "<td>" . htmlspecialchars($profesional['correo']) . "</td>";
         echo "<td class='action-links'>";
         if ($profesional['id'] != $_SESSION['usuario_id']) {
-            echo "<a href='reset_password.php?id=" . $profesional['id'] . "' class='approve' onclick=\"return confirm('¿Seguro que quieres restablecer la contraseña?');\">Restablecer</a>";
-            echo "<a href='borrar_usuario.php?id=" . $profesional['id'] . "' class='reject' onclick=\"return confirm('¿Estás seguro?');\">Borrar</a>";
+            echo "<form method='post' action='reset_password.php' style='display:inline' onsubmit=\"return confirm('¿Seguro que quieres restablecer la contraseña?');\">" . csrf_field() . "<input type='hidden' name='id' value='" . (int)$profesional['id'] . "'><button type='submit' class='approve'>Restablecer</button></form>";
+            echo "<form method='post' action='borrar_usuario.php' style='display:inline' onsubmit=\"return confirm('¿Estás seguro?');\">" . csrf_field() . "<input type='hidden' name='id' value='" . (int)$profesional['id'] . "'><button type='submit' class='reject'>Borrar</button></form>";
         }
         echo "</td></tr>";
     }

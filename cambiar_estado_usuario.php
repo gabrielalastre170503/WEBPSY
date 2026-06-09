@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'conexion.php';
+require_once __DIR__ . '/lib/seguridad.php';
 
 header('Content-Type: application/json'); // Importante: indicar que la respuesta es JSON
 
@@ -37,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['nuevo_es
     $stmt->bind_param("si", $nuevo_estado, $usuario_id);
 
     if ($stmt->execute()) {
+        eco_auditar($conex, 'usuario_estado_cambiado', ['entidad' => 'usuario', 'entidad_id' => $usuario_id, 'detalle' => ['estado' => $nuevo_estado]]);
         $response['success'] = true;
         $response['message'] = 'Estado del usuario actualizado correctamente.';
     } else {

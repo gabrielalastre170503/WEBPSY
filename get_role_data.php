@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
@@ -22,9 +22,9 @@ $colors = [];
 // Paleta de colores para los roles
 $colorMap = [
     'paciente'      => 'rgba(2, 177, 244, 0.8)',   // Azul
-    'psicologo'     => 'rgba(40, 167, 69, 0.8)',   // Verde
-    'psiquiatra'    => 'rgba(23, 162, 184, 0.8)',  // Turquesa
-    'secretaria'    => 'rgba(255, 193, 7, 0.8)',   // Amarillo
+    'ecografista'     => 'rgba(40, 167, 69, 0.8)',   // Verde
+    'ecografista'    => 'rgba(23, 162, 184, 0.8)',  // Turquesa
+    'recepcionista'    => 'rgba(255, 193, 7, 0.8)',   // Amarillo
     'administrador' => 'rgba(108, 117, 125, 0.8)' // Gris
 ];
 

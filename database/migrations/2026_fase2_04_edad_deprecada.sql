@@ -1,0 +1,27 @@
+-- =============================================================================
+-- Fase 2 · D — Deprecacion de usuarios.edad (columna redundante).
+--
+-- ESTADO: "codigo primero, DROP despues".
+--   * Los 6 escritores YA NO insertan `edad` (queda NULL en filas nuevas).
+--   * Los 12 lectores calculan la edad fresca con:
+--         COALESCE(TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()), edad)
+--     -> usan fecha_nacimiento (fuente de verdad) y caen a la columna `edad`
+--        solo como fallback mientras la columna exista.
+--
+-- Motivo: `edad` almacenada quedaba STALE (no se actualiza al cumplir anios).
+--         Verificado en datos reales: stored=26 vs real=27, etc.
+--
+-- ESTA MIGRACION NO EJECUTA NADA TODAVIA. El DROP es irreversible: hacer backup
+-- y, ANTES de ejecutarlo, quitar el fallback ", edad" de las 12 expresiones
+-- COALESCE de los lectores (dejar solo TIMESTAMPDIFF(...)), porque al borrar la
+-- columna la referencia a `edad` daria error.
+--
+-- Cuando se decida dropear, descomentar:
+-- -----------------------------------------------------------------------------
+-- USE db_clinica_ecografias;
+-- -- 1) Backup de respaldo de los valores actuales (por si acaso):
+-- CREATE TABLE IF NOT EXISTS _backup_usuarios_edad AS
+--   SELECT id, edad, fecha_nacimiento FROM usuarios WHERE edad IS NOT NULL;
+-- -- 2) Soltar la columna:
+-- ALTER TABLE usuarios DROP COLUMN edad;
+-- -----------------------------------------------------------------------------

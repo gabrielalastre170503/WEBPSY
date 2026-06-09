@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'conexion.php';
+require_once __DIR__ . '/lib/citas.php';
 
 // Seguridad
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
@@ -24,10 +25,17 @@ if (isset($_GET['cita_id']) && isset($_GET['accion'])) {
     if (isset($stmt)) {
         $stmt->bind_param("ii", $cita_id, $paciente_id);
         $stmt->execute();
+        if ($stmt->affected_rows > 0) {
+            if ($accion == 'aceptar') {
+                eco_cita_evento($conex, (int)$cita_id, 'aceptada', ['estado_nuevo' => 'confirmada']);
+            } else {
+                eco_cita_evento($conex, (int)$cita_id, 'rechazada', ['estado_nuevo' => 'cancelada']);
+            }
+        }
         $stmt->close();
     }
 }
 
-header('Location: panel.php?vista=miscitas');
+header('Location: mis_citas_paciente.php');
 exit();
 ?>

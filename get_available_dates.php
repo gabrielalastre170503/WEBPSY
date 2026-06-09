@@ -1,21 +1,21 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
 header('Content-Type: application/json');
 
 // Seguridad
-if (!isset($_GET['psicologo_id'])) {
+if (!isset($_GET['ecografista_id'])) {
     http_response_code(400);
     exit();
 }
 
-$psicologo_id = (int)$_GET['psicologo_id'];
+$ecografista_id = (int)$_GET['ecografista_id'];
 
 // Obtener todas las citas confirmadas para este psicólogo
 $citas_confirmadas = [];
-$stmt_citas = $conex->prepare("SELECT fecha_cita FROM citas WHERE psicologo_id = ? AND estado IN ('confirmada', 'reprogramada')");
-$stmt_citas->bind_param("i", $psicologo_id);
+$stmt_citas = $conex->prepare("SELECT fecha_cita FROM citas WHERE ecografista_id = ? AND estado IN ('confirmada', 'reprogramada')");
+$stmt_citas->bind_param("i", $ecografista_id);
 $stmt_citas->execute();
 $resultado_citas = $stmt_citas->get_result();
 while ($fila = $resultado_citas->fetch_assoc()) {
@@ -25,8 +25,8 @@ $stmt_citas->close();
 
 // Obtener días no disponibles (excepciones)
 $dias_no_disponibles = [];
-$stmt_excepciones = $conex->prepare("SELECT fecha FROM disponibilidad_excepciones WHERE psicologo_id = ? AND tipo = 'no_disponible'");
-$stmt_excepciones->bind_param("i", $psicologo_id);
+$stmt_excepciones = $conex->prepare("SELECT fecha FROM disponibilidad_excepciones WHERE ecografista_id = ? AND tipo = 'no_disponible'");
+$stmt_excepciones->bind_param("i", $ecografista_id);
 $stmt_excepciones->execute();
 $resultado_excepciones = $stmt_excepciones->get_result();
 while ($fila = $resultado_excepciones->fetch_assoc()) {
@@ -36,8 +36,8 @@ $stmt_excepciones->close();
 
 // Obtener horario semanal
 $horario_semanal = [];
-$stmt_horario = $conex->prepare("SELECT dia_semana, hora_inicio, hora_fin FROM horarios_recurrentes WHERE psicologo_id = ?");
-$stmt_horario->bind_param("i", $psicologo_id);
+$stmt_horario = $conex->prepare("SELECT dia_semana, hora_inicio, hora_fin FROM horarios_recurrentes WHERE ecografista_id = ?");
+$stmt_horario->bind_param("i", $ecografista_id);
 $stmt_horario->execute();
 $resultado_horario = $stmt_horario->get_result();
 while ($fila = $resultado_horario->fetch_assoc()) {

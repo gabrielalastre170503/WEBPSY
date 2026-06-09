@@ -1,9 +1,9 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
 // Seguridad: Solo secretarias y administradores
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['secretaria', 'administrador'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['recepcionista', 'administrador'])) {
     exit('Acceso denegado');
 }
 
@@ -24,7 +24,7 @@ $sql = "SELECT
             psicologo.nombre_completo as psicologo_nombre
         FROM citas c
         JOIN usuarios paciente ON c.paciente_id = paciente.id
-        LEFT JOIN usuarios psicologo ON c.psicologo_id = psicologo.id
+        LEFT JOIN usuarios psicologo ON c.ecografista_id = psicologo.id
         WHERE paciente.nombre_completo LIKE ? OR psicologo.nombre_completo LIKE ? OR paciente.cedula LIKE ?
         ORDER BY c.fecha_cita DESC";
 

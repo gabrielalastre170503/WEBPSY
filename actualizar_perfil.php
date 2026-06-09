@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'conexion.php';
+require_once __DIR__ . '/lib/seguridad.php';
 
 // Seguridad: El usuario debe estar logueado
 if (!isset($_SESSION['usuario_id'])) {
@@ -11,7 +12,25 @@ if (!isset($_SESSION['usuario_id'])) {
 $usuario_id = $_SESSION['usuario_id'];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion'])) {
-    
+    require_csrf();
+
+    // --- ACTIVAR / DESACTIVAR 2FA (solo admin y ecografista) ---
+    if ($_POST['accion'] == 'toggle_2fa') {
+        $rol = $_SESSION['rol'] ?? '';
+        if (!in_array($rol, ['administrador', 'ecografista'], true)) {
+            header('Location: perfil.php');
+            exit();
+        }
+        $activar = (isset($_POST['activar']) && $_POST['activar'] == '1') ? 1 : 0;
+        $upd = $conex->prepare("UPDATE usuarios SET two_factor_enabled = ? WHERE id = ?");
+        $upd->bind_param("ii", $activar, $usuario_id);
+        $upd->execute();
+        $upd->close();
+        eco_auditar($conex, '2fa_modificado', ['detalle' => ['activado' => (bool)$activar]]);
+        header('Location: perfil.php?status=' . ($activar ? '2fa_activado' : '2fa_desactivado'));
+        exit();
+    }
+
     // --- LÓGICA PARA CAMBIAR LA CONTRASEÑA (SIMPLIFICADA) ---
     if ($_POST['accion'] == 'cambiar_contrasena') {
         $nueva_contrasena = $_POST['nueva_contrasena'];
@@ -19,13 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion'])) {
 
         // 1. Verificar que la nueva contraseña y su confirmación coincidan
         if ($nueva_contrasena !== $confirmar_nueva_contrasena) {
-            header('Location: panel.php?vista=perfil&error=pass_no_coincide');
+            header('Location: perfil.php?error=pass_no_coincide');
             exit();
         }
 
         // 2. Verificar la seguridad de la nueva contraseña
         if (strlen($nueva_contrasena) < 8 || !preg_match('/[A-Z]/', $nueva_contrasena) || !preg_match('/[\W_]/', $nueva_contrasena)) {
-            header('Location: panel.php?vista=perfil&error=pass_no_segura');
+            header('Location: perfil.php?error=pass_no_segura');
             exit();
         }
 
@@ -35,9 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion'])) {
         $update_stmt->bind_param("si", $nueva_contrasena_hasheada, $usuario_id);
 
         if ($update_stmt->execute()) {
-            header('Location: panel.php?vista=perfil&status=perfil_actualizado');
+            eco_auditar($conex, 'password_cambiado');
+            header('Location: perfil.php?status=perfil_actualizado');
         } else {
-            header('Location: panel.php?vista=perfil&error=actualizacion_fallida');
+            header('Location: perfil.php?error=actualizacion_fallida');
         }
         $update_stmt->close();
         exit();
@@ -45,5 +65,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion'])) {
 }
 
 $conex->close();
-header('Location: panel.php'); // Redirigir si se accede al archivo directamente
+header('Location: perfil.php'); // Redirigir si se accede al archivo directamente
 ?>

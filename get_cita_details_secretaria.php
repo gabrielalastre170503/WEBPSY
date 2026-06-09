@@ -1,11 +1,11 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
 header('Content-Type: application/json');
 
 // Seguridad
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['secretaria', 'administrador'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['recepcionista', 'administrador'])) {
     http_response_code(403);
     echo json_encode(['error' => 'Acceso no autorizado']);
     exit();
@@ -25,11 +25,11 @@ $stmt = $conex->prepare("
         c.id, 
         c.motivo_consulta, 
         u.nombre_completo as paciente_nombre,
-        c.psicologo_id as profesional_solicitado_id, -- ID del profesional
+        c.ecografista_id as profesional_solicitado_id, -- ID del profesional
         p.nombre_completo as profesional_solicitado_nombre -- Nombre del profesional
     FROM citas c 
     JOIN usuarios u ON c.paciente_id = u.id
-    LEFT JOIN usuarios p ON c.psicologo_id = p.id
+    LEFT JOIN usuarios p ON c.ecografista_id = p.id
     WHERE c.id = ?
 ");
 $stmt->bind_param("i", $cita_id);

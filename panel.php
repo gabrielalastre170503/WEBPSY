@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 date_default_timezone_set('America/Caracas'); // <-- AÑADE ESTA LÍNEA
 session_start();
 include 'conexion.php';
@@ -48,7 +48,7 @@ if ($rol_usuario == 'administrador') {
     $stats['aprobados'] = $result_aprobados->fetch_assoc()['total'];
     
     // Contar todo el personal activo (psicólogos, psiquiatras, secretarias)
-    $result_personal = $conex->query("SELECT COUNT(id) as total FROM usuarios WHERE rol IN ('psicologo', 'psiquiatra', 'secretaria') AND estado = 'aprobado'");
+    $result_personal = $conex->query("SELECT COUNT(id) as total FROM usuarios WHERE rol IN ('ecografista', 'recepcionista') AND estado = 'aprobado'");
     $stats['personal'] = $result_personal->fetch_assoc()['total'];
 
     // Contar todas las citas
@@ -86,7 +86,12 @@ if ($rol_usuario == 'administrador') {
         unset($_SESSION['documentos_feedback']);
     }
 
-    $profesionales_stmt = $conex->query("SELECT id, nombre_completo, correo, rol, especialidades, estado FROM usuarios WHERE rol IN ('psicologo', 'psiquiatra') ORDER BY nombre_completo ASC");
+    $profesionales_stmt = $conex->query("SELECT id, nombre_completo, correo, rol, estado,
+            (SELECT GROUP_CONCAT(e.nombre ORDER BY e.nombre SEPARATOR ', ')
+               FROM usuario_especialidades ue
+               JOIN especialidades e ON e.id = ue.especialidad_id
+              WHERE ue.usuario_id = usuarios.id) AS especialidades
+        FROM usuarios WHERE rol IN ('ecografista') ORDER BY nombre_completo ASC");
 
     if ($profesionales_stmt) {
         $uniqueEspecialidades = [];
@@ -309,28 +314,28 @@ if ($rol_usuario == 'administrador') {
         });
     }
 
-} elseif ($rol_usuario == 'psicologo' || $rol_usuario == 'psiquiatra') {
-    $psicologo_id = $_SESSION['usuario_id'];
+} elseif ($rol_usuario == 'ecografista' || $rol_usuario == 'ecografista') {
+    $ecografista_id = $_SESSION['usuario_id'];
     
     // Citas para hoy
     $hoy_inicio = date('Y-m-d 00:00:00');
     $hoy_fin = date('Y-m-d 23:59:59');
-    $stmt_citas_hoy = $conex->prepare("SELECT COUNT(id) as total FROM citas WHERE psicologo_id = ? AND estado = 'confirmada' AND fecha_cita BETWEEN ? AND ?");
-    $stmt_citas_hoy->bind_param("iss", $psicologo_id, $hoy_inicio, $hoy_fin);
+    $stmt_citas_hoy = $conex->prepare("SELECT COUNT(id) as total FROM citas WHERE ecografista_id = ? AND estado = 'confirmada' AND fecha_cita BETWEEN ? AND ?");
+    $stmt_citas_hoy->bind_param("iss", $ecografista_id, $hoy_inicio, $hoy_fin);
     $stmt_citas_hoy->execute();
     $stats['citas_hoy'] = $stmt_citas_hoy->get_result()->fetch_assoc()['total'];
     $stmt_citas_hoy->close();
 
     // Solicitudes pendientes
-    $stmt_pendientes = $conex->prepare("SELECT COUNT(id) as total FROM citas WHERE psicologo_id = ? AND estado = 'pendiente'");
-    $stmt_pendientes->bind_param("i", $psicologo_id);
+    $stmt_pendientes = $conex->prepare("SELECT COUNT(id) as total FROM citas WHERE ecografista_id = ? AND estado = 'pendiente'");
+    $stmt_pendientes->bind_param("i", $ecografista_id);
     $stmt_pendientes->execute();
     $stats['pendientes'] = $stmt_pendientes->get_result()->fetch_assoc()['total'];
     $stmt_pendientes->close();
 
     // Pacientes activos
-    $stmt_pacientes_activos = $conex->prepare("SELECT COUNT(DISTINCT u.id) as total FROM usuarios u LEFT JOIN citas c ON u.id = c.paciente_id WHERE u.rol = 'paciente' AND u.estado = 'aprobado' AND (u.creado_por_psicologo_id = ? OR c.psicologo_id = ?)");
-    $stmt_pacientes_activos->bind_param("ii", $psicologo_id, $psicologo_id);
+    $stmt_pacientes_activos = $conex->prepare("SELECT COUNT(DISTINCT u.id) as total FROM usuarios u LEFT JOIN citas c ON u.id = c.paciente_id WHERE u.rol = 'paciente' AND u.estado = 'aprobado' AND (u.creado_por_id = ? OR c.ecografista_id = ?)");
+    $stmt_pacientes_activos->bind_param("ii", $ecografista_id, $ecografista_id);
     $stmt_pacientes_activos->execute();
     $stats['pacientes_activos'] = $stmt_pacientes_activos->get_result()->fetch_assoc()['total'];
     $stmt_pacientes_activos->close();
@@ -341,28 +346,83 @@ if ($rol_usuario == 'administrador') {
         SELECT c.id, c.fecha_cita, c.motivo_consulta, u.nombre_completo, u.cedula 
         FROM citas c 
         JOIN usuarios u ON c.paciente_id = u.id 
-        WHERE c.psicologo_id = ? 
+        WHERE c.ecografista_id = ? 
         AND c.estado IN ('confirmada', 'reprogramada')
         AND c.fecha_cita >= NOW() 
         ORDER BY c.fecha_cita ASC 
         LIMIT 5
     ");
-    $proximas_citas_stmt->bind_param("i", $psicologo_id);
+    $proximas_citas_stmt->bind_param("i", $ecografista_id);
     $proximas_citas_stmt->execute();
     $proximas_citas = $proximas_citas_stmt->get_result();
 }
+
+// ── Tipos de ecografía para la modal de selección (disponibles para todos los roles) ──
+// Excluimos sub-tipos (Musculoesqueletica_Sub, Obstetrica_Sub, Partes_Blandas_Sub) — se muestran en sub-modales
+$tipos_panel = [];
+$res_tipos_panel = $conex->query("SELECT id, codigo, nombre, categoria, descripcion, icono FROM tipos_ecografias WHERE activo = 1 AND (categoria IS NULL OR categoria NOT IN ('Musculoesqueletica_Sub', 'Obstetrica_Sub', 'Partes_Blandas_Sub')) ORDER BY posicion, nombre");
+if ($res_tipos_panel) {
+    while ($row = $res_tipos_panel->fetch_assoc()) {
+        $tipos_panel[] = $row;
+    }
+}
+
+// Sub-tipos musculoesqueléticos (Hombro, Codo, Muñeca, Cadera, Rodilla, Tobillo)
+$tipos_musculo = [];
+$res_musc = $conex->query("SELECT id, codigo, nombre, descripcion, icono FROM tipos_ecografias WHERE activo = 1 AND categoria = 'Musculoesqueletica_Sub' ORDER BY posicion, nombre");
+if ($res_musc) {
+    while ($row = $res_musc->fetch_assoc()) {
+        $tipos_musculo[] = $row;
+    }
+}
+
+// Sub-tipos obstétricos (I Trimestre, II y III Trimestre)
+$tipos_obstetrica = [];
+$res_obs = $conex->query("SELECT id, codigo, nombre, descripcion, icono FROM tipos_ecografias WHERE activo = 1 AND categoria = 'Obstetrica_Sub' ORDER BY posicion, nombre");
+if ($res_obs) {
+    while ($row = $res_obs->fetch_assoc()) {
+        $tipos_obstetrica[] = $row;
+    }
+}
+
+// Sub-tipos partes blandas (General, Cuello, Inguinal)
+$tipos_partes_blandas = [];
+$res_pbl = $conex->query("SELECT id, codigo, nombre, descripcion, icono FROM tipos_ecografias WHERE activo = 1 AND categoria = 'Partes_Blandas_Sub' ORDER BY posicion, nombre");
+if ($res_pbl) {
+    while ($row = $res_pbl->fetch_assoc()) {
+        $tipos_partes_blandas[] = $row;
+    }
+}
+
+// Mapa de colores por categoría
+$eco_colores = [
+    'Abdominal'         => ['bg' => 'linear-gradient(135deg,#02b1f4,#38bdf8)', 'badge' => '#e0f5fe', 'text' => '#0284c7'],
+    'Renal'             => ['bg' => 'linear-gradient(135deg,#0ea5e9,#7dd3fc)', 'badge' => '#e0f2fe', 'text' => '#0369a1'],
+    'Obstetrica'        => ['bg' => 'linear-gradient(135deg,#ec4899,#f9a8d4)', 'badge' => '#fce7f3', 'text' => '#be185d'],
+    'Cervical'          => ['bg' => 'linear-gradient(135deg,#14b8a6,#5eead4)', 'badge' => '#ccfbf1', 'text' => '#0f766e'],
+    'Pelvica'           => ['bg' => 'linear-gradient(135deg,#8b5cf6,#c4b5fd)', 'badge' => '#ede9fe', 'text' => '#6d28d9'],
+    'Musculoesqueletica'=> ['bg' => 'linear-gradient(135deg,#22c55e,#86efac)', 'badge' => '#dcfce7', 'text' => '#15803d'],
+    'Prostatica'        => ['bg' => 'linear-gradient(135deg,#3b82f6,#93c5fd)', 'badge' => '#dbeafe', 'text' => '#1d4ed8'],
+    'Mamaria'           => ['bg' => 'linear-gradient(135deg,#f43f5e,#fda4af)', 'badge' => '#ffe4e6', 'text' => '#be123c'],
+    'Partes Blandas'    => ['bg' => 'linear-gradient(135deg,#f59e0b,#fcd34d)', 'badge' => '#fef3c7', 'text' => '#b45309'],
+    'Testicular'        => ['bg' => 'linear-gradient(135deg,#6366f1,#a5b4fc)', 'badge' => '#e0e7ff', 'text' => '#4338ca'],
+    'Pulmonar'          => ['bg' => 'linear-gradient(135deg,#0891b2,#22d3ee)', 'badge' => '#cffafe', 'text' => '#0e7490'],
+];
+$eco_color_default = ['bg' => 'linear-gradient(135deg,#64748b,#94a3b8)', 'badge' => '#f1f5f9', 'text' => '#475569'];
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Control - WebPSY</title>
+    <title>Panel de Control - EcoMadelleine</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="assets/css/shell.css">
+    <link rel="stylesheet" href="assets/css/shell-modals.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
 <style>
@@ -2227,6 +2287,46 @@ if ($rol_usuario == 'administrador') {
 }
 .modal-close-btn:hover { background-color: #e2e6ea; color: #333; }
 
+/* Botón cerrar para modal "Ver detalle de informe" — igual estilo que en crear informe */
+#modal-informe-detalle .modal-form-eco-header .modal-close-btn,
+#eco-modal-informe-detalle-eco .modal-form-eco-header .modal-close-btn {
+    position: static !important;
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    border: none !important;
+    outline: none !important;
+    background-color: #f0f2f5 !important;
+    color: #888 !important;
+    border-radius: 50% !important;
+    font-size: 15px !important;
+    cursor: pointer;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: none !important;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+#modal-informe-detalle .modal-form-eco-header .modal-close-btn:hover,
+#eco-modal-informe-detalle-eco .modal-form-eco-header .modal-close-btn:hover {
+    background-color: #e2e6ea !important;
+    color: #333 !important;
+    transform: none !important;
+}
+#modal-informe-detalle .modal-form-eco-header .modal-close-btn:focus,
+#eco-modal-informe-detalle-eco .modal-form-eco-header .modal-close-btn:focus,
+#modal-informe-detalle .modal-form-eco-header .modal-close-btn:focus-visible,
+#eco-modal-informe-detalle-eco .modal-form-eco-header .modal-close-btn:focus-visible {
+    outline: 2px solid #02b1f4 !important;
+    outline-offset: 2px;
+}
+#modal-informe-detalle .modal-form-eco-header .modal-close-btn i,
+#eco-modal-informe-detalle-eco .modal-form-eco-header .modal-close-btn i {
+    pointer-events: none;
+}
+
 
 /* Estilo para el panel informativo de la modal de reprogramación */
 .modal-info-panel.info-panel-warning {
@@ -2802,6 +2902,648 @@ body.fade-out {
 .selection-card-premium:hover .card-arrow {
     opacity: 1;
     margin-top: 25px; /* Se desliza hacia abajo */
+}
+
+/* ================================================================
+   MODAL DE SELECCIÓN DE ECOGRAFÍA — Grid Premium
+   ================================================================ */
+.modal-content-eco-grid {
+    width: 96%;
+    max-width: 1120px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+    overflow: hidden;
+    animation: fadeIn 0.35s ease-out;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+.eco-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 28px;
+    border-bottom: 1px solid #f0f2f5;
+    flex-shrink: 0;
+    background: #fff;
+}
+.eco-modal-header .eco-btn-back,
+.modal-form-eco-header .eco-btn-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: "Poppins", sans-serif;
+    white-space: nowrap;
+}
+.eco-modal-header .eco-btn-back:hover,
+.modal-form-eco-header .eco-btn-back:hover {
+    background: #f1f5f9;
+    border-color: #02b1f4;
+    color: #02b1f4;
+}
+.eco-modal-header .eco-header-title {
+    flex: 1;
+    text-align: center;
+}
+.eco-modal-header .eco-header-title h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #1e293b;
+    font-weight: 700;
+    border: none;
+    padding: 0;
+}
+.eco-modal-header .eco-header-title p {
+    margin: 3px 0 0;
+    font-size: 13px;
+    color: #64748b;
+}
+.eco-modal-body {
+    padding: 28px 28px 32px;
+    overflow-y: auto;
+}
+.eco-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+}
+.eco-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 22px 14px 18px;
+    background: #fff;
+    border: 1.5px solid #e8ecf0;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.28s ease;
+    overflow: hidden;
+}
+.eco-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background: inherit;
+    opacity: 0;
+    transition: opacity 0.28s;
+}
+.eco-card:hover {
+    transform: translateY(-7px);
+    box-shadow: 0 14px 32px rgba(0,0,0,0.10);
+    border-color: transparent;
+}
+.eco-card .eco-card-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #fff;
+    margin-bottom: 13px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.14);
+    flex-shrink: 0;
+    transition: transform 0.28s ease;
+}
+.eco-card:hover .eco-card-icon {
+    transform: scale(1.12);
+}
+.eco-card .eco-card-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 7px;
+}
+.eco-card .eco-card-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 5px;
+    line-height: 1.35;
+}
+.eco-card .eco-card-desc {
+    font-size: 11.5px;
+    color: #94a3b8;
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.eco-card .eco-card-select-hint {
+    margin-top: 10px;
+    font-size: 11px;
+    color: #02b1f4;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.25s;
+}
+.eco-card:hover .eco-card-select-hint {
+    opacity: 1;
+}
+@media (max-width: 600px) {
+    .eco-cards-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .eco-modal-body { padding: 16px; }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   SUB-MODAL MUSCULOESQUELÉTICA — Grid 3 columnas premium
+   ──────────────────────────────────────────────────────────────── */
+.musculo-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    max-width: 820px;
+    margin: 0 auto;
+}
+.musculo-card {
+    padding: 28px 16px 22px;
+    background: #fff;
+    border: 1.5px solid #dcfce7;
+    border-radius: 16px;
+    transition: all 0.28s cubic-bezier(.4, 0, .2, 1);
+    box-shadow: 0 1px 3px rgba(34, 197, 94, 0.06);
+}
+.musculo-card:hover {
+    transform: translateY(-6px);
+    border-color: #22c55e;
+    box-shadow: 0 16px 36px rgba(34, 197, 94, 0.18);
+    background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 60%);
+}
+.musculo-card .musculo-card-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #22c55e, #4ade80);
+    color: #fff;
+    font-size: 26px;
+    margin-bottom: 14px;
+    box-shadow: 0 6px 14px rgba(34, 197, 94, 0.28);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.28s ease;
+}
+.musculo-card:hover .musculo-card-icon {
+    transform: scale(1.12) rotate(-4deg);
+}
+.musculo-card .eco-card-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #14532d;
+    margin: 0 0 6px;
+}
+.musculo-card .eco-card-desc {
+    font-size: 11.5px;
+    color: #64748b;
+    line-height: 1.45;
+}
+.musculo-card .eco-card-select-hint {
+    color: #16a34a;
+    margin-top: 12px;
+}
+@media (max-width: 820px) {
+    .musculo-cards-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+}
+@media (max-width: 480px) {
+    .musculo-cards-grid { grid-template-columns: 1fr; gap: 12px; }
+    .musculo-card { padding: 22px 14px 18px; }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   SUB-MODAL OBSTÉTRICA — Grid 2 columnas tema rosa
+   ──────────────────────────────────────────────────────────────── */
+.obstetrica-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    max-width: 720px;
+    margin: 0 auto;
+}
+.obstetrica-card {
+    padding: 32px 18px 24px;
+    background: #fff;
+    border: 1.5px solid #fce7f3;
+    border-radius: 16px;
+    transition: all 0.28s cubic-bezier(.4, 0, .2, 1);
+    box-shadow: 0 1px 3px rgba(236, 72, 153, 0.06);
+}
+.obstetrica-card:hover {
+    transform: translateY(-6px);
+    border-color: #ec4899;
+    box-shadow: 0 16px 36px rgba(236, 72, 153, 0.18);
+    background: linear-gradient(180deg, #fdf2f8 0%, #ffffff 60%);
+}
+.obstetrica-card .obstetrica-card-icon {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ec4899, #f9a8d4);
+    color: #fff;
+    font-size: 28px;
+    margin-bottom: 16px;
+    box-shadow: 0 6px 16px rgba(236, 72, 153, 0.30);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.28s ease;
+}
+.obstetrica-card:hover .obstetrica-card-icon {
+    transform: scale(1.12) rotate(-4deg);
+}
+.obstetrica-card .eco-card-name {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: #831843;
+    margin: 0 0 6px;
+}
+.obstetrica-card .eco-card-desc {
+    font-size: 11.5px;
+    color: #64748b;
+    line-height: 1.45;
+}
+.obstetrica-card .eco-card-select-hint {
+    color: #db2777;
+    margin-top: 14px;
+}
+@media (max-width: 600px) {
+    .obstetrica-cards-grid { grid-template-columns: 1fr; gap: 14px; }
+    .obstetrica-card { padding: 24px 14px 18px; }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   SUB-MODAL PARTES BLANDAS — Grid 3 columnas tema ámbar
+   ──────────────────────────────────────────────────────────────── */
+.pblandas-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    max-width: 820px;
+    margin: 0 auto;
+}
+.pblandas-card {
+    padding: 28px 16px 22px;
+    background: #fff;
+    border: 1.5px solid #fef3c7;
+    border-radius: 16px;
+    transition: all 0.28s cubic-bezier(.4, 0, .2, 1);
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.06);
+}
+.pblandas-card:hover {
+    transform: translateY(-6px);
+    border-color: #f59e0b;
+    box-shadow: 0 16px 36px rgba(245, 158, 11, 0.18);
+    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 60%);
+}
+.pblandas-card .pblandas-card-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b, #fcd34d);
+    color: #fff;
+    font-size: 26px;
+    margin-bottom: 14px;
+    box-shadow: 0 6px 14px rgba(245, 158, 11, 0.30);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.28s ease;
+}
+.pblandas-card:hover .pblandas-card-icon {
+    transform: scale(1.12) rotate(-4deg);
+}
+.pblandas-card .eco-card-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #78350f;
+    margin: 0 0 6px;
+}
+.pblandas-card .eco-card-desc {
+    font-size: 11.5px;
+    color: #64748b;
+    line-height: 1.45;
+}
+.pblandas-card .eco-card-select-hint {
+    color: #b45309;
+    margin-top: 12px;
+}
+@media (max-width: 820px) {
+    .pblandas-cards-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+}
+@media (max-width: 480px) {
+    .pblandas-cards-grid { grid-template-columns: 1fr; gap: 12px; }
+    .pblandas-card { padding: 22px 14px 18px; }
+}
+
+/* ================================================================
+   MODAL 3 — FORMULARIO DE ESTUDIO ECOGRÁFICO (carga por AJAX)
+   ================================================================ */
+.modal-content-form-eco {
+    width: 96%;
+    max-width: 1060px;
+    height: 92vh;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeIn 0.35s ease-out;
+}
+.modal-form-eco-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #f0f2f5;
+    flex-shrink: 0;
+    background: #fff;
+}
+.eco-modal-tipo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #02b1f4, #38bdf8);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 18px;
+    box-shadow: 0 3px 10px rgba(2,177,244,0.3);
+    flex-shrink: 0;
+    transition: background .3s;
+}
+.modal-form-eco-header .eco-header-tipo-info { flex: 1; min-width: 0; }
+.modal-form-eco-header .eco-header-tipo-info h2 {
+    margin: 0 0 2px; font-size: 17px; font-weight: 700; color: #1e293b;
+    border: none; padding: 0;
+}
+.modal-form-eco-header .eco-header-tipo-info p { margin: 0; font-size: 12.5px; color: #64748b; }
+
+/* Feedback bar */
+.modal-form-eco-feedback-bar { padding: 0 24px; flex-shrink: 0; }
+.eco-msg-ok  { background:#f0fdf4; color:#15803d; border:1px solid #86efac; padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:6px; }
+.eco-msg-err { background:#fff5f5; color:#c0392b; border:1px solid #fca5a5; padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:6px; }
+.eco-msg-ok a { color:#15803d; font-weight:700; }
+
+/* Scrollable body */
+.modal-form-eco-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px 24px 28px;
+    background: #f8fafc;
+}
+.modal-form-eco-loader {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 14px; height: 220px; color: #64748b; font-size: 14px;
+}
+.modal-form-eco-loader i { font-size: 2.2rem; color: #02b1f4; }
+
+/* ── Secciones con card ── */
+.modal-form-eco-body .form-seccion {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+.modal-form-eco-body .form-seccion-header {
+    background: linear-gradient(90deg, #f8fafc, #f1f5f9);
+    padding: 10px 18px;
+    border-bottom: 1px solid #e9ecef;
+}
+.modal-form-eco-body .form-seccion-header h3 {
+    margin: 0; font-size: 13px; font-weight: 700; color: #0284c7;
+    letter-spacing: .3px; border: none; padding: 0;
+}
+.modal-form-eco-body .form-seccion-header h3 i { margin-right: 7px; }
+/* Padding extra para que los bordes de los inputs nunca toquen el overflow:hidden */
+.modal-form-eco-body .form-seccion-body { padding: 16px 20px 14px; }
+
+/* ── Grid de campos ── */
+.modal-form-eco-body .form-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px 14px;
+}
+.modal-form-eco-body .form-group { display: flex; flex-direction: column; min-width: 0; }
+.modal-form-eco-body .campo-completo { grid-column: span 6; }
+.modal-form-eco-body .campo-medio    { grid-column: span 3; }
+.modal-form-eco-body .campo-tercio   { grid-column: span 2; }
+.modal-form-eco-body .campo-sexto    { grid-column: span 1; }
+.modal-form-eco-body .form-group label {
+    margin-bottom: 4px; font-size: 12px; font-weight: 600; color: #475569;
+}
+.modal-form-eco-body .campo-req { color: #dc3545; }
+.modal-form-eco-body .form-group input:not([type=radio]):not([type=checkbox]),
+.modal-form-eco-body .form-group textarea,
+.modal-form-eco-body .form-group select {
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: "Poppins", sans-serif;
+    transition: border-color .2s, box-shadow .2s;
+    width: 100%; background: #fff; color: #1e293b;
+}
+.modal-form-eco-body .form-group input:focus,
+.modal-form-eco-body .form-group textarea:focus,
+.modal-form-eco-body .form-group select:focus {
+    outline: none; border-color: #02b1f4; box-shadow: 0 0 0 3px rgba(2,177,244,.15);
+}
+.modal-form-eco-body .input-con-unidad { position:relative; display:flex; align-items:center; width:100%; }
+.modal-form-eco-body .input-con-unidad input { padding-right: 38px; width:100%; box-sizing:border-box; }
+.modal-form-eco-body .campo-unidad {
+    position: absolute; right: 9px; color: #94a3b8; font-size: 10.5px; font-weight: 600; pointer-events: none;
+}
+/* Ocultar flechas nativas de inputs numéricos para que no choquen con la unidad */
+.modal-form-eco-body input[type=number]::-webkit-inner-spin-button,
+.modal-form-eco-body input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.modal-form-eco-body input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* ── Radio pill ── */
+.modal-form-eco-body .radio-group { display:flex; gap:7px; flex-wrap:wrap; padding-top:5px; }
+.modal-form-eco-body .radio-label {
+    display: inline-flex; align-items: center; gap:5px;
+    font-size: 12.5px; color: #334155; cursor:pointer;
+    padding: 4px 10px; border: 1.5px solid #d1d5db; border-radius: 20px; transition: all .2s;
+}
+.modal-form-eco-body .radio-label:has(input:checked) {
+    background: #e0f5fe; border-color: #02b1f4; color: #0284c7; font-weight: 600;
+}
+.modal-form-eco-body .radio-label input[type=radio] { accent-color: #02b1f4; }
+
+/* ── SI / NO pills ── */
+.modal-form-eco-body .sinno-group { display:flex; gap:6px; padding-top:4px; }
+.modal-form-eco-body .sinno-btn {
+    display: inline-flex; align-items: center; gap:5px;
+    padding: 5px 14px; border: 1.5px solid #d1d5db; border-radius: 20px;
+    cursor: pointer; font-size: 12.5px; font-weight: 600; transition: all .2s; color: #555;
+}
+.modal-form-eco-body .sinno-btn input[type=radio] { display: none; }
+.modal-form-eco-body .sinno-btn.sinno-si:has(input:checked) {
+    background: #dcfce7; border-color: #22c55e; color: #15803d;
+}
+.modal-form-eco-body .sinno-btn.sinno-no:has(input:checked) {
+    background: #fee2e2; border-color: #f87171; color: #b91c1c;
+}
+.modal-form-eco-body .sinno-btn:hover { background: #f8fafc; border-color: #94a3b8; }
+
+/* ── Sección PAR ── */
+.modal-form-eco-body .seccion-par-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+.modal-form-eco-body .seccion-par-col {
+    border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; min-width: 0;
+}
+.modal-form-eco-body .seccion-par-col-titulo {
+    background: linear-gradient(90deg, #0284c7, #0ea5e9);
+    color: #fff; font-size: 12.5px; font-weight: 700; padding: 7px 12px; text-align: center;
+}
+.modal-form-eco-body .form-grid-par {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); padding: 12px 14px; gap: 9px 10px;
+}
+.modal-form-eco-body .form-grid-par .campo-completo { grid-column: span 2; }
+.modal-form-eco-body .form-grid-par .campo-medio    { grid-column: span 1; }
+.modal-form-eco-body .form-grid-par .campo-tercio   { grid-column: span 1; }
+
+/* ── Botones del formulario ── */
+.modal-form-eco-actions {
+    display: flex; justify-content: flex-end; gap: 12px;
+    margin-top: 24px; padding-top: 16px; border-top: 2px solid #f0f2f5;
+}
+.eco-btn-cancel {
+    display: inline-flex; align-items: center; gap:7px;
+    padding: 10px 22px; font-size: 13.5px; font-weight: 600;
+    border: 1.5px solid #d1d5db; border-radius: 8px; background: #fff;
+    color: #555; cursor: pointer; transition: all .2s; font-family: "Poppins", sans-serif;
+}
+.eco-btn-cancel:hover { background: #f1f5f9; border-color: #94a3b8; }
+.eco-btn-submit {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 26px; font-size: 13.5px; font-weight: 600;
+    background: linear-gradient(135deg, #02b1f4, #00c2ff);
+    border: none; border-radius: 8px; color: #fff; cursor: pointer;
+    transition: all .25s; box-shadow: 0 4px 14px rgba(2,177,244,.3);
+    font-family: "Poppins", sans-serif;
+}
+.eco-btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(2,177,244,.4); }
+.eco-btn-submit:disabled { opacity: .7; transform: none; cursor: not-allowed; }
+
+.eco-btn-submit.eco-btn-submit--saved {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    box-shadow: 0 4px 14px rgba(34,197,94,.30);
+    opacity: 1;
+}
+
+.eco-btn-imprimir {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 22px; font-size: 13.5px; font-weight: 600;
+    background: #fff;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    color: #94a3b8;
+    cursor: not-allowed;
+    transition: all .25s;
+    font-family: "Poppins", sans-serif;
+}
+.eco-btn-imprimir.eco-btn-imprimir--ready {
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    border-color: transparent;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(99,102,241,.28);
+}
+.eco-btn-imprimir.eco-btn-imprimir--ready:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99,102,241,.40);
+}
+
+/* ── Valores en modo solo lectura (informe detalle) ── */
+.modal-form-eco-body .campo-valor {
+    background: #f8fafc;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #1e293b;
+    min-height: 36px;
+    margin: 0;
+    line-height: 1.5;
+}
+.modal-form-eco-body .campo-valor em { color: #cbd5e1; font-style: normal; }
+
+/* Info rápida del informe (número, fecha, ecografista) */
+.inf-det-meta {
+    display: flex; flex-wrap: wrap; gap: 10px 24px;
+    padding: 10px 18px 12px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 12.5px; color: #64748b;
+    flex-shrink: 0;
+}
+.inf-det-meta span { display:inline-flex; align-items:center; gap:5px; }
+.inf-det-meta strong { color: #1e293b; }
+
+/* ── Campo de solo lectura ── */
+.modal-form-eco-body .campo-readonly input,
+.modal-form-eco-body .campo-readonly textarea {
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+    cursor: not-allowed;
+    border-color: #e2e8f0 !important;
+}
+.modal-form-eco-body .campo-readonly input:focus,
+.modal-form-eco-body .campo-readonly textarea:focus {
+    box-shadow: none !important;
+    border-color: #e2e8f0 !important;
+}
+.modal-form-eco-body .campo-readonly label {
+    color: #94a3b8;
+}
+
+/* ── Campo condicional (se muestra/oculta según otro campo) ── */
+.modal-form-eco-body .campo-condicional {
+    overflow: hidden;
+    animation: fadeInCampo .25s ease-out;
+}
+@keyframes fadeInCampo {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 700px) {
+    .modal-form-eco-body .form-grid { grid-template-columns: 1fr 1fr; }
+    .modal-form-eco-body .campo-completo { grid-column: span 2; }
+    .modal-form-eco-body .campo-medio,
+    .modal-form-eco-body .campo-tercio   { grid-column: span 1; }
+    .modal-form-eco-body .seccion-par-grid { grid-template-columns: 1fr; }
 }
 
 /* --- CORRECCIÓN DE COLOR PARA LA LISTA DE INFORMES EN LA MODAL --- */
@@ -4567,6 +5309,19 @@ body.fade-out {
     color: #333;
     letter-spacing: 2px;
 }
+#eco-modal-exito-paciente-panel .btn-submit {
+    padding: 10px 30px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    background-color: #02b1f4;
+    color: white;
+}
+#eco-modal-exito-paciente-panel .btn-submit:hover {
+    background-color: #028ac7;
+}
 
 /* --- ESTILOS PARA EL CAMPO DE TELÉFONO COMPUESTO (SIN FLECHA) --- */
 .phone-input-group {
@@ -5043,7 +5798,7 @@ body.fade-out {
     margin-top: -3px; /* Ajusta este valor (ej: 0, 10px, etc.) */
 }
 
-/* Para los títulos de las listas de personal ("Psicólogos Activos", etc.) */
+/* Para los títulos de las listas de personal ("Ecografistas Activos", etc.) */
 #vista-admin-personal .panel-seccion h2 {
     margin-top: -3px; /* Ajusta este valor */
 }
@@ -5517,7 +6272,7 @@ body.fade-out {
         
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="panel.php" class="logo">WebPSY</a>
+                <a href="panel.php" class="logo">EcoMadelleine</a>
             </div>
 
             <nav class="sidebar-nav">
@@ -5546,7 +6301,7 @@ body.fade-out {
     </a>
     
 <?php endif; ?>
-                <?php if ($rol_usuario == 'psicologo' || $rol_usuario == 'psiquiatra'): ?>
+                <?php if ($rol_usuario == 'ecografista' || $rol_usuario == 'ecografista'): ?>
     <a href="#" id="nav-dashboard" class="nav-link active" onclick="mostrarVista('dashboard', event)">
         <i class="fa-solid fa-chart-line"></i> <span>Panel de Control</span>
     </a>
@@ -5595,11 +6350,11 @@ body.fade-out {
     </a>
     <!-- ENLACE MODIFICADO -->
     <a href="#" class="nav-link" onclick="mostrarVista('psicologos', event)">
-        <i class="fa-solid fa-user-doctor"></i> <span>Psicólogos Activos</span>
+        <i class="fa-solid fa-user-doctor"></i> <span>Ecografistas Activos</span>
     </a>
     <!-- ENLACE NUEVO -->
     <a href="#" class="nav-link" onclick="mostrarVista('psiquiatras', event)">
-        <i class="fa-solid fa-brain"></i> <span>Psiquiatras Activos</span>
+        <i class="fa-solid fa-brain"></i> <span>Ecografistas Senior</span>
     </a>
     <a href="#" class="nav-link" onclick="mostrarVista('faq', event)">
         <i class="fa-solid fa-circle-question"></i> <span>Preguntas Sobre:</span>
@@ -5613,7 +6368,7 @@ body.fade-out {
 <?php endif; ?>
 
                 <!-- ENLACES PARA SECRETARIA -->
-<?php if ($rol_usuario == 'secretaria'): ?>
+<?php if ($rol_usuario == 'recepcionista'): ?>
     <a href="#" class="nav-link active" onclick="mostrarVista('secretaria-dashboard', event)">
         <i class="fa-solid fa-chart-line"></i> <span>Panel de Control</span>
     </a>
@@ -5851,7 +6606,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 </div>
                 <div>
                     <h4><i class="fa-solid fa-headset"></i> Soporte</h4>
-                    <p>¿Necesitas ayuda? Escríbenos a <a href="mailto:soporte@webpsy.com">soporte@webpsy.com</a>.</p>
+                    <p>¿Necesitas ayuda? Escríbenos a <a href="mailto:soporte@ecomadelleine.com">soporte@ecomadelleine.com</a>.</p>
                 </div>
             </div>
         </div>
@@ -5866,14 +6621,14 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         <h2>Gestión de Contenido Web</h2>
         
         <div class="content-management-grid">
-            <a href="gestionar_terapias.php" class="content-card">
+            <a href="#" class="content-card">
                 <div class="content-card-icon" style="background-color: #02b1f4;"><i class="fa-solid fa-hand-holding-heart"></i></div>
                 <h3>Gestionar Terapias</h3>
                 <p>Añade, edita o elimina las terapias.</p>
                 <span class="card-action">Gestionar <i class="fa-solid fa-arrow-right"></i></span>
             </a>
 
-            <a href="gestionar_farmacos.php" class="content-card">
+            <a href="#" class="content-card">
                 <div class="content-card-icon" style="background-color: #17a2b8;"><i class="fa-solid fa-pills"></i></div>
                 <h3>Gestionar Fármacos</h3>
                 <p>Administra la lista de fármacos.</p>
@@ -5926,8 +6681,8 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 <span>Terapias</span>
             </div>
             <div class="shortcut-actions">
-                <a href="terapias.php" target="_blank" class="btn-view">Ver página</a>
-                <a href="gestionar_terapias.php" class="btn-manage">Gestionar</a>
+                <a href="#" target="_blank" class="btn-view">Ver página</a>
+                <a href="#" class="btn-manage">Gestionar</a>
             </div>
         </li>
         <li class="shortcut-item">
@@ -5936,8 +6691,8 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 <span>Fármacos</span>
             </div>
             <div class="shortcut-actions">
-                <a href="farmacologia.php" target="_blank" class="btn-view">Ver página</a>
-                <a href="gestionar_farmacos.php" class="btn-manage">Gestionar</a>
+                <a href="#" target="_blank" class="btn-view">Ver página</a>
+                <a href="#" class="btn-manage">Gestionar</a>
             </div>
         </li>
     </ul>
@@ -6036,24 +6791,24 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         <h2>Añadir Nuevo Usuario al Sistema</h2>
         
         <div class="user-creation-grid">
-            <!-- Tarjeta para Registrar Psicólogo -->
-            <a href="crear_usuario_admin.php?rol=psicologo" class="creation-card">
+            <!-- Tarjeta para Registrar Ecografista -->
+            <a href="crear_usuario_admin.php?rol=ecografista" class="creation-card">
                 <div class="card-icon psicologo-icon"><i class="fa-solid fa-user-doctor"></i></div>
-                <h3>Registrar Psicólogo</h3>
+                <h3>Registrar Ecografista</h3>
                 <p>Crear una cuenta para un nuevo terapeuta.</p>
                 <span class="card-action">Crear Perfil <i class="fa-solid fa-arrow-right"></i></span>
             </a>
 
-            <!-- Tarjeta para Registrar Psiquiatra -->
-            <a href="crear_usuario_admin.php?rol=psiquiatra" class="creation-card">
+            <!-- Tarjeta para Registrar Especialista -->
+            <a href="crear_usuario_admin.php?rol=ecografista" class="creation-card">
                 <div class="card-icon psiquiatra-icon"><i class="fa-solid fa-brain"></i></div>
-                <h3>Registrar Psiquiatra</h3>
+                <h3>Registrar Especialista</h3>
                 <p>Crear una cuenta para un médico especialista.</p>
                 <span class="card-action">Crear Perfil <i class="fa-solid fa-arrow-right"></i></span>
             </a>
 
             <!-- Tarjeta para Registrar Secretaria -->
-            <a href="crear_usuario_admin.php?rol=secretaria" class="creation-card">
+            <a href="crear_usuario_admin.php?rol=recepcionista" class="creation-card">
                 <div class="card-icon secretaria-icon"><i class="fa-solid fa-clipboard-user"></i></div>
                 <h3>Registrar Secretaria</h3>
                 <p>Crear una cuenta para asistente administrativo.</p>
@@ -6073,10 +6828,10 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 
     <!-- Sección para la lista de Psicólogos -->
     <div class="panel-seccion">
-        <h2><i class="fa-solid fa-user-doctor"></i> Psicólogos Activos</h2>
+        <h2><i class="fa-solid fa-user-doctor"></i> Ecografistas Activos</h2>
         <div class="personal-grid">
             <?php
-            $consulta_psicologos = $conex->query("SELECT id, nombre_completo, correo FROM usuarios WHERE rol = 'psicologo' AND estado = 'aprobado' ORDER BY nombre_completo ASC");
+            $consulta_psicologos = $conex->query("SELECT id, nombre_completo, correo FROM usuarios WHERE rol = 'ecografista' AND estado = 'aprobado' ORDER BY nombre_completo ASC");
             if ($consulta_psicologos->num_rows > 0) {
                 while($profesional = $consulta_psicologos->fetch_assoc()) {
                     echo '<a href="ver_perfil_personal.php?id=' . $profesional['id'] . '" class="personal-card-link">';
@@ -6095,10 +6850,10 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 
     <!-- Sección para la lista de Psiquiatras -->
     <div class="panel-seccion">
-        <h2><i class="fa-solid fa-brain"></i> Psiquiatras Activos</h2>
+        <h2><i class="fa-solid fa-brain"></i> Ecografistas Senior</h2>
         <div class="personal-grid">
             <?php
-            $consulta_psiquiatras = $conex->query("SELECT id, nombre_completo, correo FROM usuarios WHERE rol = 'psiquiatra' AND estado = 'aprobado' ORDER BY nombre_completo ASC");
+            $consulta_psiquiatras = $conex->query("SELECT id, nombre_completo, correo FROM usuarios WHERE rol = 'ecografista' AND estado = 'aprobado' ORDER BY nombre_completo ASC");
             if ($consulta_psiquiatras->num_rows > 0) {
                 while($profesional = $consulta_psiquiatras->fetch_assoc()) {
                     echo '<a href="ver_perfil_personal.php?id=' . $profesional['id'] . '" class="personal-card-link">';
@@ -6120,7 +6875,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         <h2><i class="fa-solid fa-user-tie"></i> Secretarias Activas</h2>
         <div class="personal-grid">
              <?php
-            $consulta_secretarias = $conex->query("SELECT id, nombre_completo, correo FROM usuarios WHERE rol = 'secretaria' AND estado = 'aprobado' ORDER BY nombre_completo ASC");
+            $consulta_secretarias = $conex->query("SELECT id, nombre_completo, correo FROM usuarios WHERE rol = 'recepcionista' AND estado = 'aprobado' ORDER BY nombre_completo ASC");
             if ($consulta_secretarias->num_rows > 0) {
                 while($profesional = $consulta_secretarias->fetch_assoc()) {
                     echo '<a href="ver_perfil_personal.php?id=' . $profesional['id'] . '" class="personal-card-link">';
@@ -6131,7 +6886,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                     echo '</a>';
                 }
             } else {
-                echo "<p>No hay secretarias registradas.</p>";
+                echo "<p>No hay recepcionistas registradas.</p>";
             }
             ?>
         </div>
@@ -6256,7 +7011,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                                     <span class="specialty-status-badge <?php echo htmlspecialchars($estadoActual); ?>"><?php echo htmlspecialchars($profesional['estado'] ? ucfirst($profesional['estado']) : 'Sin estado'); ?></span>
                                 </td>
                                 <td>
-                                    <form action="actualizar_especialidades.php" method="POST" class="specialty-form">
+                                    <form action="#" method="POST" class="specialty-form">
                                         <input type="hidden" name="usuario_id" value="<?php echo (int)$profesional['id']; ?>">
                                         <input type="text" name="especialidades" value="<?php echo htmlspecialchars($profesional['especialidades_texto']); ?>" placeholder="Ej. Terapia Familiar, Mindfulness" list="catalogo-especialidades">
                                         <button type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
@@ -6418,7 +7173,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 
 <?php endif; ?>
 
-<?php if ($rol_usuario == 'administrador' || $rol_usuario == 'secretaria'): ?>
+<?php if ($rol_usuario == 'administrador' || $rol_usuario == 'recepcionista'): ?>
 <div id="vista-agenda-general" class="panel-vista">
     <div class="panel-seccion">
         <h2>Agenda General del Consultorio</h2>
@@ -6498,7 +7253,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     </div>
 </div>
 <?php endif; ?>
-            <?php if ($rol_usuario == 'psicologo' || $rol_usuario == 'psiquiatra'): ?>
+            <?php if ($rol_usuario == 'ecografista' || $rol_usuario == 'ecografista'): ?>
 
     <div id="vista-dashboard" class="panel-vista active">
         <div class="panel-seccion" style="margin-top: 0px;">
@@ -6523,27 +7278,27 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         
         <?php
         // Lógica para obtener las estadísticas del dashboard
-        $psicologo_id_stats = $_SESSION['usuario_id'];
+        $ecografista_id_stats = $_SESSION['usuario_id'];
         
         // Citas para hoy
         $hoy_inicio = date('Y-m-d 00:00:00');
         $hoy_fin = date('Y-m-d 23:59:59');
-        $stmt_citas_hoy = $conex->prepare("SELECT COUNT(id) as total FROM citas WHERE psicologo_id = ? AND estado = 'confirmada' AND fecha_cita BETWEEN ? AND ?");
-        $stmt_citas_hoy->bind_param("iss", $psicologo_id_stats, $hoy_inicio, $hoy_fin);
+        $stmt_citas_hoy = $conex->prepare("SELECT COUNT(id) as total FROM citas WHERE ecografista_id = ? AND estado = 'confirmada' AND fecha_cita BETWEEN ? AND ?");
+        $stmt_citas_hoy->bind_param("iss", $ecografista_id_stats, $hoy_inicio, $hoy_fin);
         $stmt_citas_hoy->execute();
         $citas_hoy = $stmt_citas_hoy->get_result()->fetch_assoc()['total'];
         $stmt_citas_hoy->close();
 
         // Solicitudes pendientes
-        $stmt_pendientes = $conex->prepare("SELECT COUNT(id) as total FROM citas WHERE psicologo_id = ? AND estado = 'pendiente'");
-        $stmt_pendientes->bind_param("i", $psicologo_id_stats);
+        $stmt_pendientes = $conex->prepare("SELECT COUNT(id) as total FROM citas WHERE ecografista_id = ? AND estado = 'pendiente'");
+        $stmt_pendientes->bind_param("i", $ecografista_id_stats);
         $stmt_pendientes->execute();
         $solicitudes_pendientes = $stmt_pendientes->get_result()->fetch_assoc()['total'];
         $stmt_pendientes->close();
 
         // Pacientes activos
-        $stmt_pacientes_activos = $conex->prepare("SELECT COUNT(DISTINCT u.id) as total FROM usuarios u LEFT JOIN citas c ON u.id = c.paciente_id WHERE u.rol = 'paciente' AND u.estado = 'aprobado' AND (u.creado_por_psicologo_id = ? OR c.psicologo_id = ?)");
-        $stmt_pacientes_activos->bind_param("ii", $psicologo_id_stats, $psicologo_id_stats);
+        $stmt_pacientes_activos = $conex->prepare("SELECT COUNT(DISTINCT u.id) as total FROM usuarios u LEFT JOIN citas c ON u.id = c.paciente_id WHERE u.rol = 'paciente' AND u.estado = 'aprobado' AND (u.creado_por_id = ? OR c.ecografista_id = ?)");
+        $stmt_pacientes_activos->bind_param("ii", $ecografista_id_stats, $ecografista_id_stats);
         $stmt_pacientes_activos->execute();
         $pacientes_activos = $stmt_pacientes_activos->get_result()->fetch_assoc()['total'];
         $stmt_pacientes_activos->close();
@@ -6626,7 +7381,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 SELECT c.id, c.motivo_consulta, c.fecha_cita, u.nombre_completo as paciente_nombre 
                 FROM citas c 
                 JOIN usuarios u ON c.paciente_id = u.id 
-                WHERE c.estado = 'pendiente' AND c.psicologo_id = ?
+                WHERE c.estado = 'pendiente' AND c.ecografista_id = ?
                 ORDER BY c.fecha_solicitud ASC
             ");
             $consulta_pendientes->bind_param("i", $usuario_id);
@@ -6693,15 +7448,15 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         
         <div class="appointments-list-premium">
             <?php
-            $psicologo_id_proximas = $_SESSION['usuario_id'];
+            $ecografista_id_proximas = $_SESSION['usuario_id'];
             $consulta_proximas_stmt = $conex->prepare(
                 "SELECT c.id, c.fecha_cita, u.id as paciente_id, u.nombre_completo as paciente_nombre, u.cedula as paciente_cedula, u.correo as paciente_correo
                  FROM citas c 
                  JOIN usuarios u ON c.paciente_id = u.id 
-                 WHERE c.psicologo_id = ? AND c.estado IN ('confirmada', 'reprogramada') AND c.fecha_cita >= NOW()
+                 WHERE c.ecografista_id = ? AND c.estado IN ('confirmada', 'reprogramada') AND c.fecha_cita >= NOW()
                  ORDER BY c.fecha_cita ASC"
             );
-            $consulta_proximas_stmt->bind_param("i", $psicologo_id_proximas);
+            $consulta_proximas_stmt->bind_param("i", $ecografista_id_proximas);
             $consulta_proximas_stmt->execute();
             $resultado_proximas = $consulta_proximas_stmt->get_result();
             
@@ -6745,14 +7500,14 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         <div id="tabla-notas-container">
             <?php
             // Consulta actualizada para incluir correo y fecha de registro
-            $psicologo_id_notas = $_SESSION['usuario_id'];
+            $ecografista_id_notas = $_SESSION['usuario_id'];
             $sql_pacientes_notas = "SELECT DISTINCT u.id, u.nombre_completo, u.cedula, u.correo, u.fecha_registro 
                                     FROM usuarios u
                                     LEFT JOIN citas c ON u.id = c.paciente_id
                                     WHERE u.rol = 'paciente' AND u.estado = 'aprobado'
-                                    AND (u.creado_por_psicologo_id = ? OR c.psicologo_id = ?)";
+                                    AND (u.creado_por_id = ? OR c.ecografista_id = ?)";
             $stmt_pacientes_notas = $conex->prepare($sql_pacientes_notas);
-            $stmt_pacientes_notas->bind_param("ii", $psicologo_id_notas, $psicologo_id_notas);
+            $stmt_pacientes_notas->bind_param("ii", $ecografista_id_notas, $ecografista_id_notas);
             $stmt_pacientes_notas->execute();
             $pacientes_notas = $stmt_pacientes_notas->get_result();
 
@@ -6808,7 +7563,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     $stmt_proxima = $conex->prepare("
         SELECT c.fecha_cita, u.nombre_completo as profesional_nombre
         FROM citas c
-        JOIN usuarios u ON c.psicologo_id = u.id
+        JOIN usuarios u ON c.ecografista_id = u.id
         WHERE c.paciente_id = ? AND c.estado IN ('confirmada', 'reprogramada') AND c.fecha_cita >= NOW()
         ORDER BY c.fecha_cita ASC
         LIMIT 1
@@ -6832,9 +7587,9 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     $stmt_profesional = $conex->prepare("
         SELECT u.nombre_completo
         FROM citas c
-        JOIN usuarios u ON c.psicologo_id = u.id
+        JOIN usuarios u ON c.ecografista_id = u.id
         WHERE c.paciente_id = ?
-        GROUP BY c.psicologo_id
+        GROUP BY c.ecografista_id
         ORDER BY COUNT(c.id) DESC
         LIMIT 1
     ");
@@ -6942,7 +7697,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             $consulta_citas = $conex->prepare("
                 SELECT c.id, c.fecha_cita, c.fecha_propuesta, c.estado, p.nombre_completo as psicologo_nombre, p.rol as profesional_rol
                 FROM citas c 
-                LEFT JOIN usuarios p ON c.psicologo_id = p.id 
+                LEFT JOIN usuarios p ON c.ecografista_id = p.id 
                 WHERE c.paciente_id = ? 
                 ORDER BY c.fecha_solicitud DESC
             ");
@@ -7064,13 +7819,12 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                             <label for="especialidad_selector">Especialidad Requerida</label>
                             <select id="especialidad_selector" required>
                                 <option value="">Elige una especialidad</option>
-                                <option value="psicologo">Psicología</option>
-                                <option value="psiquiatra">Psiquiatría</option>
+                                <option value="ecografista">Ecografista</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="psicologo_selector">Profesional Disponible</label>
-                            <select name="psicologo_id" id="psicologo_selector" required disabled>
+                            <select name="ecografista_id" id="psicologo_selector" required disabled>
                                 <option value="">Primero elige especialidad</option>
                             </select>
                         </div>
@@ -7106,18 +7860,18 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     <!-- VISTA 3: PSICÓLOGOS (DISEÑO MINIMALISTA) -->
     <div id="vista-psicologos" class="panel-vista">
         <div class="panel-seccion">
-            <h2>Nuestros Psicólogos</h2>
+            <h2>Nuestros Ecografistas</h2>
             <p>Conoce a los profesionales dedicados a la terapia y el acompañamiento emocional.</p>
             <div class="professionals-list">
                 <?php
-                $psicologos_result = $conex->query("
-                    SELECT u.id, u.nombre_completo, u.especialidades, 
-                           (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.psicologo_id = u.id AND c.estado IN ('confirmada', 'completada')) as pacientes_atendidos
+                $ecografistas_result = $conex->query("
+                    SELECT u.id, u.nombre_completo, (SELECT GROUP_CONCAT(e.nombre ORDER BY e.nombre SEPARATOR ', ') FROM usuario_especialidades ue JOIN especialidades e ON e.id = ue.especialidad_id WHERE ue.usuario_id = u.id) AS especialidades, 
+                           (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.ecografista_id = u.id AND c.estado IN ('confirmada', 'completada')) as pacientes_atendidos
                     FROM usuarios u 
-                    WHERE u.rol = 'psicologo' AND u.estado = 'aprobado'
+                    WHERE u.rol = 'ecografista' AND u.estado = 'aprobado'
                 ");
-                if ($psicologos_result->num_rows > 0) {
-                    while($profesional = $psicologos_result->fetch_assoc()) {
+                if ($ecografistas_result->num_rows > 0) {
+                    while($profesional = $ecografistas_result->fetch_assoc()) {
                         echo '<button type="button" class="professional-list-item" onclick="abrirModalProfesionalDetalle(' . $profesional['id'] . ')">';
                         echo '  <div class="item-avatar psicologo"><i class="fa-solid fa-user-doctor"></i></div>';
                         echo '  <div class="item-info">';
@@ -7139,15 +7893,15 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     <!-- VISTA 4: PSIQUIATRAS (DISEÑO MINIMALISTA) -->
     <div id="vista-psiquiatras" class="panel-vista">
         <div class="panel-seccion">
-            <h2>Nuestros Psiquiatras</h2>
+            <h2>Nuestros Especialistas</h2>
             <p>Conoce a los médicos especialistas en el diagnóstico y tratamiento de trastornos mentales.</p>
             <div class="professionals-list">
                 <?php
                  $psiquiatras_result = $conex->query("
-                    SELECT u.id, u.nombre_completo, u.especialidades, 
-                           (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.psicologo_id = u.id AND c.estado IN ('confirmada', 'completada')) as pacientes_atendidos
+                    SELECT u.id, u.nombre_completo, (SELECT GROUP_CONCAT(e.nombre ORDER BY e.nombre SEPARATOR ', ') FROM usuario_especialidades ue JOIN especialidades e ON e.id = ue.especialidad_id WHERE ue.usuario_id = u.id) AS especialidades, 
+                           (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.ecografista_id = u.id AND c.estado IN ('confirmada', 'completada')) as pacientes_atendidos
                     FROM usuarios u 
-                    WHERE u.rol = 'psiquiatra' AND u.estado = 'aprobado'
+                    WHERE u.rol = 'ecografista' AND u.estado = 'aprobado'
                 ");
                  if ($psiquiatras_result->num_rows > 0) {
                     while($profesional = $psiquiatras_result->fetch_assoc()) {
@@ -7172,15 +7926,15 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     <!-- VISTA 4: PSIQUIATRAS (DISEÑO MEJORADO) -->
     <div id="vista-psiquiatras" class="panel-vista">
         <div class="panel-seccion">
-            <h2>Nuestros Psiquiatras</h2>
+            <h2>Nuestros Especialistas</h2>
             <p>Conoce a los médicos especialistas en el diagnóstico y tratamiento de trastornos mentales.</p>
             <div class="professionals-grid">
                 <?php
                  $psiquiatras_result = $conex->query("
-                    SELECT u.id, u.nombre_completo, u.especialidades, 
-                           (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.psicologo_id = u.id AND c.estado IN ('confirmada', 'completada')) as pacientes_atendidos
+                    SELECT u.id, u.nombre_completo, (SELECT GROUP_CONCAT(e.nombre ORDER BY e.nombre SEPARATOR ', ') FROM usuario_especialidades ue JOIN especialidades e ON e.id = ue.especialidad_id WHERE ue.usuario_id = u.id) AS especialidades, 
+                           (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.ecografista_id = u.id AND c.estado IN ('confirmada', 'completada')) as pacientes_atendidos
                     FROM usuarios u 
-                    WHERE u.rol = 'psiquiatra' AND u.estado = 'aprobado'
+                    WHERE u.rol = 'ecografista' AND u.estado = 'aprobado'
                 ");
                  if ($psiquiatras_result->num_rows > 0) {
                     while($profesional = $psiquiatras_result->fetch_assoc()) {
@@ -7287,7 +8041,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 <?php endif; ?>
 
 <!-- ================== VISTAS PARA SECRETARIA ================== -->
-<?php if ($rol_usuario == 'secretaria'): ?>
+<?php if ($rol_usuario == 'recepcionista'): ?>
 
     <!-- VISTA 0: DASHBOARD GENERAL PARA SECRETARÍA -->
 <div id="vista-secretaria-dashboard" class="panel-vista active">
@@ -7318,7 +8072,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 $resultadoTemp->free();
             }
 
-            if ($resultadoTemp = $conex->query("SELECT COUNT(*) AS total FROM usuarios WHERE rol IN ('psicologo','psiquiatra') AND estado = 'aprobado'")) {
+            if ($resultadoTemp = $conex->query("SELECT COUNT(*) AS total FROM usuarios WHERE rol = 'ecografista' AND estado = 'aprobado'")) {
                 $fila = $resultadoTemp->fetch_assoc();
                 $profesionalesActivosSecretaria = (int)($fila['total'] ?? 0);
                 $resultadoTemp->free();
@@ -7331,7 +8085,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             }
 
             $agendaHoySecretaria = [];
-            if ($stmtAgendaHoySecretaria = $conex->prepare("SELECT c.fecha_cita, c.motivo_consulta, u.nombre_completo AS paciente_nombre, prof.nombre_completo AS profesional_nombre FROM citas c JOIN usuarios u ON c.paciente_id = u.id LEFT JOIN usuarios prof ON c.psicologo_id = prof.id WHERE c.estado IN ('confirmada','reprogramada') AND DATE(c.fecha_cita) = CURDATE() ORDER BY c.fecha_cita ASC LIMIT 5")) {
+            if ($stmtAgendaHoySecretaria = $conex->prepare("SELECT c.fecha_cita, c.motivo_consulta, u.nombre_completo AS paciente_nombre, prof.nombre_completo AS profesional_nombre FROM citas c JOIN usuarios u ON c.paciente_id = u.id LEFT JOIN usuarios prof ON c.ecografista_id = prof.id WHERE c.estado IN ('confirmada','reprogramada') AND DATE(c.fecha_cita) = CURDATE() ORDER BY c.fecha_cita ASC LIMIT 5")) {
                 $stmtAgendaHoySecretaria->execute();
                 $resultadoAgenda = $stmtAgendaHoySecretaria->get_result();
                 while ($filaAgenda = $resultadoAgenda->fetch_assoc()) {
@@ -7588,7 +8342,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                     u.nombre_completo AS paciente_nombre,
                     u.cedula AS paciente_cedula,
                     u.correo AS paciente_correo,
-                    u.edad AS paciente_edad
+                    TIMESTAMPDIFF(YEAR, u.fecha_nacimiento, CURDATE()) AS paciente_edad
                 FROM citas c
                 JOIN usuarios u ON c.paciente_id = u.id
                 WHERE c.estado = 'pendiente'
@@ -7682,9 +8436,9 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         <p>Lista de psicólogos activos en el sistema.</p>
         <?php
         // Consulta para obtener solo los psicólogos
-        $consulta_psicologos = $conex->query("SELECT u.id, u.nombre_completo, u.correo, u.cedula, u.especialidades, u.fecha_registro,
-            (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.psicologo_id = u.id AND c.estado IN ('confirmada','completada')) AS pacientes_atendidos
-            FROM usuarios u WHERE u.rol = 'psicologo' AND u.estado = 'aprobado' ORDER BY u.nombre_completo ASC");
+        $consulta_psicologos = $conex->query("SELECT u.id, u.nombre_completo, u.correo, u.cedula, (SELECT GROUP_CONCAT(e.nombre ORDER BY e.nombre SEPARATOR ', ') FROM usuario_especialidades ue JOIN especialidades e ON e.id = ue.especialidad_id WHERE ue.usuario_id = u.id) AS especialidades, u.fecha_registro,
+            (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.ecografista_id = u.id AND c.estado IN ('confirmada','completada')) AS pacientes_atendidos
+            FROM usuarios u WHERE u.rol = 'ecografista' AND u.estado = 'aprobado' ORDER BY u.nombre_completo ASC");
         
         if ($consulta_psicologos->num_rows > 0) {
             echo "<table class='approvals-table'>";
@@ -7716,9 +8470,9 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         <p>Lista de psiquiatras activos en el sistema.</p>
         <?php
         // Consulta para obtener solo los psiquiatras
-        $consulta_psiquiatras = $conex->query("SELECT u.id, u.nombre_completo, u.correo, u.cedula, u.especialidades, u.fecha_registro,
-            (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.psicologo_id = u.id AND c.estado IN ('confirmada','completada')) AS pacientes_atendidos
-            FROM usuarios u WHERE u.rol = 'psiquiatra' AND u.estado = 'aprobado' ORDER BY u.nombre_completo ASC");
+        $consulta_psiquiatras = $conex->query("SELECT u.id, u.nombre_completo, u.correo, u.cedula, (SELECT GROUP_CONCAT(e.nombre ORDER BY e.nombre SEPARATOR ', ') FROM usuario_especialidades ue JOIN especialidades e ON e.id = ue.especialidad_id WHERE ue.usuario_id = u.id) AS especialidades, u.fecha_registro,
+            (SELECT COUNT(DISTINCT c.paciente_id) FROM citas c WHERE c.ecografista_id = u.id AND c.estado IN ('confirmada','completada')) AS pacientes_atendidos
+            FROM usuarios u WHERE u.rol = 'ecografista' AND u.estado = 'aprobado' ORDER BY u.nombre_completo ASC");
         
         if ($consulta_psiquiatras->num_rows > 0) {
             echo "<table class='approvals-table'>";
@@ -7786,15 +8540,15 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             <h4>Datos del Paciente</h4>
             <?php
                 $profesionalesAsignables = [];
-                if ($rol_usuario === 'secretaria') {
-                    if ($resultadoProfesionales = $conex->query("SELECT id, nombre_completo, rol FROM usuarios WHERE rol IN ('psicologo','psiquiatra') AND estado = 'aprobado' ORDER BY nombre_completo ASC")) {
+                if ($rol_usuario === 'recepcionista') {
+                    if ($resultadoProfesionales = $conex->query("SELECT id, nombre_completo, rol FROM usuarios WHERE rol = 'ecografista' AND estado = 'aprobado' ORDER BY nombre_completo ASC")) {
                         while ($profesional = $resultadoProfesionales->fetch_assoc()) {
                             $profesionalesAsignables[] = $profesional;
                         }
                         $resultadoProfesionales->free();
                     }
                 }
-                $secretariaSinProfesionales = ($rol_usuario === 'secretaria' && empty($profesionalesAsignables));
+                $secretariaSinProfesionales = ($rol_usuario === 'recepcionista' && empty($profesionalesAsignables));
             ?>
             <form action="guardar_paciente.php" method="POST" id="form-crear-paciente">
                 <!-- Div para mostrar mensajes de error -->
@@ -7833,7 +8587,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                     <i class="fa-solid fa-envelope"></i>
                     <input type="email" name="correo" id="correo_modal" placeholder="ejemplo@gmail.com" required>
                 </div>
-                    <?php if ($rol_usuario === 'secretaria'): ?>
+                    <?php if ($rol_usuario === 'recepcionista'): ?>
                     <div class="form-group full-width">
                         <label for="profesional_asignado_modal" class="label-tight">Asignar profesional responsable:</label>
                         <div class="input-wrapper">
@@ -7843,7 +8597,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                                 <?php foreach ($profesionalesAsignables as $profesional): ?>
                                     <option value="<?php echo (int)$profesional['id']; ?>">
                                         <?php echo htmlspecialchars($profesional['nombre_completo']); ?>
-                                        (<?php echo $profesional['rol'] === 'psicologo' ? 'Psicólogo' : 'Psiquiatra'; ?>)
+                                        (Ecografista)
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -7864,131 +8618,119 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     </div>
 </div>
 
-<!-- ================== MODAL PARA PROGRAMAR CITA DIRECTA (DISEÑO PREMIUM) ================== -->
-<div id="modal-programar-cita" class="modal-overlay" style="display: none;">
-    <div class="modal-content-premium">
-        <!-- Panel Izquierdo (Informativo) -->
-        <div class="modal-info-panel">
-            <div class="info-icon">
-                <i class="fa-solid fa-calendar-check"></i>
+<!-- ================== MODAL PROGRAMAR CITA (EcoModal + premium legacy) ================== -->
+<div id="eco-modal-programar-cita" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-programar-aside-title">
+    <div class="eco-modal__dialog eco-modal__dialog--wide eco-modal-dialog--premium-legacy" style="max-width:920px;">
+        <div class="modal-content-premium">
+            <div class="modal-info-panel">
+                <div class="info-icon">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <h3 id="eco-programar-aside-title">Nueva Cita</h3>
+                <p>Estás agendando una nueva consulta para:</p>
+                <strong id="modal-paciente-nombre-display"></strong>
+                <p class="info-footer">Asegúrate de que la fecha y el motivo sean correctos antes de guardar.</p>
             </div>
-            <h3>Nueva Cita</h3>
-            <p>Estás agendando una nueva consulta para:</p>
-            <strong id="modal-paciente-nombre-display"></strong>
-            <p class="info-footer">Asegúrate de que la fecha y el motivo sean correctos antes de guardar.</p>
-        </div>
-
-        <!-- Panel Derecho (Formulario) -->
-        <div class="modal-form-panel">
-            <button type="button" class="modal-close-btn" onclick="cerrarModalProgramarCita()"><i class="fa-solid fa-xmark"></i></button>
-            <h4>Detalles de la Cita</h4>
-            <form action="guardar_cita_directa.php" method="POST" id="form-programar-cita">
-                <input type="hidden" name="paciente_id" id="modal-paciente-id">
-                
-                <div class="form-group">
-                    <label for="calendario-programar">Fecha y Hora</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-calendar-alt"></i>
-                        <input type="text" id="calendario-programar" name="fecha_cita" placeholder="Selecciona una fecha..." required>
+            <div class="modal-form-panel">
+                <button type="button" class="modal-close-btn" onclick="cerrarModalProgramarCita()" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+                <h4>Detalles de la Cita</h4>
+                <form action="guardar_cita_directa.php" method="POST" id="form-programar-cita">
+                    <input type="hidden" name="paciente_id" id="modal-paciente-id">
+                    <div class="form-group">
+                        <label for="calendario-programar">Fecha y Hora</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-calendar-alt"></i>
+                            <input type="text" id="calendario-programar" name="fecha_cita" placeholder="Selecciona una fecha..." required>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="motivo_consulta_modal">Motivo de la consulta</label>
-                    <textarea name="motivo_consulta" id="motivo_consulta_modal" rows="5" required placeholder="Ej: Cita de seguimiento..."></textarea>
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="cerrarModalProgramarCita()">Cancelar</button>
-                    <button type="submit" class="btn-submit">Guardar Cita</button>
-                </div>
-            </form>
+                    <div class="form-group">
+                        <label for="motivo_consulta_modal">Motivo de la consulta</label>
+                        <textarea name="motivo_consulta" id="motivo_consulta_modal" rows="5" required placeholder="Ej: Cita de seguimiento..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="cerrarModalProgramarCita()">Cancelar</button>
+                        <button type="submit" class="btn-submit">Guardar Cita</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- ================== MODAL PARA REPROGRAMAR CITA (DISEÑO PREMIUM) ================== -->
-<div id="modal-reprogramar-cita" class="modal-overlay" style="display: none;">
-    <div class="modal-content-premium">
-        <!-- Panel Izquierdo (Informativo) con estilo de advertencia -->
-        <div class="modal-info-panel info-panel-warning">
-            <div class="info-icon">
-                <i class="fa-solid fa-clock-rotate-left"></i>
+<!-- ================== MODAL REPROGRAMAR CITA (EcoModal + premium legacy) ================== -->
+<div id="eco-modal-reprogramar-cita" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-reprogramar-aside-title">
+    <div class="eco-modal__dialog eco-modal__dialog--wide eco-modal-dialog--premium-legacy" style="max-width:920px;">
+        <div class="modal-content-premium">
+            <div class="modal-info-panel info-panel-warning">
+                <div class="info-icon">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <h3 id="eco-reprogramar-aside-title">Reprogramar Cita</h3>
+                <p>Paciente:</p>
+                <strong id="reprogramar-paciente-nombre"></strong>
+                <p class="info-footer">El paciente recibirá una notificación con la nueva fecha y el motivo del cambio.</p>
             </div>
-            <h3>Reprogramar Cita</h3>
-            <p>Paciente:</p>
-            <strong id="reprogramar-paciente-nombre"></strong>
-            <p class="info-footer">El paciente recibirá una notificación con la nueva fecha y el motivo del cambio.</p>
-        </div>
-
-        <!-- Panel Derecho (Formulario) -->
-        <div class="modal-form-panel">
-            <button type="button" class="modal-close-btn" onclick="cerrarModalReprogramarCita()"><i class="fa-solid fa-xmark"></i></button>
-            <h4>Nuevos Detalles de la Cita</h4>
-            <form action="actualizar_cita.php" method="POST" id="form-reprogramar-cita">
-                <input type="hidden" name="cita_id" id="reprogramar-cita-id">
-                
-                <div class="form-group">
-                    <label for="calendario-reprogramar">Seleccionar Nueva Fecha y Hora:</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-calendar-alt"></i>
-                        <input type="text" id="calendario-reprogramar" name="nueva_fecha_cita" placeholder="Haz clic para seleccionar..." required>
+            <div class="modal-form-panel">
+                <button type="button" class="modal-close-btn" onclick="cerrarModalReprogramarCita()" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+                <h4>Nuevos Detalles de la Cita</h4>
+                <form action="actualizar_cita.php" method="POST" id="form-reprogramar-cita">
+                    <input type="hidden" name="cita_id" id="reprogramar-cita-id">
+                    <div class="form-group">
+                        <label for="calendario-reprogramar">Seleccionar Nueva Fecha y Hora:</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-calendar-alt"></i>
+                            <input type="text" id="calendario-reprogramar" name="nueva_fecha_cita" placeholder="Haz clic para seleccionar..." required>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="motivo_reprogramacion_modal">Motivo de la reprogramación:</label>
-                    <textarea name="motivo_reprogramacion" id="motivo_reprogramacion_modal" rows="4" required placeholder="Ej: Conflicto de horario imprevisto..."></textarea>
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="cerrarModalReprogramarCita()">Cancelar</button>
-                    <button type="submit" class="btn-submit">Guardar y Notificar</button>
-                </div>
-            </form>
+                    <div class="form-group">
+                        <label for="motivo_reprogramacion_modal">Motivo de la reprogramación:</label>
+                        <textarea name="motivo_reprogramacion" id="motivo_reprogramacion_modal" rows="4" required placeholder="Ej: Conflicto de horario imprevisto..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="cerrarModalReprogramarCita()">Cancelar</button>
+                        <button type="submit" class="btn-submit">Guardar y Notificar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- ================== MODAL PARA PROPONER NUEVA FECHA (DISEÑO PREMIUM) ================== -->
-<div id="modal-proponer-fecha" class="modal-overlay" style="display: none;">
-    <div class="modal-content-premium">
-        <!-- Panel Izquierdo (Informativo) -->
-        <div class="modal-info-panel info-panel-warning">
-            <div class="info-icon">
-                <i class="fa-solid fa-calendar-plus"></i>
+<!-- ================== MODAL PROPONER FECHA (EcoModal + premium legacy) ================== -->
+<div id="eco-modal-proponer-fecha" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-proponer-aside-title">
+    <div class="eco-modal__dialog eco-modal__dialog--wide eco-modal-dialog--premium-legacy" style="max-width:920px;">
+        <div class="modal-content-premium">
+            <div class="modal-info-panel info-panel-warning">
+                <div class="info-icon">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                </div>
+                <h3 id="eco-proponer-aside-title">Proponer Nueva Fecha</h3>
+                <p>Paciente:</p>
+                <strong id="proponer-paciente-nombre"></strong>
+                <p class="info-footer">El paciente recibirá una notificación con tu propuesta y deberá aceptarla o rechazarla.</p>
             </div>
-            <h3>Proponer Nueva Fecha</h3>
-            <p>Paciente:</p>
-            <strong id="proponer-paciente-nombre"></strong>
-            <p class="info-footer">El paciente recibirá una notificación con tu propuesta y deberá aceptarla o rechazarla.</p>
-        </div>
-
-        <!-- Panel Derecho (Formulario) -->
-        <div class="modal-form-panel">
-            <button type="button" class="modal-close-btn" onclick="cerrarModalProponerFecha()"><i class="fa-solid fa-xmark"></i></button>
-            <h4>Detalles de la Propuesta</h4>
-            <form action="guardar_propuesta.php" method="POST" id="form-proponer-fecha">
-                <input type="hidden" name="cita_id" id="proponer-cita-id">
-                
-                <div class="form-group">
-                    <label for="calendario-proponer">Sugerir nueva fecha y hora:</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-calendar-alt"></i>
-                        <input type="text" id="calendario-proponer" name="fecha_propuesta" placeholder="Haz clic para seleccionar..." required>
+            <div class="modal-form-panel">
+                <button type="button" class="modal-close-btn" onclick="cerrarModalProponerFecha()" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+                <h4>Detalles de la Propuesta</h4>
+                <form action="guardar_propuesta.php" method="POST" id="form-proponer-fecha">
+                    <input type="hidden" name="cita_id" id="proponer-cita-id">
+                    <div class="form-group">
+                        <label for="calendario-proponer">Sugerir nueva fecha y hora:</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-calendar-alt"></i>
+                            <input type="text" id="calendario-proponer" name="fecha_propuesta" placeholder="Haz clic para seleccionar..." required>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="motivo_reprogramacion_propuesta">Motivo (se notificará al paciente):</label>
-                    <textarea name="motivo_reprogramacion" id="motivo_reprogramacion_propuesta" rows="4" required placeholder="Ej: No tengo disponibilidad en el horario solicitado..."></textarea>
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" onclick="cerrarModalProponerFecha()">Cancelar</button>
-                    <button type="submit" class="btn-submit">Enviar Propuesta</button>
-                </div>
-            </form>
+                    <div class="form-group">
+                        <label for="motivo_reprogramacion_propuesta">Motivo (se notificará al paciente):</label>
+                        <textarea name="motivo_reprogramacion" id="motivo_reprogramacion_propuesta" rows="4" required placeholder="Ej: No tengo disponibilidad en el horario solicitado..."></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="cerrarModalProponerFecha()">Cancelar</button>
+                        <button type="submit" class="btn-submit">Enviar Propuesta</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -8003,6 +8745,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             <p>Acciones rápidas para:</p>
             <strong id="gestion-paciente-nombre"></strong>
             <p id="gestion-paciente-edad" class="info-panel-age"></p>
+            <p id="gestion-paciente-direccion" class="info-panel-age" style="margin-top:4px;"></p>
             <p class="info-footer">Desde aquí puedes acceder a la historia clínica y a los informes del paciente.</p>
         </div>
 
@@ -8100,6 +8843,265 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     </div>
 </div>
 
+<!-- ================== MODAL 2: SELECCIONAR TIPO DE ECOGRAFÍA ================== -->
+<div id="modal-seleccionar-ecografia" class="modal-overlay" style="display:none;">
+    <div class="modal-content-eco-grid">
+
+        <!-- ── Encabezado ── -->
+        <div class="eco-modal-header">
+            <button class="eco-btn-back" onclick="volverAModalHistoria()">
+                <i class="fa-solid fa-arrow-left"></i> Volver
+            </button>
+            <div class="eco-header-title">
+                <h2><i class="fa-solid fa-wave-square" style="color:#02b1f4;margin-right:8px;"></i>Seleccionar Tipo de Ecografía</h2>
+                <p id="eco-modal-paciente-info">Paciente: —</p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="cerrarModalSeleccionarEcografia()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- ── Grid de tarjetas ── -->
+        <div class="eco-modal-body">
+            <div class="eco-cards-grid">
+                <?php
+                $eco_colores_map = $eco_colores ?? [];
+                $eco_color_def   = $eco_color_default ?? ['bg'=>'linear-gradient(135deg,#64748b,#94a3b8)','badge'=>'#f1f5f9','text'=>'#475569'];
+                foreach ($tipos_panel as $t):
+                    $cat   = $t['categoria'] ?? '';
+                    $col   = $eco_colores_map[$cat] ?? $eco_color_def;
+                    $icono = htmlspecialchars($t['icono'] ?: 'fa-solid fa-wave-square');
+                    $desc  = htmlspecialchars($t['descripcion'] ?? '');
+                ?>
+                <div class="eco-card"
+                     data-tipo-id="<?php echo (int)$t['id']; ?>"
+                     data-tipo-codigo="<?php echo htmlspecialchars($t['codigo'] ?? ''); ?>"
+                     data-tipo-nombre="<?php echo htmlspecialchars($t['nombre']); ?>"
+                     onclick="seleccionarEcografiaModal(<?php echo (int)$t['id']; ?>, '<?php echo addslashes($t['nombre']); ?>', '<?php echo addslashes($t['codigo'] ?? ''); ?>')">
+
+                    <div class="eco-card-icon" style="background:<?php echo $col['bg']; ?>;">
+                        <i class="<?php echo $icono; ?>"></i>
+                    </div>
+
+                    <?php if ($cat): ?>
+                    <span class="eco-card-badge"
+                          style="background:<?php echo $col['badge']; ?>;color:<?php echo $col['text']; ?>;">
+                        <?php echo htmlspecialchars($cat); ?>
+                    </span>
+                    <?php endif; ?>
+
+                    <p class="eco-card-name"><?php echo htmlspecialchars($t['nombre']); ?></p>
+                    <?php if ($desc): ?>
+                    <p class="eco-card-desc"><?php echo $desc; ?></p>
+                    <?php endif; ?>
+                    <span class="eco-card-select-hint"><i class="fa-solid fa-circle-check"></i> Seleccionar</span>
+                </div>
+                <?php endforeach; ?>
+
+                <?php if (empty($tipos_panel)): ?>
+                <p style="grid-column:1/-1;text-align:center;color:#aaa;padding:30px 0;">
+                    <i class="fa-solid fa-circle-exclamation" style="font-size:2rem;margin-bottom:10px;display:block;"></i>
+                    No hay tipos de ecografía activos configurados.<br>
+                    <small>Solicítale al administrador que los registre en la tabla <code>tipos_ecografias</code>.</small>
+                </p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ================== MODAL 2.5: SUB-SELECCIÓN MUSCULOESQUELÉTICA ================== -->
+<div id="modal-seleccionar-musculo" class="modal-overlay" style="display:none;">
+    <div class="modal-content-eco-grid">
+
+        <div class="eco-modal-header">
+            <button class="eco-btn-back" onclick="volverDeModalMusculo()">
+                <i class="fa-solid fa-arrow-left"></i> Volver
+            </button>
+            <div class="eco-header-title">
+                <h2><i class="fa-solid fa-bone" style="color:#22c55e;margin-right:8px;"></i>Ecografía Musculoesquelética</h2>
+                <p id="musculo-modal-paciente-info">Seleccione la articulación a estudiar</p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="cerrarModalMusculo()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="eco-modal-body">
+            <div class="musculo-cards-grid">
+                <?php foreach ($tipos_musculo as $t):
+                    $icono = htmlspecialchars($t['icono'] ?: 'fa-solid fa-bone');
+                    $desc  = htmlspecialchars($t['descripcion'] ?? '');
+                ?>
+                <div class="eco-card musculo-card"
+                     data-tipo-id="<?php echo (int)$t['id']; ?>"
+                     data-tipo-codigo="<?php echo htmlspecialchars($t['codigo']); ?>"
+                     data-tipo-nombre="<?php echo htmlspecialchars($t['nombre']); ?>"
+                     onclick="seleccionarSubMusculo(<?php echo (int)$t['id']; ?>, '<?php echo addslashes($t['nombre']); ?>')">
+                    <div class="eco-card-icon musculo-card-icon">
+                        <i class="<?php echo $icono; ?>"></i>
+                    </div>
+                    <p class="eco-card-name"><?php echo htmlspecialchars($t['nombre']); ?></p>
+                    <?php if ($desc): ?>
+                    <p class="eco-card-desc"><?php echo $desc; ?></p>
+                    <?php endif; ?>
+                    <span class="eco-card-select-hint"><i class="fa-solid fa-circle-check"></i> Seleccionar</span>
+                </div>
+                <?php endforeach; ?>
+
+                <?php if (empty($tipos_musculo)): ?>
+                <p style="grid-column:1/-1;text-align:center;color:#aaa;padding:30px 0;">
+                    <i class="fa-solid fa-circle-exclamation" style="font-size:2rem;margin-bottom:10px;display:block;"></i>
+                    No hay sub-tipos musculoesqueléticos configurados.<br>
+                    <small>Ejecuta <code>database/seed_musculo_subtipos.php</code></small>
+                </p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ================== MODAL 2.6: SUB-SELECCIÓN OBSTÉTRICA (I / II-III TRIMESTRE) ================== -->
+<div id="modal-seleccionar-obstetrica" class="modal-overlay" style="display:none;">
+    <div class="modal-content-eco-grid">
+
+        <div class="eco-modal-header">
+            <button class="eco-btn-back" onclick="volverDeModalObstetrica()">
+                <i class="fa-solid fa-arrow-left"></i> Volver
+            </button>
+            <div class="eco-header-title">
+                <h2><i class="fa-solid fa-baby" style="color:#ec4899;margin-right:8px;"></i>Ecografía Obstétrica</h2>
+                <p id="obstetrica-modal-paciente-info">Seleccione el trimestre del estudio</p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="cerrarModalObstetrica()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="eco-modal-body">
+            <div class="obstetrica-cards-grid">
+                <?php foreach ($tipos_obstetrica as $t):
+                    $icono = htmlspecialchars($t['icono'] ?: 'fa-solid fa-baby');
+                    $desc  = htmlspecialchars($t['descripcion'] ?? '');
+                ?>
+                <div class="eco-card obstetrica-card"
+                     data-tipo-id="<?php echo (int)$t['id']; ?>"
+                     data-tipo-codigo="<?php echo htmlspecialchars($t['codigo']); ?>"
+                     data-tipo-nombre="<?php echo htmlspecialchars($t['nombre']); ?>"
+                     onclick="seleccionarSubObstetrica(<?php echo (int)$t['id']; ?>, '<?php echo addslashes($t['nombre']); ?>')">
+                    <div class="eco-card-icon obstetrica-card-icon">
+                        <i class="<?php echo $icono; ?>"></i>
+                    </div>
+                    <p class="eco-card-name"><?php echo htmlspecialchars($t['nombre']); ?></p>
+                    <?php if ($desc): ?>
+                    <p class="eco-card-desc"><?php echo $desc; ?></p>
+                    <?php endif; ?>
+                    <span class="eco-card-select-hint"><i class="fa-solid fa-circle-check"></i> Seleccionar</span>
+                </div>
+                <?php endforeach; ?>
+
+                <?php if (empty($tipos_obstetrica)): ?>
+                <p style="grid-column:1/-1;text-align:center;color:#aaa;padding:30px 0;">
+                    <i class="fa-solid fa-circle-exclamation" style="font-size:2rem;margin-bottom:10px;display:block;"></i>
+                    No hay sub-tipos obstétricos configurados.<br>
+                    <small>Ejecuta <code>database/seed_obstetrica_subtipos.php</code></small>
+                </p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ================== MODAL 2.7: SUB-SELECCIÓN PARTES BLANDAS ================== -->
+<div id="modal-seleccionar-partes-blandas" class="modal-overlay" style="display:none;">
+    <div class="modal-content-eco-grid">
+
+        <div class="eco-modal-header">
+            <button class="eco-btn-back" onclick="volverDeModalPartesBlandas()">
+                <i class="fa-solid fa-arrow-left"></i> Volver
+            </button>
+            <div class="eco-header-title">
+                <h2><i class="fa-solid fa-hand-holding-medical" style="color:#f59e0b;margin-right:8px;"></i>Ecografía de Partes Blandas</h2>
+                <p id="pblandas-modal-paciente-info">Seleccione el tipo de estudio</p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="cerrarModalPartesBlandas()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="eco-modal-body">
+            <div class="pblandas-cards-grid">
+                <?php foreach ($tipos_partes_blandas as $t):
+                    $icono = htmlspecialchars($t['icono'] ?: 'fa-solid fa-hand-holding-medical');
+                    $desc  = htmlspecialchars($t['descripcion'] ?? '');
+                ?>
+                <div class="eco-card pblandas-card"
+                     data-tipo-id="<?php echo (int)$t['id']; ?>"
+                     data-tipo-codigo="<?php echo htmlspecialchars($t['codigo']); ?>"
+                     data-tipo-nombre="<?php echo htmlspecialchars($t['nombre']); ?>"
+                     onclick="seleccionarSubPartesBlandas(<?php echo (int)$t['id']; ?>, '<?php echo addslashes($t['nombre']); ?>')">
+                    <div class="eco-card-icon pblandas-card-icon">
+                        <i class="<?php echo $icono; ?>"></i>
+                    </div>
+                    <p class="eco-card-name"><?php echo htmlspecialchars($t['nombre']); ?></p>
+                    <?php if ($desc): ?>
+                    <p class="eco-card-desc"><?php echo $desc; ?></p>
+                    <?php endif; ?>
+                    <span class="eco-card-select-hint"><i class="fa-solid fa-circle-check"></i> Seleccionar</span>
+                </div>
+                <?php endforeach; ?>
+
+                <?php if (empty($tipos_partes_blandas)): ?>
+                <p style="grid-column:1/-1;text-align:center;color:#aaa;padding:30px 0;">
+                    <i class="fa-solid fa-circle-exclamation" style="font-size:2rem;margin-bottom:10px;display:block;"></i>
+                    No hay sub-tipos de partes blandas configurados.<br>
+                    <small>Ejecuta <code>database/seed_partes_blandas_subtipos.php</code></small>
+                </p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ================== MODAL 3: FORMULARIO DE ESTUDIO ECOGRÁFICO ================== -->
+<div id="modal-formulario-estudio" class="modal-overlay" style="display:none;">
+    <div class="modal-content-form-eco">
+
+        <!-- Encabezado -->
+        <div class="modal-form-eco-header">
+            <button class="eco-btn-back" onclick="volverAModalEcoDesdeFormulario()">
+                <i class="fa-solid fa-arrow-left"></i> Volver
+            </button>
+            <div class="eco-modal-tipo-icon" id="modal-form-eco-icon">
+                <i class="fa-solid fa-wave-square"></i>
+            </div>
+            <div class="eco-header-tipo-info">
+                <h2 id="modal-form-eco-titulo">Formulario de Estudio</h2>
+                <p id="modal-form-eco-paciente">Paciente: —</p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="cerrarModalFormularioEstudio()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Barra de feedback -->
+        <div class="modal-form-eco-feedback-bar" id="modal-form-eco-feedback" style="display:none;"></div>
+
+        <!-- Cuerpo (el formulario se inyecta aquí por AJAX) -->
+        <div class="modal-form-eco-body" id="modal-form-eco-body">
+            <div class="modal-form-eco-loader">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <p>Cargando formulario…</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 <!-- ================== MODAL PARA CREAR HISTORIA CLÍNICA (ADULTO - DISEÑO DE ENCABEZADO) ================== -->
 <div id="modal-crear-historia" class="modal-overlay" style="display: none;">
     <div class="modal-content-premium-header">
@@ -8117,14 +9119,14 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         
         <!-- Cuerpo del Formulario con Íconos junto a las Etiquetas -->
         <div class="modal-body-premium">
-            <form action="guardar_historia.php" method="POST" id="form-crear-historia">
+            <form action="#" method="POST" id="form-crear-historia">
                 <input type="hidden" name="tipo_historia" value="adulto">
                 <input type="hidden" name="paciente_id" id="historia-paciente-id" value="123">
                 
                 <h3>Datos Generales</h3>
                 <div class="form-grid">
                     <div class="form-group"><label><i class="fa-solid fa-hashtag"></i> N° de Historia:</label><input type="text" name="numero_historia" id="historia-numero-adulto" class="validate-numeric" readonly required></div>
-                    <div class="form-group"><label><i class="fa-solid fa-hospital"></i> Centro de Salud:</label><input type="text" name="centro_salud" value="WebPSY Consultorio" required></div>
+                    <div class="form-group"><label><i class="fa-solid fa-hospital"></i> Centro de Salud:</label><input type="text" name="centro_salud" value="Clínica EcoMadelleine" required></div>
                     <div class="form-group"><label><i class="fa-solid fa-calendar-day"></i> Fecha:</label><input type="date" name="fecha" value="<?php echo date('Y-m-d'); ?>" required readonly></div>
                 </div>
                 <h3>Datos Personales</h3>
@@ -8201,14 +9203,14 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         
          <!-- Cuerpo del Formulario con Íconos junto a las Etiquetas -->
         <div class="modal-body-premium">
-            <form action="guardar_historia.php" method="POST" id="form-crear-historia-infantil">
+            <form action="#" method="POST" id="form-crear-historia-infantil">
                 <input type="hidden" name="tipo_historia" value="infantil">
                 <input type="hidden" name="paciente_id" id="historia-paciente-id-infantil" value="123">
                 
                 <h3>Datos Generales</h3>
                 <div class="form-grid">
                     <div class="form-group"><label><i class="fa-solid fa-hashtag"></i> N° de Historia:</label><input type="text" name="numero_historia" id="historia-numero-infantil" class="validate-numeric" readonly required></div>
-                    <div class="form-group"><label><i class="fa-solid fa-hospital"></i> Centro de Salud:</label><input type="text" name="centro_salud" value="WebPSY Consultorio" required></div>
+                    <div class="form-group"><label><i class="fa-solid fa-hospital"></i> Centro de Salud:</label><input type="text" name="centro_salud" value="Clínica EcoMadelleine" required></div>
                     <div class="form-group"><label><i class="fa-solid fa-calendar-day"></i> Fecha:</label><input type="date" name="fecha" value="<?php echo date('Y-m-d'); ?>" required readonly></div>
                 </div>
 
@@ -8287,19 +9289,21 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         <!-- Panel Izquierdo (Informativo) -->
         <div class="modal-info-panel" style="background: linear-gradient(160deg, #6f42c1, #5a32a3);">
             <div class="info-icon"><i class="fa-solid fa-folder-open"></i></div>
-            <h3>Historial de Informes</h3>
+            <h3>Historial de Ecografías</h3>
             <p>Paciente:</p>
             <strong id="informes-paciente-nombre"></strong>
             <p id="informes-paciente-edad" class="info-panel-age"></p>
-            <p class="info-footer">Aquí se listan todos los informes psicológicos generados para este paciente.</p>
+            <p id="informes-paciente-cedula" style="font-size:13px;opacity:.8;margin-top:4px;"></p>
+            <p class="info-footer">Listado completo de estudios ecográficos realizados al paciente.</p>
         </div>
 
         <!-- Panel Derecho (Lista de Informes) -->
         <div class="modal-form-panel">
-            <button type="button" class="modal-close-btn" onclick="cerrarModalVerInformes()"><i class="fa-solid fa-xmark"></i></button>
-            <h4>Informes Registrados</h4>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                <h4 style="margin:0;" id="informes-panel-titulo">Estudios Registrados</h4>
+                <button type="button" class="modal-close-btn" style="position:static;" onclick="cerrarModalVerInformes()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
             <div id="historial-informes-container" class="history-list">
-                <!-- Los informes se cargarán aquí con JavaScript -->
                 <p>Cargando historial...</p>
             </div>
         </div>
@@ -8307,25 +9311,36 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 </div>
 
 <!-- ================== MODAL PARA VER DETALLE DE INFORME (DISEÑO PREMIUM) ================== -->
-<div id="modal-informe-detalle" class="modal-overlay" style="display: none;">
-    <div class="modal-content-premium-header" style="max-width: 800px;">
+<div id="modal-informe-detalle" class="modal-overlay" style="display:none;">
+    <div class="modal-content-form-eco">
+
         <!-- Encabezado -->
-        <div class="modal-header-premium">
-            <div class="header-content">
+        <div class="modal-form-eco-header">
+            <div class="eco-modal-tipo-icon" id="inf-det-icon">
                 <i class="fa-solid fa-file-waveform"></i>
-                <div>
-                    <h2>Informe Psicológico</h2>
-                    <p id="informe-detalle-paciente-nombre"></p>
-                </div>
             </div>
-            <button type="button" class="modal-close-btn" onclick="cerrarModalInformeDetalle()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="eco-header-tipo-info">
+                <h2 id="inf-det-titulo">Informe de Estudio</h2>
+                <p id="inf-det-paciente">—</p>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+                <button type="button" class="eco-btn-cancel" id="inf-det-print" title="Imprimir informe">
+                    <i class="fa-solid fa-print"></i> Imprimir
+                </button>
+                <button type="button" class="modal-close-btn" onclick="cerrarModalInformeDetalle()" aria-label="Cerrar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
         </div>
-        
-        <!-- Cuerpo del Informe con Scroll -->
-        <div class="modal-body-premium" id="informe-detalle-body">
-            <!-- El contenido del informe se cargará aquí con JavaScript -->
-            <p>Cargando informe...</p>
+
+        <!-- Cuerpo con scroll -->
+        <div class="modal-form-eco-body" id="informe-detalle-body">
+            <div class="modal-form-eco-loader">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <p>Cargando informe…</p>
+            </div>
         </div>
+
     </div>
 </div>
 
@@ -8347,7 +9362,8 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             
             <!-- Cuerpo del Formulario con Scroll, Íconos y Validación -->
         <div class="modal-body-premium">
-            <form action="guardar_informe.php" method="POST" id="form-crear-informe">
+            <form action="guardar_informe_estudio.php" method="POST" id="form-crear-informe">
+                <?= csrf_field() ?>
                 <input type="hidden" name="paciente_id" id="informe-paciente-id">
                 
                 <h3>Datos de Referencia</h3>
@@ -8467,13 +9483,13 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                 </div>
 
                 <div class="form-group">
-                    <label for="asignar-psicologo-id">Asignar a Profesional:</label>
+                    <label for="asignar-ecografista-id">Asignar a Profesional:</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-user-doctor"></i>
-                        <select name="psicologo_id" id="asignar-psicologo-id" required>
+                        <select name="ecografista_id" id="asignar-ecografista-id" required>
                             <option value="">-- Seleccione un profesional --</option>
                             <?php 
-                            $profesionales_result = $conex->query("SELECT id, nombre_completo, rol FROM usuarios WHERE rol IN ('psicologo', 'psiquiatra') AND estado = 'aprobado'");
+                            $profesionales_result = $conex->query("SELECT id, nombre_completo, rol FROM usuarios WHERE rol IN ('ecografista') AND estado = 'aprobado'");
                             if ($profesionales_result) {
                                 while($prof = $profesionales_result->fetch_assoc()){
                                     echo '<option value="' . $prof['id'] . '">' . htmlspecialchars($prof['nombre_completo']) . ' (' . ucfirst($prof['rol']) . ')</option>';
@@ -8547,19 +9563,24 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     </div>
 </div>
 
-<!-- ================== MODAL PARA MOSTRAR CONTRASEÑA TEMPORAL ================== -->
-<div id="modal-exito-paciente" class="modal-overlay" style="display: none;">
-    <div class="modal-content" style="max-width: 500px; text-align: center;">
-        <div class="modal-icon success-icon">
-            <i class="fa-solid fa-check-circle"></i>
+<!-- ================== MODAL PARA MOSTRAR CONTRASEÑA TEMPORAL (EcoModal) ================== -->
+<div id="eco-modal-exito-paciente-panel" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-exito-paciente-title">
+    <div class="eco-modal__dialog" style="max-width:520px;">
+        <div class="eco-modal__main" style="padding-top:28px;text-align:center;">
+            <button type="button" class="eco-modal__close" onclick="cerrarModalExitoPaciente()" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-icon success-icon">
+                <i class="fa-solid fa-check-circle"></i>
+            </div>
+            <h3 id="eco-exito-paciente-title" style="margin:12px 36px 10px;font-size:1.15rem;font-weight:700;color:var(--text-primary);">¡Paciente Creado con Éxito!</h3>
+            <p class="eco-modal__body-text" style="text-align:center;">La cuenta para <strong id="exito-paciente-nombre"></strong> ha sido creada. Su contraseña temporal es:</p>
+            <div class="temp-password-box">
+                <span id="exito-paciente-password"></span>
+            </div>
+            <p style="font-size:14px;color:var(--text-muted);margin-top:15px;">Por favor, anota esta contraseña y entrégasela al paciente.</p>
+            <div style="margin-top:22px;">
+                <button type="button" class="btn-submit" style="width:auto;padding:10px 30px;" onclick="cerrarModalExitoPaciente()">Entendido</button>
+            </div>
         </div>
-        <h3>¡Paciente Creado con Éxito!</h3>
-        <p>La cuenta para <strong id="exito-paciente-nombre"></strong> ha sido creada. Su contraseña temporal es:</p>
-        <div class="temp-password-box">
-            <span id="exito-paciente-password"></span>
-        </div>
-        <p style="font-size: 14px; color: #777; margin-top: 15px;">Por favor, anota esta contraseña y entrégasela al paciente.</p>
-        <button class="btn-submit" style="width: auto; padding: 10px 30px;" onclick="cerrarModalExitoPaciente()">Entendido</button>
     </div>
 </div>
 
@@ -8629,8 +9650,8 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 
     <!-- PASO 1: Cargar la librería principal de Flatpickr -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <!-- PASO 2: Cargar el paquete de idioma español para Flatpickr -->
     <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+    <script src="assets/js/shell-modals.js"></script>
 
     <script>
     // ==================================================================
@@ -8638,6 +9659,8 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     // ==================================================================
     // --- VARIABLES Y FUNCIONES PARA LAS NUEVAS MODALES ---
     const modalSeleccionarHistoria = document.getElementById('modal-seleccionar-historia');
+    const modalSeleccionarEcografia   = document.getElementById('modal-seleccionar-ecografia');
+    const modalFormularioEstudio      = document.getElementById('modal-formulario-estudio');
     const modalCrearHistoria = document.getElementById('modal-crear-historia');
     const modalCrearHistoriaInfantil = document.getElementById('modal-crear-historia-infantil');
     const modalVerInformes = document.getElementById('modal-ver-informes');
@@ -8647,7 +9670,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     const modalEditarHistoria = document.getElementById('modal-editar-historia');
     // Variables para las ventanas modales
     const modalCrearPaciente = document.getElementById('modal-crear-paciente');
-    const modalProgramarCita = document.getElementById('modal-programar-cita');
+    const modalProgramarCita = document.getElementById('eco-modal-programar-cita');
     const modalGestionarPaciente = document.getElementById('modal-gestionar-paciente');
     const modalSolicitudDetalle = document.getElementById('modal-solicitud-detalle');
     const modalGestionarNotas = document.getElementById('modal-gestionar-notas');
@@ -8781,18 +9804,19 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     }
 
     function abrirModalProgramarCita(pacienteId, pacienteNombre) {
-    if (modalProgramarCita) {
-        // Rellenar los datos del paciente en la modal
+        if (!modalProgramarCita) return;
         document.getElementById('modal-paciente-id').value = pacienteId;
-        document.getElementById('modal-paciente-nombre-display').textContent = pacienteNombre; // Usamos el nuevo elemento
-        modalProgramarCita.style.display = 'flex';
-    }
+        document.getElementById('modal-paciente-nombre-display').textContent = pacienteNombre;
+        if (typeof EcoModal !== 'undefined') {
+            EcoModal.open('eco-modal-programar-cita');
+        }
     }
     function cerrarModalProgramarCita() {
-        if (modalProgramarCita) {
-            modalProgramarCita.style.display = 'none';
-            document.getElementById('form-programar-cita').reset();
+        if (typeof EcoModal !== 'undefined') {
+            EcoModal.close('eco-modal-programar-cita');
         }
+        var fpForm = document.getElementById('form-programar-cita');
+        if (fpForm) fpForm.reset();
     }
 
     // --- FUNCIÓN PARA MOSTRAR MENSAJE DE ÉXITO (CREAR PACIENTE) ---
@@ -8816,37 +9840,41 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     }
 
     // --- NUEVAS FUNCIONES PARA LA MODAL DE REPROGRAMAR CITA ---
-    const modalReprogramarCita = document.getElementById('modal-reprogramar-cita');
+    const modalReprogramarCita = document.getElementById('eco-modal-reprogramar-cita');
 
     function abrirModalReprogramarCita(citaId, pacienteNombre) {
-        if (modalReprogramarCita) {
-            document.getElementById('reprogramar-cita-id').value = citaId;
-            document.getElementById('reprogramar-paciente-nombre').textContent = pacienteNombre;
-            modalReprogramarCita.style.display = 'flex';
+        if (!modalReprogramarCita) return;
+        document.getElementById('reprogramar-cita-id').value = citaId;
+        document.getElementById('reprogramar-paciente-nombre').textContent = pacienteNombre;
+        if (typeof EcoModal !== 'undefined') {
+            EcoModal.open('eco-modal-reprogramar-cita');
         }
     }
     function cerrarModalReprogramarCita() {
-        if (modalReprogramarCita) {
-            modalReprogramarCita.style.display = 'none';
-            document.getElementById('form-reprogramar-cita').reset();
+        if (typeof EcoModal !== 'undefined') {
+            EcoModal.close('eco-modal-reprogramar-cita');
         }
+        var fr = document.getElementById('form-reprogramar-cita');
+        if (fr) fr.reset();
     }
 
     // --- NUEVAS FUNCIONES PARA LA MODAL DE PROPONER FECHA ---
-    const modalProponerFecha = document.getElementById('modal-proponer-fecha');
+    const modalProponerFecha = document.getElementById('eco-modal-proponer-fecha');
 
     function abrirModalProponerFecha(citaId, pacienteNombre) {
-        if (modalProponerFecha) {
-            document.getElementById('proponer-cita-id').value = citaId;
-            document.getElementById('proponer-paciente-nombre').textContent = pacienteNombre;
-            modalProponerFecha.style.display = 'flex';
+        if (!modalProponerFecha) return;
+        document.getElementById('proponer-cita-id').value = citaId;
+        document.getElementById('proponer-paciente-nombre').textContent = pacienteNombre;
+        if (typeof EcoModal !== 'undefined') {
+            EcoModal.open('eco-modal-proponer-fecha');
         }
     }
     function cerrarModalProponerFecha() {
-        if (modalProponerFecha) {
-            modalProponerFecha.style.display = 'none';
-            document.getElementById('form-proponer-fecha').reset();
+        if (typeof EcoModal !== 'undefined') {
+            EcoModal.close('eco-modal-proponer-fecha');
         }
+        var fp = document.getElementById('form-proponer-fecha');
+        if (fp) fp.reset();
     }
     
     // --- NUEVAS FUNCIONES PARA LA MODAL DE GESTIONAR PACIENTE ---
@@ -8867,6 +9895,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             const modalBody = document.getElementById('gestion-modal-body');
             const pacienteNombreDisplay = document.getElementById('gestion-paciente-nombre');
             const pacienteEdadDisplay = document.getElementById('gestion-paciente-edad');
+            const pacienteDireccionDisplay = document.getElementById('gestion-paciente-direccion');
             
             modalBody.innerHTML = '<p>Cargando datos del paciente...</p>';
             pacienteNombreDisplay.textContent = '...';
@@ -8885,6 +9914,14 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                         pacienteEdadDisplay.textContent = `${data.paciente.edad} años`;
                     } else {
                         pacienteEdadDisplay.textContent = '';
+                    }
+                    if (pacienteDireccionDisplay) {
+                        if (data.paciente.direccion) {
+                            pacienteDireccionDisplay.innerHTML = '<i class="fa-solid fa-location-dot" style="margin-right:5px;"></i>';
+                            pacienteDireccionDisplay.appendChild(document.createTextNode(data.paciente.direccion));
+                        } else {
+                            pacienteDireccionDisplay.textContent = '';
+                        }
                     }
                     const nombreEscapado = data.paciente.nombre_completo.replace(/'/g, "\\'");
                     const pacienteEdad = data.paciente.edad; // Obtenemos la edad
@@ -8914,7 +9951,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                         <button type="button" class="action-card" onclick='abrirModalGestionarNotas(${pacienteId})'>
                             <div class="icon-wrapper" style="background-color: #29bcd2ff;"><i class="fa-solid fa-notes-medical"></i></div>
                             <div>
-                                <h3>Notas de Sesión (${data.total_notas})</h3>
+                                <h3>Notas de Sesión</h3>
                                 <p>Ver y añadir notas de evolución del paciente.</p>
                             </div>
                         </button>
@@ -8924,9 +9961,9 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
                     modalBody.innerHTML = `
                         <div class="action-grid">
                             ${historiaBoton}
-                            <button type="button" class="action-card" onclick="abrirModalVerInformes(${pacienteId}, ${pacienteEdad})">
+                            <button type="button" class="action-card" onclick="abrirModalVerInformes(${pacienteId})">
                                 <div class="icon-wrapper" style="background-color: #6f42c1;"><i class="fa-solid fa-folder-open"></i></div>
-                                <div><h3>Ver Informes (${data.total_informes})</h3><p>Accede al historial de informes.</p></div>
+                                <div><h3>Ver Informes (${data.total_estudios ?? 0})</h3><p>Accede al historial de informes.</p></div>
                             </button>
                             ${notasBoton}
                             ${informeBoton}
@@ -9087,52 +10124,420 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         }
     }
 
-    // --- FUNCIONES PARA LA MODAL DE VER INFORMES ---
-    // --- FUNCIÓN 2: MODIFICADA PARA RECIBIR Y PASAR LA EDAD ---
-    function abrirModalVerInformes(pacienteId, pacienteEdad) {
-        if (modalVerInformes) {
-            const pacienteNombreDisplay = document.getElementById('informes-paciente-nombre');
-            const pacienteEdadDisplay = document.getElementById('informes-paciente-edad');
-            const historialContainer = document.getElementById('historial-informes-container');
+    // ── MODAL 2: SELECCIONAR TIPO DE ECOGRAFÍA ──────────────────────────────
+    // Variable temporal para guardar el contexto del paciente mientras navega la cadena
+    let _ecoCtx = { pacienteId: null, cedula: '', nombre: '', edad: null };
 
-            pacienteNombreDisplay.textContent = 'Cargando...';
-            historialContainer.innerHTML = '<p>Cargando historial...</p>';
-            cerrarModalGestionarPaciente();
-            modalVerInformes.style.display = 'flex';
-
-            fetch(`get_informes_paciente.php?paciente_id=${pacienteId}`)
-                .then(response => response.json())
-                .then(data => {
-                    let displayText = `Paciente: ${data.paciente_nombre}`;
-                    pacienteNombreDisplay.textContent = data.paciente_nombre;
-                    if (pacienteEdad) { // Nuevo
-                        pacienteEdadDisplay.textContent = `${pacienteEdad} años`;
-                    } else {
-                        pacienteEdadDisplay.textContent = '';
-                    }
-
-                    let informesHtml = '';
-                    if (data.informes && data.informes.length > 0) {
-                        data.informes.forEach(informe => {
-                            informesHtml += `
-                                <div class="informe-list-item">
-                                    <div class="item-icon"><i class="fa-solid fa-file-alt"></i></div>
-                                    <div class="item-info">
-                                        <h4>Informe del ${informe.fecha_formateada}</h4>
-                                        <p>Motivo: ${informe.motivo}</p>
-                                    </div>
-                                    <div class="item-actions">
-                                        <button class="btn-view-details" onclick='abrirModalInformeDetalle(${informe.id}, ${pacienteEdad})'>Ver Detalles</button>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                    } else {
-                        informesHtml = '<p>Este paciente no tiene informes registrados.</p>';
-                    }
-                    historialContainer.innerHTML = informesHtml;
-                });
+    function abrirModalSeleccionarEcografia(pacienteId, cedula, nombre, edad) {
+        if (!modalSeleccionarEcografia) return;
+        _ecoCtx = { pacienteId, cedula, nombre, edad };
+        const infoEl = document.getElementById('eco-modal-paciente-info');
+        if (infoEl) {
+            const edadStr = edad ? ` · ${edad} años` : '';
+            infoEl.textContent = `Paciente: ${nombre}${edadStr}`;
         }
+        // Cerrar la modal 1 sin regresar al gestor de paciente
+        if (modalSeleccionarHistoria) modalSeleccionarHistoria.style.display = 'none';
+        modalSeleccionarEcografia.style.display = 'flex';
+    }
+
+    function cerrarModalSeleccionarEcografia() {
+        if (modalSeleccionarEcografia) {
+            modalSeleccionarEcografia.style.display = 'none';
+            if (currentManagedPatientId) abrirModalGestionarPaciente(currentManagedPatientId);
+        }
+    }
+
+    function volverAModalHistoria() {
+        if (modalSeleccionarEcografia) modalSeleccionarEcografia.style.display = 'none';
+        // Volver a abrir la modal 1 con el mismo contexto
+        if (modalSeleccionarHistoria && _ecoCtx.pacienteId) {
+            modalSeleccionarHistoria.style.display = 'flex';
+        }
+    }
+
+    /**
+     * Llamado al hacer clic en una tarjeta de ecografía.
+     * Si es Musculoesquelética (codigo ECO_MUSCU) abre sub-modal con articulaciones.
+     * Si es cualquier otra, abre directamente el formulario.
+     */
+    function seleccionarEcografiaModal(tipoId, tipoNombre, tipoCodigo) {
+        if (!_ecoCtx.pacienteId) return;
+        tipoCodigo = tipoCodigo || '';
+
+        // Interceptar Musculoesquelética padre → mostrar sub-selector
+        if (tipoCodigo === 'ECO_MUSCU') {
+            if (modalSeleccionarEcografia) modalSeleccionarEcografia.style.display = 'none';
+            abrirModalSubMusculo();
+            return;
+        }
+
+        // Interceptar Obstétrica padre → mostrar sub-selector (I / II-III Trimestre)
+        if (tipoCodigo === 'eco_obstetrica') {
+            if (modalSeleccionarEcografia) modalSeleccionarEcografia.style.display = 'none';
+            abrirModalSubObstetrica();
+            return;
+        }
+
+        // Interceptar Partes Blandas padre → mostrar sub-selector (General / Cuello / Inguinal)
+        if (tipoCodigo === 'ECO_PBLANCAS') {
+            if (modalSeleccionarEcografia) modalSeleccionarEcografia.style.display = 'none';
+            abrirModalSubPartesBlandas();
+            return;
+        }
+
+        // Cerrar Modal 2 sin regresar al gestor de paciente
+        if (modalSeleccionarEcografia) modalSeleccionarEcografia.style.display = 'none';
+        abrirModalFormularioEstudio(tipoId, tipoNombre);
+    }
+
+    // ── MODAL 2.5: SUB-SELECCIÓN MUSCULOESQUELÉTICA ───────────────────────
+    const modalSeleccionarMusculo = document.getElementById('modal-seleccionar-musculo');
+
+    function abrirModalSubMusculo() {
+        if (!modalSeleccionarMusculo) return;
+        const info = document.getElementById('musculo-modal-paciente-info');
+        if (info && _ecoCtx.nombre) {
+            info.textContent = 'Paciente: ' + _ecoCtx.nombre + ' · Seleccione la articulación a estudiar';
+        }
+        modalSeleccionarMusculo.style.display = 'flex';
+    }
+
+    function cerrarModalMusculo() {
+        if (modalSeleccionarMusculo) modalSeleccionarMusculo.style.display = 'none';
+    }
+
+    function volverDeModalMusculo() {
+        if (modalSeleccionarMusculo) modalSeleccionarMusculo.style.display = 'none';
+        if (modalSeleccionarEcografia && _ecoCtx.pacienteId) {
+            modalSeleccionarEcografia.style.display = 'flex';
+        }
+    }
+
+    function seleccionarSubMusculo(tipoId, tipoNombre) {
+        if (!_ecoCtx.pacienteId) return;
+        _ecoCtx.fromSubMusculo = true;
+        if (modalSeleccionarMusculo) modalSeleccionarMusculo.style.display = 'none';
+        abrirModalFormularioEstudio(tipoId, tipoNombre);
+    }
+
+    // ── MODAL 2.6: SUB-SELECCIÓN OBSTÉTRICA ───────────────────────────────
+    const modalSeleccionarObstetrica = document.getElementById('modal-seleccionar-obstetrica');
+
+    function abrirModalSubObstetrica() {
+        if (!modalSeleccionarObstetrica) return;
+        const info = document.getElementById('obstetrica-modal-paciente-info');
+        if (info && _ecoCtx.nombre) {
+            info.textContent = 'Paciente: ' + _ecoCtx.nombre + ' · Seleccione el trimestre del estudio';
+        }
+        modalSeleccionarObstetrica.style.display = 'flex';
+    }
+
+    function cerrarModalObstetrica() {
+        if (modalSeleccionarObstetrica) modalSeleccionarObstetrica.style.display = 'none';
+    }
+
+    function volverDeModalObstetrica() {
+        if (modalSeleccionarObstetrica) modalSeleccionarObstetrica.style.display = 'none';
+        if (modalSeleccionarEcografia && _ecoCtx.pacienteId) {
+            modalSeleccionarEcografia.style.display = 'flex';
+        }
+    }
+
+    function seleccionarSubObstetrica(tipoId, tipoNombre) {
+        if (!_ecoCtx.pacienteId) return;
+        _ecoCtx.fromSubObstetrica = true;
+        if (modalSeleccionarObstetrica) modalSeleccionarObstetrica.style.display = 'none';
+        abrirModalFormularioEstudio(tipoId, tipoNombre);
+    }
+
+    // ── MODAL 2.7: SUB-SELECCIÓN PARTES BLANDAS ───────────────────────────
+    const modalSeleccionarPartesBlandas = document.getElementById('modal-seleccionar-partes-blandas');
+
+    function abrirModalSubPartesBlandas() {
+        if (!modalSeleccionarPartesBlandas) return;
+        const info = document.getElementById('pblandas-modal-paciente-info');
+        if (info && _ecoCtx.nombre) {
+            info.textContent = 'Paciente: ' + _ecoCtx.nombre + ' · Seleccione el tipo de estudio';
+        }
+        modalSeleccionarPartesBlandas.style.display = 'flex';
+    }
+
+    function cerrarModalPartesBlandas() {
+        if (modalSeleccionarPartesBlandas) modalSeleccionarPartesBlandas.style.display = 'none';
+    }
+
+    function volverDeModalPartesBlandas() {
+        if (modalSeleccionarPartesBlandas) modalSeleccionarPartesBlandas.style.display = 'none';
+        if (modalSeleccionarEcografia && _ecoCtx.pacienteId) {
+            modalSeleccionarEcografia.style.display = 'flex';
+        }
+    }
+
+    function seleccionarSubPartesBlandas(tipoId, tipoNombre) {
+        if (!_ecoCtx.pacienteId) return;
+        _ecoCtx.fromSubPartesBlandas = true;
+        if (modalSeleccionarPartesBlandas) modalSeleccionarPartesBlandas.style.display = 'none';
+        abrirModalFormularioEstudio(tipoId, tipoNombre);
+    }
+
+    // ── MODAL 3: FORMULARIO DE ESTUDIO ECOGRÁFICO ─────────────────────────
+    function abrirModalFormularioEstudio(tipoId, tipoNombre) {
+        if (!modalFormularioEstudio) return;
+
+        const bodyEl     = document.getElementById('modal-form-eco-body');
+        const tituloEl   = document.getElementById('modal-form-eco-titulo');
+        const pacienteEl = document.getElementById('modal-form-eco-paciente');
+        const iconEl     = document.getElementById('modal-form-eco-icon');
+        const feedbackEl = document.getElementById('modal-form-eco-feedback');
+
+        // Reset estado
+        feedbackEl.style.display = 'none';
+        feedbackEl.innerHTML = '';
+        tituloEl.textContent = tipoNombre;
+        pacienteEl.textContent = 'Paciente: ' + (_ecoCtx.nombre || '—');
+        iconEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        bodyEl.innerHTML = '<div class="modal-form-eco-loader"><i class="fa-solid fa-spinner fa-spin"></i><p>Cargando formulario…</p></div>';
+
+        modalFormularioEstudio.style.display = 'flex';
+
+        // Carga AJAX del formulario
+        fetch(`get_form_ecografia.php?paciente_id=${_ecoCtx.pacienteId}&tipo_id=${tipoId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    bodyEl.innerHTML = `<p style="color:#c0392b;padding:20px;">${data.error}</p>`;
+                    return;
+                }
+
+                // Actualizar icono del header
+                iconEl.innerHTML = `<i class="${data.tipo.icono || 'fa-solid fa-wave-square'}"></i>`;
+
+                // Inyectar formulario
+                bodyEl.innerHTML = `
+                    <form id="form-estudio-modal" autocomplete="off">
+                        <input type="hidden" name="paciente_id"       value="${data.paciente.id}">
+                        <input type="hidden" name="tipo_ecografia_id" value="${data.tipo.id}">
+                        <input type="hidden" name="esquema_version"   value="${data.tipo.esquema_version}">
+                        ${data.html}
+                        <div class="modal-form-eco-actions">
+                            <button type="button" class="eco-btn-cancel" onclick="cerrarModalFormularioEstudio()">
+                                <i class="fa-solid fa-xmark"></i> Cancelar
+                            </button>
+                            <button type="submit" class="eco-btn-submit">
+                                <i class="fa-solid fa-floppy-disk"></i> Guardar Informe
+                            </button>
+                            <button type="button" class="eco-btn-imprimir" disabled
+                                    title="Disponible después de guardar el informe"
+                                    onclick="imprimirInformeModal()">
+                                <i class="fa-solid fa-print"></i> Imprimir
+                            </button>
+                        </div>
+                    </form>`;
+
+                const formEl = document.getElementById('form-estudio-modal');
+                formEl.addEventListener('submit', _handleFormEstudioSubmit);
+
+                // ── Campos condicionales: mostrar/ocultar según radio SI/NO ──
+                formEl.addEventListener('change', function(ev) {
+                    const inp = ev.target;
+                    if (inp.type !== 'radio') return;
+                    formEl.querySelectorAll('.campo-condicional').forEach(function(el) {
+                        if (el.dataset.dependeDe === inp.name) {
+                            el.style.display = (inp.value === el.dataset.dependeValor) ? '' : 'none';
+                        }
+                    });
+                });
+            })
+            .catch(err => {
+                bodyEl.innerHTML = `<p style="color:#c0392b;padding:20px;">Error de red: ${err.message}</p>`;
+                iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            });
+    }
+
+    // ID del último informe guardado en este modal (para habilitar Imprimir)
+    let _ultimoInformeGuardadoId = null;
+
+    async function _handleFormEstudioSubmit(ev) {
+        ev.preventDefault();
+        const form      = ev.currentTarget;
+        const submitBtn = form.querySelector('.eco-btn-submit');
+        const imprimirBtn = form.querySelector('.eco-btn-imprimir');
+        const feedbackEl= document.getElementById('modal-form-eco-feedback');
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando…';
+        feedbackEl.style.display = 'none';
+
+        try {
+            const resp = await fetch('guardar_informe_estudio.php', { method: 'POST', body: new FormData(form) });
+            const json = await resp.json();
+
+            feedbackEl.style.display = 'block';
+            if (json.success) {
+                _ultimoInformeGuardadoId = json.informe_id;
+                feedbackEl.innerHTML = `<div class="eco-msg-ok">
+                    <i class="fa-solid fa-circle-check"></i> ${json.message}
+                    &nbsp;—&nbsp;
+                    <a href="ver_informe_estudio.php?informe_id=${json.informe_id}" target="_blank">Ver informe</a>
+                </div>`;
+                // Marcar como guardado: deshabilitar submit, habilitar imprimir
+                submitBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Guardado';
+                submitBtn.classList.add('eco-btn-submit--saved');
+                if (imprimirBtn) {
+                    imprimirBtn.disabled = false;
+                    imprimirBtn.removeAttribute('title');
+                    imprimirBtn.classList.add('eco-btn-imprimir--ready');
+                }
+            } else {
+                feedbackEl.innerHTML = `<div class="eco-msg-err">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    ${json.message || 'Error al guardar.'}
+                </div>`;
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar Informe';
+            }
+        } catch (err) {
+            feedbackEl.style.display = 'block';
+            feedbackEl.innerHTML = `<div class="eco-msg-err">Error de red: ${err.message}</div>`;
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar Informe';
+        }
+        // Scroll al feedback
+        document.getElementById('modal-form-eco-body').scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Imprimir informe en iframe oculto — sin redirección, sin salir de la modal
+    function _imprimirInformeEnIframe(informeId) {
+        if (!informeId) return;
+        var prev = document.getElementById('eco-print-frame');
+        if (prev) prev.remove();
+        var iframe = document.createElement('iframe');
+        iframe.id = 'eco-print-frame';
+        iframe.setAttribute('aria-hidden', 'true');
+        iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:8.5in;height:11in;border:0;visibility:hidden;';
+        iframe.src = 'ver_informe_estudio.php?informe_id=' + encodeURIComponent(informeId) + '&print=1';
+        document.body.appendChild(iframe);
+        // Cleanup automático
+        setTimeout(function () { try { iframe.remove(); } catch (e) {} }, 60000);
+    }
+
+    function imprimirInformeModal() {
+        _imprimirInformeEnIframe(_ultimoInformeGuardadoId);
+    }
+
+    function cerrarModalFormularioEstudio() {
+        if (!modalFormularioEstudio) return;
+        modalFormularioEstudio.style.display = 'none';
+        document.getElementById('modal-form-eco-body').innerHTML =
+            '<div class="modal-form-eco-loader"><i class="fa-solid fa-spinner fa-spin"></i><p>Cargando…</p></div>';
+        const fb = document.getElementById('modal-form-eco-feedback');
+        fb.style.display = 'none';
+        fb.innerHTML = '';
+        _ultimoInformeGuardadoId = null;
+        if (currentManagedPatientId) abrirModalGestionarPaciente(currentManagedPatientId);
+    }
+
+    function volverAModalEcoDesdeFormulario() {
+        if (modalFormularioEstudio) modalFormularioEstudio.style.display = 'none';
+        // Si veníamos del sub-modal musculo, regresamos a él
+        if (_ecoCtx.fromSubMusculo && modalSeleccionarMusculo && _ecoCtx.pacienteId) {
+            _ecoCtx.fromSubMusculo = false;
+            modalSeleccionarMusculo.style.display = 'flex';
+            return;
+        }
+        // Si veníamos del sub-modal obstétrico, regresamos a él
+        if (_ecoCtx.fromSubObstetrica && modalSeleccionarObstetrica && _ecoCtx.pacienteId) {
+            _ecoCtx.fromSubObstetrica = false;
+            modalSeleccionarObstetrica.style.display = 'flex';
+            return;
+        }
+        // Si veníamos del sub-modal partes blandas, regresamos a él
+        if (_ecoCtx.fromSubPartesBlandas && modalSeleccionarPartesBlandas && _ecoCtx.pacienteId) {
+            _ecoCtx.fromSubPartesBlandas = false;
+            modalSeleccionarPartesBlandas.style.display = 'flex';
+            return;
+        }
+        if (modalSeleccionarEcografia && _ecoCtx.pacienteId) {
+            modalSeleccionarEcografia.style.display = 'flex';
+        }
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
+    // --- FUNCIONES PARA LA MODAL DE VER INFORMES ---
+    function abrirModalVerInformes(pacienteId) {
+        if (!modalVerInformes) return;
+
+        const nombreEl    = document.getElementById('informes-paciente-nombre');
+        const edadEl      = document.getElementById('informes-paciente-edad');
+        const cedulaEl    = document.getElementById('informes-paciente-cedula');
+        const tituloEl    = document.getElementById('informes-panel-titulo');
+        const container   = document.getElementById('historial-informes-container');
+
+        nombreEl.textContent  = 'Cargando…';
+        edadEl.textContent    = '';
+        cedulaEl.textContent  = '';
+        container.innerHTML   = '<p style="color:#94a3b8;padding:20px 0;">Cargando historial…</p>';
+
+        cerrarModalGestionarPaciente();
+        modalVerInformes.style.display = 'flex';
+
+        fetch(`get_informes_paciente.php?paciente_id=${pacienteId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    container.innerHTML = `<p style="color:#c0392b;">${data.error}</p>`;
+                    return;
+                }
+
+                nombreEl.textContent  = data.paciente_nombre;
+                edadEl.textContent    = data.paciente_edad ? `${data.paciente_edad} años` : '';
+                cedulaEl.textContent  = data.paciente_cedula ? `CI: ${data.paciente_cedula}` : '';
+                tituloEl.textContent  = `Estudios Registrados (${data.total})`;
+
+                const estadoBadge = (estado, label) => {
+                    const colores = {
+                        borrador:   '#64748b',
+                        finalizado: '#0284c7',
+                        firmado:    '#15803d',
+                        anulado:    '#b91c1c',
+                    };
+                    const color = colores[estado] || '#64748b';
+                    return `<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:${color}20;color:${color};border:1px solid ${color}40;">${label}</span>`;
+                };
+
+                if (data.informes && data.informes.length > 0) {
+                    container.innerHTML = data.informes.map(inf => `
+                        <div class="informe-list-item">
+                            <div class="item-icon">
+                                <i class="${inf.tipo_icono || 'fa-solid fa-wave-square'}"></i>
+                            </div>
+                            <div class="item-info">
+                                <h4>${inf.tipo_nombre}</h4>
+                                    <p>
+                                    <i class="fa-regular fa-calendar" style="margin-right:4px;"></i>${inf.fecha_formateada}
+                                    &nbsp;·&nbsp;
+                                    <i class="fa-solid fa-user-doctor" style="margin-right:4px;"></i>${inf.ecografista}
+                                </p>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn-view-details" onclick="abrirModalInformeDetalle(${inf.id})">
+                                    <i class="fa-solid fa-eye" style="margin-right:5px;"></i>Ver
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `
+                        <div style="text-align:center;padding:40px 20px;color:#94a3b8;">
+                            <i class="fa-solid fa-folder-open" style="font-size:2.5rem;margin-bottom:12px;display:block;opacity:.4;"></i>
+                            <p style="margin:0;font-size:14px;">Este paciente no tiene estudios ecográficos registrados.</p>
+                        </div>`;
+                }
+            })
+            .catch(err => {
+                container.innerHTML = `<p style="color:#c0392b;">Error al cargar: ${err.message}</p>`;
+            });
     }
 
     function cerrarModalVerInformes() {
@@ -9146,107 +10551,66 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         }
     }
 
-    // --- NUEVAS FUNCIONES PARA LA MODAL DE DETALLE DE INFORME ---
-    function abrirModalInformeDetalle(informeId, pacienteEdad) {
-        if (modalInformeDetalle) {
-            const modalBody = document.getElementById('informe-detalle-body');
-            const pacienteNombreDisplay = document.getElementById('informe-detalle-paciente-nombre');
-            const modalHeader = modalInformeDetalle.querySelector('.modal-header-premium');
+    // --- FUNCIONES PARA LA MODAL DE DETALLE DE INFORME ---
+    let _currentInformeDetalleId = null;
+    function abrirModalInformeDetalle(informeId) {
+        if (!modalInformeDetalle) return;
+        _currentInformeDetalleId = informeId;
 
-            // Limpiar cualquier botón de acción anterior para evitar duplicados
-            const oldActions = modalHeader.querySelector('.modal-header-actions');
-            if (oldActions) oldActions.remove();
-
-            modalBody.innerHTML = '<p>Cargando informe...</p>';
-            pacienteNombreDisplay.textContent = '';
-            modalInformeDetalle.style.display = 'flex';
-
-            fetch(`get_informe_detalle.php?informe_id=${informeId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        modalBody.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
-                        return;
-                    }
-
-                    // --- LÓGICA PARA AÑADIR LOS BOTONES DE ACCIÓN ---
-                    const headerActions = document.createElement('div');
-                    headerActions.className = 'modal-header-actions';
-
-                    // 1. Botón de Imprimir
-                    const printButton = document.createElement('button');
-                    printButton.className = 'btn-print-informe';
-                    printButton.innerHTML = '<i class="fa-solid fa-print"></i> Imprimir';
-                    printButton.onclick = function() {
-                        window.print(); // Llama a la función de impresión del navegador
-                    };
-                    headerActions.appendChild(printButton);
-
-                    // 2. Botón de Borrar
-                    const deleteButton = document.createElement('a');
-                    deleteButton.className = 'btn-delete-historia';
-                    deleteButton.href = `borrar_informe.php?id=${informeId}`;
-                    deleteButton.innerHTML = '<i class="fa-solid fa-trash-can"></i> Borrar';
-                    deleteButton.onclick = function(event) {
-                        if (!confirm('¿Estás seguro de que quieres borrar este informe? Esta acción es irreversible.')) {
-                            event.preventDefault();
-                        }
-                    };
-                    headerActions.appendChild(deleteButton);
-
-                    // Insertamos el contenedor de botones en el encabezado
-                    modalHeader.appendChild(headerActions);
-
-                    
-
-                    // Función auxiliar para mostrar los datos de forma segura
-                    const mostrar = (valor) => valor ? htmlspecialchars(valor) : 'No especificado';
-                    const mostrarLargo = (valor) => valor ? nl2br(htmlspecialchars(valor)) : 'No especificado';
-
-                    function htmlspecialchars(str) {
-                        if (str === null || typeof str === 'undefined') return '';
-                        return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-                    }
-                    function nl2br(str) {
-                        if (str === null || typeof str === 'undefined') return '';
-                        return str.replace(/\r\n|\r|\n/g, '<br>');
-                    }
-
-                    // Rellenamos el encabezado
-                    let displayText = `Paciente: ${data.paciente_nombre}`;
-                    if (pacienteEdad) {
-                        displayText += ` (${pacienteEdad} años)`;
-                    }
-                    pacienteNombreDisplay.textContent = displayText;
-                    
-                    // --- CONSTRUIMOS EL HTML CON TODOS LOS DETALLES, SIN OMITIR NADA ---
-                    let informeHtml = `
-                        <h3>Datos de Referencia</h3>
-                        <div class="dato-item"><strong>N° de Historia:</strong> <p>${mostrar(data.numero_historia)}</p></div>
-                        <div class="dato-item"><strong>Fecha de Evaluación:</strong> <p>${mostrar(data.fecha_evaluacion_formateada)}</p></div>
-                        <div class="dato-item"><strong>Referido por:</strong> <p>${mostrar(data.referido_por)}</p></div>
-
-                        <h3>Evaluación</h3>
-                        <div class="dato-item"><strong>Motivo de la Referencia:</strong> <p>${mostrarLargo(data.motivo_referencia)}</p></div>
-                        <div class="dato-item"><strong>Actitud ante la Evaluación:</strong> <p>${mostrarLargo(data.actitud_ante_evaluacion)}</p></div>
-                        
-                        <h3>Resultados</h3>
-                        <div class="dato-item"><strong>Área Visomotriz:</strong> <p>${mostrarLargo(data.area_visomotriz)}</p></div>
-                        <div class="dato-item"><strong>Área Intelectual:</strong> <p>${mostrarLargo(data.area_intelectual)}</p></div>
-                        <div class="dato-item"><strong>Área Emocional:</strong> <p>${mostrarLargo(data.area_emocional)}</p></div>
-                        <div class="dato-item"><strong>Otros Resultados Relevantes:</strong> <p>${mostrarLargo(data.resultados_adicionales)}</p></div>
-                        
-                        <h3>Recomendaciones</h3>
-                        <div class="dato-item"><strong>Recomendaciones:</strong> <p>${mostrarLargo(data.recomendaciones)}</p></div>
-                    `;
-                    modalBody.innerHTML = informeHtml;
-                });
+        const bodyEl    = document.getElementById('informe-detalle-body');
+        const iconEl    = document.getElementById('inf-det-icon');
+        const tituloEl  = document.getElementById('inf-det-titulo');
+        const pacienteEl= document.getElementById('inf-det-paciente');
+        const printBtn  = document.getElementById('inf-det-print');
+        if (printBtn) {
+            printBtn.onclick = function () {
+                _imprimirInformeEnIframe(_currentInformeDetalleId);
+            };
         }
+
+        // Reset
+        iconEl.innerHTML    = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        tituloEl.textContent = 'Cargando…';
+        pacienteEl.textContent = '';
+        bodyEl.innerHTML = '<div class="modal-form-eco-loader"><i class="fa-solid fa-spinner fa-spin"></i><p>Cargando informe…</p></div>';
+
+        modalInformeDetalle.style.display = 'flex';
+
+        fetch(`get_informe_detalle.php?informe_id=${informeId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    bodyEl.innerHTML = `<p style="color:#c0392b;padding:20px;">${data.error}</p>`;
+                    return;
+                }
+
+                // Header
+                iconEl.innerHTML     = `<i class="${data.tipo.icono || 'fa-solid fa-wave-square'}"></i>`;
+                tituloEl.textContent  = data.tipo.nombre;
+                pacienteEl.textContent= `Paciente: ${data.paciente.nombre}  ·  CI: ${data.paciente.cedula}  ·  ${data.paciente.edad} años`;
+
+                // Barra de meta-información
+                const metaBar = `
+                    <div class="inf-det-meta">
+                        <span><i class="fa-solid fa-hashtag"></i> <strong>${data.informe.numero_informe}</strong></span>
+                        <span><i class="fa-regular fa-calendar"></i> <strong>${data.informe.fecha_formateada}</strong></span>
+                        <span><i class="fa-solid fa-user-doctor"></i> <strong>${data.ecografista}</strong></span>
+                    </div>`;
+
+                // Inyectar meta + secciones del formulario en solo lectura
+                bodyEl.innerHTML = metaBar + data.html;
+            })
+            .catch(err => {
+                bodyEl.innerHTML = `<p style="color:#c0392b;padding:20px;">Error al cargar: ${err.message}</p>`;
+                iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            });
     }
+
     function cerrarModalInformeDetalle() {
-        if (modalInformeDetalle) {
-            modalInformeDetalle.style.display = 'none';
-        }
+        if (!modalInformeDetalle) return;
+        modalInformeDetalle.style.display = 'none';
+        document.getElementById('informe-detalle-body').innerHTML =
+            '<div class="modal-form-eco-loader"><i class="fa-solid fa-spinner fa-spin"></i><p>Cargando…</p></div>';
     }
 
     // --- NUEVAS FUNCIONES PARA LA MODAL DE CREAR INFORME ---
@@ -9304,7 +10668,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             cerrarModalGestionarPaciente();
             modalVerHistoria.style.display = 'flex';
 
-            fetch(`get_historia_clinica.php?paciente_id=${pacienteId}`)
+            fetch(`get_gestionar_paciente.php?paciente_id=${pacienteId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (!data.tipo || !data.datos) {
@@ -9603,7 +10967,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             tipo
         };
 
-        fetch(`editar_historia.php?historia_id=${historiaId}&tipo=${tipo}&ajax=1`)
+        fetch(`#?historia_id=${historiaId}&tipo=${tipo}&ajax=1`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('No se pudo cargar el formulario de edición.');
@@ -9658,7 +11022,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 
                 const formData = new FormData(form);
 
-                fetch('guardar_historia.php', {
+                fetch('#', {
                     method: 'POST',
                     body: formData
                 })
@@ -9757,7 +11121,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             const motivoConsultaDisplay = document.getElementById('asignar-motivo-consulta');
             const citaIdInput = document.getElementById('asignar-cita-id');
             const profesionalSolicitadoDisplay = document.getElementById('asignar-profesional-solicitado'); // Nuevo
-            const psicologoSelector = document.getElementById('asignar-psicologo-id'); // Nuevo
+            const psicologoSelector = document.getElementById('asignar-ecografista-id'); // Nuevo
 
             pacienteNombreDisplay.textContent = 'Cargando...';
             motivoConsultaDisplay.textContent = '...';
@@ -9906,18 +11270,19 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 
 
     // --- NUEVAS FUNCIONES PARA LA MODAL DE ÉXITO ---
-    const modalExitoPaciente = document.getElementById('modal-exito-paciente');
+    const modalExitoPaciente = document.getElementById('eco-modal-exito-paciente-panel');
 
     function abrirModalExitoPaciente(nombre, password) {
-        if (modalExitoPaciente) {
-            document.getElementById('exito-paciente-nombre').textContent = nombre;
-            document.getElementById('exito-paciente-password').textContent = password;
-            modalExitoPaciente.style.display = 'flex';
+        if (!modalExitoPaciente) return;
+        document.getElementById('exito-paciente-nombre').textContent = nombre;
+        document.getElementById('exito-paciente-password').textContent = password;
+        if (typeof EcoModal !== 'undefined') {
+            EcoModal.open('eco-modal-exito-paciente-panel');
         }
     }
     function cerrarModalExitoPaciente() {
-        if (modalExitoPaciente) {
-            modalExitoPaciente.style.display = 'none';
+        if (typeof EcoModal !== 'undefined') {
+            EcoModal.close('eco-modal-exito-paciente-panel');
         }
     }
 
@@ -10073,7 +11438,11 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 
     function marcarCitaComoCompletada(citaId) {
         if (confirm('¿Estás seguro de que quieres marcar esta cita como completada?')) {
-            fetch(`marcar_completada.php?cita_id=${citaId}`)
+            fetch('marcar_completada.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': '<?= csrf_token() ?>' },
+                    body: 'cita_id=' + encodeURIComponent(citaId)
+                })
                 .then(response => response.json())
                 .then(result => {
                     if (result.success) {
@@ -10631,46 +12000,41 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
 
 
         // --- NUEVA LÓGICA PARA LOS BOTONES DE SELECCIÓN DE HISTORIA ---
-        const btnSeleccionarAdulto = document.getElementById('btn-seleccionar-adulto');
+        // Ambos botones (Adulto e Infantil) ahora llevan a la modal de ecografías
+        const btnSeleccionarAdulto   = document.getElementById('btn-seleccionar-adulto');
         const btnSeleccionarInfantil = document.getElementById('btn-seleccionar-infantil');
 
-
-        // --- LÓGICA PARA LOS BOTONES DE SELECCIÓN DE HISTORIA ---
-
-
-        // Botón de seleccionar historia adulta
+        // Botón "Historia de Adulto" → valida edad ≥ 18, luego abre Modal 2 (ecografías)
         if (btnSeleccionarAdulto) {
-            btnSeleccionarAdulto.addEventListener('click', function() {
+            btnSeleccionarAdulto.addEventListener('click', function () {
                 const edad = parseInt(this.dataset.pacienteEdad, 10);
                 if (edad < 18) {
-                    alert('Error: Este paciente es menor de edad. Debes crear una historia clínica infantil.');
+                    alert('Error: Este paciente es menor de edad. Debes usar la tarjeta de Historia Infantil.');
                     return;
                 }
-                
-                const pacienteId = this.dataset.pacienteId;
-                const pacienteCedula = this.dataset.pacienteCedula;
-                const pacienteNombre = this.dataset.pacienteNombre;
-                const pacienteEdad = this.dataset.pacienteEdad;
-                
-                abrirModalCrearHistoria(pacienteId, pacienteCedula, pacienteNombre, pacienteEdad);
+                abrirModalSeleccionarEcografia(
+                    this.dataset.pacienteId,
+                    this.dataset.pacienteCedula,
+                    this.dataset.pacienteNombre,
+                    this.dataset.pacienteEdad
+                );
             });
         }
 
-        // Botón de seleccionar historia infantil
+        // Botón "Historia Infantil" → valida edad < 18, luego abre Modal 2 (ecografías)
         if (btnSeleccionarInfantil) {
-            btnSeleccionarInfantil.addEventListener('click', function() {
+            btnSeleccionarInfantil.addEventListener('click', function () {
                 const edad = parseInt(this.dataset.pacienteEdad, 10);
                 if (edad >= 18) {
-                    alert('Error: Este paciente es mayor de edad. Debes crear una historia clínica de adulto.');
+                    alert('Error: Este paciente es mayor de edad. Debes usar la tarjeta de Historia de Adulto.');
                     return;
                 }
-                
-                const pacienteId = this.dataset.pacienteId;
-                const pacienteCedula = this.dataset.pacienteCedula;
-                const pacienteNombre = this.dataset.pacienteNombre;
-                const pacienteEdad = this.dataset.pacienteEdad;
-                
-                abrirModalCrearHistoriaInfantil(pacienteId, pacienteCedula, pacienteNombre, pacienteEdad);
+                abrirModalSeleccionarEcografia(
+                    this.dataset.pacienteId,
+                    this.dataset.pacienteCedula,
+                    this.dataset.pacienteNombre,
+                    this.dataset.pacienteEdad
+                );
             });
         }
 
@@ -10699,7 +12063,7 @@ if (formCrearHistoria) {
 
         console.log('Enviando paciente_id (Adulto):', pacienteId);
 
-        fetch('guardar_historia.php', {
+        fetch('#', {
             method: 'POST',
             body: formData
         })
@@ -10742,7 +12106,7 @@ if (formCrearHistoria) {
                 submitButton.textContent = 'Guardando...';
                 submitButton.disabled = true;
 
-                fetch('guardar_historia.php', { method: 'POST', body: formData })
+                fetch('#', { method: 'POST', body: formData })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -10878,7 +12242,7 @@ if (formCrearHistoria) {
                 submitButton.textContent = 'Guardando...';
                 submitButton.disabled = true;
 
-                fetch('guardar_informe.php', { method: 'POST', body: formData })
+                fetch('guardar_informe_estudio.php', { method: 'POST', body: formData })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -10915,17 +12279,11 @@ if (formCrearHistoria) {
 
         
         // Cerrar modales al hacer clic fuera
-        window.addEventListener('click', function(event) {
-            if (event.target == modalCrearPaciente) cerrarModalCrearPaciente();
-            if (event.target == modalProgramarCita) cerrarModalProgramarCita();
-            if (event.target == modalProponerFecha) cerrarModalProponerFecha();
-            if (event.target == modalReprogramarCita) cerrarModalReprogramarCita();
-            if (event.target == modalGestionarPaciente) cerrarModalGestionarPaciente();
-            if (event.target == modalGestionarNotas) cerrarModalGestionarNotas();
-            if (event.target == modalSeleccionarHistoria) cerrarModalSeleccionarHistoria();
-            if (event.target == modalProfesionalDetalle) cerrarModalProfesionalDetalle();
-            if (event.target == modalConflictoCita) cerrarModalConflicto();
-        });
+        // NOTA: las modales del flujo de creación de ecografías
+        // (seleccionar tipo, sub-modales, formulario, crear informe) NO se cierran
+        // con click fuera ni ESC — sólo con la X, para evitar pérdida accidental de datos.
+        // El clic fuera de las modales NO las cierra: el usuario debe pulsar la X
+        // para evitar la pérdida accidental de datos.
 
         // --- BUSCADOR DE ESPECIALIDADES (ADMINISTRADOR) ---
         const specialtySearchInput = document.getElementById('specialty-search-input');
@@ -11203,9 +12561,6 @@ if (formCrearHistoria) {
 
         // --- LÓGICA PARA EL FORMULARIO MODAL DE PROGRAMAR CITA ---
         const formProgramarCita = document.getElementById('form-programar-cita');
-        const btnCerrarModalProgramar = document.querySelector('#modal-programar-cita .modal-close');
-
-        if (btnCerrarModalProgramar) btnCerrarModalProgramar.addEventListener('click', cerrarModalProgramarCita);
 
         if(formProgramarCita) {
             flatpickr("#calendario-programar", {
@@ -11371,7 +12726,7 @@ if (formCrearHistoria) {
                 if (fp) fp.destroy();
 
                 if (psicologoId) {
-                    fetch(`get_available_dates.php?psicologo_id=${psicologoId}`)
+                    fetch(`get_available_dates.php?ecografista_id=${psicologoId}`)
                     .then(response => response.json())
                     .then(availableDates => {
                         datePickerGroup.style.display = 'block';
@@ -11397,7 +12752,7 @@ if (formCrearHistoria) {
                             onChange: function(selectedDates, dateStr) {
                                 timeSlotsContainer.innerHTML = 'Cargando...';
                                 timeSlotsGroup.style.display = 'block';
-                                fetch(`get_available_times.php?psicologo_id=${psicologoId}&fecha=${dateStr}`)
+                                fetch(`get_available_times.php?ecografista_id=${psicologoId}&fecha=${dateStr}`)
                                 .then(res => res.json())
                                 .then(times => {
                                     timeSlotsContainer.innerHTML = '';

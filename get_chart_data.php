@@ -1,17 +1,17 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
 header('Content-Type: application/json');
 
 // Seguridad: Solo para psicólogos
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista'])) {
     http_response_code(403);
     echo json_encode(['error' => 'Acceso denegado']);
     exit();
 }
 
-$psicologo_id = $_SESSION['usuario_id'];
+$ecografista_id = $_SESSION['usuario_id'];
 
 // --- LÓGICA CORREGIDA Y ROBUSTA PARA OBTENER LOS ÚLTIMOS 6 MESES ---
 
@@ -39,13 +39,13 @@ for ($i = 5; $i >= 0; $i--) {
 $seis_meses_atras = date('Y-m-01', strtotime('-5 months'));
 $sql = "SELECT DATE_FORMAT(fecha_cita, '%Y-%m') as mes, COUNT(id) as total 
         FROM citas 
-        WHERE psicologo_id = ? 
+        WHERE ecografista_id = ? 
         AND estado = 'confirmada' 
         AND fecha_cita >= ?
         GROUP BY mes";
 
 $stmt = $conex->prepare($sql);
-$stmt->bind_param("is", $psicologo_id, $seis_meses_atras);
+$stmt->bind_param("is", $ecografista_id, $seis_meses_atras);
 $stmt->execute();
 $resultado = $stmt->get_result();
 

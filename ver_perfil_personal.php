@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
@@ -30,7 +30,7 @@ $stmt->close();
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Perfil de Usuario - WebPSY</title>
+    <title>Perfil de Usuario - EcoMadelleine</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -69,8 +69,16 @@ $stmt->close();
 
         <div class="profile-actions">
             <?php if ($_SESSION['usuario_id'] != $usuario['id']): ?>
-                <a href="reset_password.php?id=<?php echo $usuario['id']; ?>" class="btn-action btn-reset" onclick="return confirm('¿Seguro que quieres restablecer la contraseña de este usuario?');">Restablecer Contraseña</a>
-                <a href="borrar_usuario.php?id=<?php echo $usuario['id']; ?>" class="btn-action btn-delete" onclick="return confirm('¿Estás seguro de que quieres borrar a este usuario? Esta acción es irreversible.');">Borrar Usuario</a>
+                <form method="post" action="reset_password.php" style="display:inline" onsubmit="return confirm('¿Seguro que quieres restablecer la contraseña de este usuario?');">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="id" value="<?php echo (int)$usuario['id']; ?>">
+                    <button type="submit" class="btn-action btn-reset" style="border:none;font:inherit;cursor:pointer;">Restablecer Contraseña</button>
+                </form>
+                <form method="post" action="borrar_usuario.php" style="display:inline" onsubmit="return confirm('¿Estás seguro de que quieres borrar a este usuario? Esta acción es irreversible.');">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="id" value="<?php echo (int)$usuario['id']; ?>">
+                    <button type="submit" class="btn-action btn-delete" style="border:none;font:inherit;cursor:pointer;">Borrar Usuario</button>
+                </form>
             <?php else: ?>
                 <p>No puedes realizar acciones sobre tu propia cuenta desde aquí.</p>
             <?php endif; ?>

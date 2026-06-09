@@ -1,0 +1,659 @@
+/* Modales registro personal — formulario simétrico (estilos.css / shell-modals) */
+
+.eco-modal .staff-register-form .eco-field {
+    width: 100%;
+}
+
+.eco-modal .staff-register-form .eco-field-hint {
+    margin: 6px 0 0;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.eco-modal .staff-register-form .eco-field-hint i {
+    margin-right: 4px;
+    color: var(--accent-text);
+    font-size: 10px;
+}
+
+/* Modales registro personal — solo estilos del modal (tarjetas sin cambios) */
+
+.staff-modal-alert {
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #b91c1c;
+}
+
+.staff-modal-alert[hidden] {
+    display: none !important;
+}
+
+.staff-modal-aside--eco .eco-modal__aside-icon {
+    background: rgba(2, 177, 244, 0.2);
+}
+
+.staff-modal-aside--rx .eco-modal__aside-icon {
+    background: rgba(99, 102, 241, 0.18);
+}
+
+.staff-modal-aside--pat .eco-modal__aside-icon {
+    background: rgba(34, 197, 94, 0.18);
+}
+
+.staff-feedback-banner {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13.5px;
+    border-left: 4px solid var(--success);
+    background: rgba(34, 197, 94, 0.08);
+}
+
+/* Cabecera de sección clickeable (sin cambiar la rejilla inferior) */
+button.staff-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    margin: 0;
+    padding: inherit;
+    border: none;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    border-radius: var(--radius) var(--radius) 0 0;
+    transition: background 0.2s ease;
+}
+
+button.staff-section-header:hover {
+    background: var(--bg-hover);
+}
+
+button.staff-section-header:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+button.staff-section-header h3 {
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+.staff-section-header__cta {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-text);
+    white-space: nowrap;
+}
+
+/* Modal listado de personal activo */
+.staff-lista-dialog {
+    max-width: 920px;
+}
+
+.staff-lista-modal-main {
+    padding: 22px 24px 20px;
+    max-height: min(90vh, 880px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.staff-lista-modal-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding-right: 36px;
+}
+
+.staff-lista-modal-head__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.staff-lista-modal-head__icon--eco {
+    background: rgba(2, 177, 244, 0.18);
+}
+
+.staff-lista-modal-head__icon--rx {
+    background: rgba(99, 102, 241, 0.18);
+}
+
+.staff-lista-modal-head__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.staff-lista-modal-head__sub {
+    margin: 4px 0 0;
+    font-size: 13px;
+}
+
+.staff-lista-modal-badge {
+    flex-shrink: 0;
+    align-self: center;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 700;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-soft);
+    color: var(--text-primary);
+}
+
+.staff-lista-modal-search {
+    position: relative;
+    margin-bottom: 14px;
+}
+
+.staff-lista-modal-search i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.staff-lista-modal-search input {
+    width: 100%;
+    padding: 11px 14px 11px 40px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 13.5px;
+    background: var(--bg-muted);
+    color: var(--text-primary);
+    box-sizing: border-box;
+}
+
+.staff-lista-modal-search input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    background: var(--bg-surface);
+}
+
+.staff-lista-modal-body {
+    flex: 1;
+    min-height: 120px;
+    max-height: min(52vh, 480px);
+    overflow-y: auto;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    background: var(--bg-muted);
+    padding: 10px;
+}
+
+.staff-lista-empty {
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    margin: 0;
+}
+
+.staff-lista-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.staff-lista-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.staff-lista-item:hover {
+    border-color: rgba(2, 177, 244, 0.35);
+    box-shadow: var(--shadow-sm);
+}
+
+.staff-lista-item__avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.staff-lista-avatar--eco {
+    background: linear-gradient(135deg, var(--accent), #38bdf8);
+}
+
+.staff-lista-avatar--rx {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+}
+
+.staff-lista-item__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.staff-lista-item__name {
+    display: block;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.staff-lista-item__role {
+    display: inline-block;
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.staff-lista-item__meta {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.staff-lista-item__meta i {
+    width: 14px;
+    margin-right: 4px;
+    color: var(--text-muted);
+}
+
+.staff-lista-item__btn {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 12px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.staff-lista-modal-footer {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.staff-lista-modal-footer a {
+    text-decoration: none;
+    font-size: 13px;
+}
+
+/* Tarjetas de perfil: clic abre modal (mismo aspecto que enlace) */
+button.staff-profile-card__main {
+    width: 100%;
+    margin: 0;
+    padding: 16px 48px 16px 16px;
+    border: none;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+
+button.staff-profile-card__main:focus-visible,
+button.staff-profile-card__action:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+button.staff-lista-item__btn {
+    cursor: pointer;
+    font-family: inherit;
+}
+
+/* Modal perfil individual — layout split + footer de acciones */
+#eco-modal-staff-perfil .eco-modal__dialog--wide {
+    max-width: 720px;
+    overflow: hidden;
+}
+
+#eco-modal-staff-perfil .staff-perfil-split {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#eco-modal-staff-perfil .eco-modal__aside {
+    grid-column: 1;
+    min-width: 0;
+    max-width: 220px;
+    overflow: hidden;
+}
+
+#eco-modal-staff-perfil .staff-perfil-panel.eco-modal__main {
+    grid-column: 2;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: var(--bg-surface, #ffffff);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    isolation: isolate;
+}
+
+#eco-modal-staff-perfil .staff-perfil-panel__scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 20px 0 8px;
+}
+
+#eco-modal-staff-perfil .staff-perfil-panel__head,
+#eco-modal-staff-perfil .staff-perfil-loading {
+    padding-left: 24px;
+    padding-right: 24px;
+    box-sizing: border-box;
+}
+
+#eco-modal-staff-perfil .staff-perfil-body {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+#eco-modal-staff-perfil .staff-perfil-panel__alert {
+    margin: 8px 24px 0;
+}
+
+#eco-modal-staff-perfil .staff-perfil-details {
+    margin-bottom: 0;
+    padding: 0 24px;
+    box-sizing: border-box;
+}
+
+/* Footer de botones — solo columna derecha */
+#eco-modal-staff-perfil .contenedor-botones-modal.staff-perfil-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+    padding: 16px 24px;
+    margin: 0;
+    box-sizing: border-box;
+    border-top: 1px solid var(--border-soft);
+    background: var(--bg-surface, #ffffff);
+    position: relative;
+    z-index: 3;
+}
+
+#eco-modal-staff-perfil .contenedor-botones-modal[hidden] {
+    display: none !important;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: auto;
+    max-width: none;
+    flex: 0 0 auto;
+    height: 40px;
+    padding: 10px 16px;
+    margin: 0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn span {
+    display: inline;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn i {
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--reset {
+    background: rgba(2, 177, 244, 0.07);
+    border: 1px solid rgba(2, 177, 244, 0.45);
+    color: var(--accent-text, #0284c7);
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--reset:hover {
+    background: rgba(2, 177, 244, 0.14);
+    border-color: var(--accent, #02b1f4);
+    box-shadow: 0 2px 8px rgba(2, 177, 244, 0.12);
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--disable {
+    background: #fff;
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    color: #64748b;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--disable:hover {
+    background: #f8fafc;
+    border-color: rgba(185, 28, 28, 0.35);
+    color: #9f1239;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--enable {
+    background: #fff;
+    border: 1px solid rgba(34, 197, 94, 0.45);
+    color: #15803d;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--enable:hover {
+    background: rgba(34, 197, 94, 0.06);
+    border-color: rgba(34, 197, 94, 0.65);
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-soft, rgba(2, 177, 244, 0.25));
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+#eco-modal-staff-perfil .staff-perfil-self-hint {
+    margin: 16px 24px 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: var(--bg-muted);
+    border-radius: 8px;
+    border: 1px dashed var(--border);
+    box-sizing: border-box;
+}
+
+#eco-modal-staff-perfil .staff-perfil-self-hint[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 640px) {
+    #eco-modal-staff-perfil .staff-perfil-split {
+        grid-template-columns: 1fr;
+    }
+
+    #eco-modal-staff-perfil .eco-modal__aside {
+        max-width: none;
+    }
+
+    #eco-modal-staff-perfil .contenedor-botones-modal.staff-perfil-footer {
+        flex-wrap: wrap;
+        justify-content: stretch;
+    }
+
+    #eco-modal-staff-perfil .staff-perfil-btn {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+}
+
+.staff-perfil-aside {
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+}
+
+.staff-perfil-aside__avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.staff-perfil-avatar--eco {
+    background: linear-gradient(135deg, var(--accent), #38bdf8);
+}
+
+.staff-perfil-avatar--rx {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+}
+
+.staff-perfil-avatar--default {
+    background: linear-gradient(135deg, #64748b, #94a3b8);
+}
+
+.staff-perfil-aside__role {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.staff-perfil-loading {
+    padding: 32px 8px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.staff-perfil-loading[hidden],
+#staff-perfil-content[hidden] {
+    display: none !important;
+}
+
+.staff-perfil-details {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.staff-perfil-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    background: var(--bg-muted);
+    border: 1px solid var(--border-soft);
+}
+
+.staff-perfil-detail__label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.staff-perfil-detail__label i {
+    margin-right: 6px;
+    color: var(--accent-text);
+}
+
+.staff-perfil-detail__value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.staff-perfil-estado {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.staff-perfil-estado--ok {
+    background: rgba(34, 197, 94, 0.12);
+    color: #15803d;
+}
+
+.staff-perfil-estado--pending {
+    background: rgba(234, 179, 8, 0.15);
+    color: #a16207;
+}
+
+.staff-perfil-estado--off {
+    background: rgba(239, 68, 68, 0.12);
+    color: #b91c1c;
+}
+

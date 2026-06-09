@@ -1,53 +1,42 @@
 <?php
 session_start();
 include 'conexion.php';
+header('Content-Type: application/json; charset=utf-8');
 
-header('Content-Type: application/json');
-
-// Seguridad
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador', 'secretaria']) || !isset($_GET['paciente_id'])) {
+if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'ecografista') {
     http_response_code(403);
-    echo json_encode(['error' => 'Acceso no autorizado']);
-    exit();
+    echo json_encode(['ok' => false, 'error' => 'Acceso denegado']); exit;
 }
 
-$usuario_id = $_SESSION['usuario_id'];
-$rol_usuario = $_SESSION['rol'];
-$paciente_id = (int)$_GET['paciente_id'];
-
-$response = [];
-
-// Obtener nombre del paciente
-$stmt_paciente = $conex->prepare("SELECT nombre_completo FROM usuarios WHERE id = ?");
-$stmt_paciente->bind_param("i", $paciente_id);
-$stmt_paciente->execute();
-$paciente = $stmt_paciente->get_result()->fetch_assoc();
-$response['paciente_nombre'] = $paciente['nombre_completo'] ?? 'Paciente no encontrado';
-
-// Obtener notas existentes
-if ($rol_usuario === 'secretaria' || $rol_usuario === 'administrador') {
-    $stmt_notas = $conex->prepare("SELECT id, fecha_sesion, nota FROM notas_sesion WHERE paciente_id = ? ORDER BY fecha_sesion DESC");
-    $stmt_notas->bind_param("i", $paciente_id);
-} else {
-    $stmt_notas = $conex->prepare("SELECT id, fecha_sesion, nota FROM notas_sesion WHERE paciente_id = ? AND psicologo_id = ? ORDER BY fecha_sesion DESC");
-    $stmt_notas->bind_param("ii", $paciente_id, $usuario_id);
+$paciente_id = (int)($_GET['paciente_id'] ?? 0);
+if ($paciente_id <= 0) {
+    echo json_encode(['ok' => false, 'error' => 'Paciente inválido']); exit;
 }
-$stmt_notas->execute();
-$notas_result = $stmt_notas->get_result();
+
+$paciente = null;
+if ($s = $conex->prepare("SELECT id, nombre_completo, cedula, correo FROM usuarios WHERE id=? AND rol='paciente' LIMIT 1")) {
+    $s->bind_param('i', $paciente_id); $s->execute();
+    $paciente = $s->get_result()->fetch_assoc();
+    $s->close();
+}
+if (!$paciente) {
+    echo json_encode(['ok' => false, 'error' => 'Paciente no encontrado']); exit;
+}
 
 $notas = [];
-while($nota = $notas_result->fetch_assoc()) {
-    $notas[] = [
-        'id' => $nota['id'],
-        'fecha_formateada' => date('d/m/Y h:i A', strtotime($nota['fecha_sesion'])),
-        'nota' => htmlspecialchars($nota['nota'])
-    ];
+if ($s = $conex->prepare("
+    SELECT n.id, n.fecha_sesion, n.contenido, n.creado_en, u.nombre_completo AS autor
+    FROM notas_clinicas n
+    LEFT JOIN usuarios u ON u.id=n.ecografista_id
+    WHERE n.paciente_id=?
+    ORDER BY n.fecha_sesion DESC")) {
+    $s->bind_param('i', $paciente_id); $s->execute();
+    $notas = $s->get_result()->fetch_all(MYSQLI_ASSOC);
+    $s->close();
 }
-$response['notas'] = $notas;
 
-echo json_encode($response);
-
-$stmt_paciente->close();
-$stmt_notas->close();
-$conex->close();
-?>
+echo json_encode([
+    'ok' => true,
+    'paciente' => $paciente,
+    'notas' => $notas,
+]);

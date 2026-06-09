@@ -1,0 +1,5 @@
+# Carpeta de archivos medicos (imagenes ecograficas, adjuntos, PDFs firmados).
+# NUNCA se sirven directamente por HTTP: solo a traves de los handlers PHP
+# (descargar_archivo_informe.php) que validan sesion/permisos o token.
+Require all denied
+Options -Indexes

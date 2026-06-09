@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
@@ -16,7 +16,7 @@ $rol = $_GET['rol'];
 // que tienen al menos un día de trabajo definido en la tabla horarios_recurrentes.
 $sql = "SELECT DISTINCT u.id, u.nombre_completo 
         FROM usuarios u
-        JOIN horarios_recurrentes hr ON u.id = hr.psicologo_id
+        JOIN horarios_recurrentes hr ON u.id = hr.ecografista_id
         WHERE u.rol = ? AND u.estado = 'aprobado'";
 
 $stmt = $conex->prepare($sql);

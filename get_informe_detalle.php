@@ -1,34 +1,62 @@
 <?php
 session_start();
 include 'conexion.php';
+require_once __DIR__ . '/lib/estudios_render.php';
+require_once __DIR__ . '/lib/informes.php';
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
-// Seguridad: Solo roles autorizados
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador', 'secretaria'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
     http_response_code(403);
     echo json_encode(['error' => 'Acceso no autorizado']);
     exit();
 }
 
-if (!isset($_GET['informe_id']) || !is_numeric($_GET['informe_id'])) {
+$sesion_rol = (string)$_SESSION['rol'];
+$sesion_uid = (int)$_SESSION['usuario_id'];
+
+// Libera el bloqueo de sesión mientras hay I/O BD + renderizado (primer open más fluido si hay paralelismo)
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
+
+$informe_id = isset($_GET['informe_id']) && is_numeric($_GET['informe_id'])
+    ? (int)$_GET['informe_id'] : 0;
+
+if (!$informe_id) {
     http_response_code(400);
-    echo json_encode(['error' => 'ID de informe no válido']);
+    echo json_encode(['error' => 'ID de informe inválido']);
     exit();
 }
 
-$informe_id = (int)$_GET['informe_id'];
-
-// --- CONSULTA MEJORADA PARA OBTENER TODOS LOS DATOS ---
-$sql = "SELECT i.*, u.nombre_completo as paciente_nombre, u.cedula as paciente_cedula
-        FROM informes_psicologicos i
-        JOIN usuarios u ON i.paciente_id = u.id
-        WHERE i.id = ?";
-$stmt = $conex->prepare($sql);
-$stmt->bind_param("i", $informe_id);
+$stmt = $conex->prepare("
+    SELECT
+        ie.id, ie.numero_informe, ie.fecha_estudio, ie.estado,
+        ie.datos_clinicos, ie.creado_en,
+        ie.ecografista_id,
+        ie.fecha_firma, ie.fecha_anulacion, ie.motivo_anulacion,
+        t.nombre      AS tipo_nombre,
+        t.icono       AS tipo_icono,
+        t.categoria   AS tipo_categoria,
+        t.esquema_campos,
+        p.nombre_completo AS paciente_nombre,
+        p.cedula          AS paciente_cedula,
+        TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE()) AS paciente_edad,
+        u.nombre_completo AS ecografista_nombre,
+        fb.nombre_completo AS firmante_nombre,
+        ab.nombre_completo AS anulador_nombre
+    FROM informes_estudios ie
+    LEFT JOIN tipos_ecografias t ON t.id = ie.tipo_ecografia_id
+    LEFT JOIN usuarios p ON p.id = ie.paciente_id
+    LEFT JOIN usuarios u ON u.id = ie.ecografista_id
+    LEFT JOIN usuarios fb ON fb.id = ie.firmado_por
+    LEFT JOIN usuarios ab ON ab.id = ie.anulado_por
+    WHERE ie.id = ?
+");
+$stmt->bind_param('i', $informe_id);
 $stmt->execute();
-$resultado = $stmt->get_result();
-$informe = $resultado->fetch_assoc();
+$informe = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
 if (!$informe) {
     http_response_code(404);
@@ -36,12 +64,55 @@ if (!$informe) {
     exit();
 }
 
-// Formateamos la fecha para mostrarla
-$informe['fecha_evaluacion_formateada'] = date('d/m/Y', strtotime($informe['fecha_evaluacion']));
+$esquema        = json_decode($informe['esquema_campos'],  true) ?: ['secciones' => []];
+$datos_clinicos = json_decode($informe['datos_clinicos'],  true) ?: [];
 
-// Devolvemos todos los datos del informe
-echo json_encode($informe);
+// Renderizar en modo solo lectura
+$html = eco_render_formulario($esquema, $datos_clinicos, true);
 
-$stmt->close();
+$fecha_raw = $informe['fecha_estudio'] ?: substr($informe['creado_en'], 0, 10);
+$fecha_fmt = $fecha_raw ? date('d/m/Y', strtotime($fecha_raw)) : '—';
+
+$estados_labels = [
+    'borrador'   => 'Borrador',
+    'finalizado' => 'Finalizado',
+    'firmado'    => 'Firmado',
+    'anulado'    => 'Anulado',
+];
+
+$fmt_dt = static function ($v) {
+    return $v ? date('d/m/Y H:i', strtotime($v)) : null;
+};
+$puede_gestionar = eco_puede_gestionar_informe($sesion_rol, $sesion_uid, (int)$informe['ecografista_id']);
+
+echo json_encode([
+    'html'    => $html,
+    'informe' => [
+        'id'              => (int)$informe['id'],
+        'numero_informe'  => $informe['numero_informe'] ?? '—',
+        'fecha_formateada'=> $fecha_fmt,
+        'estado'          => $informe['estado'],
+        'estado_label'    => $estados_labels[$informe['estado']] ?? $informe['estado'],
+        'ecografista_id'  => (int)$informe['ecografista_id'],
+        'puede_gestionar' => $puede_gestionar,
+        'firma'           => $informe['estado'] === 'firmado'
+            ? ['por' => $informe['firmante_nombre'] ?? '—', 'fecha' => $fmt_dt($informe['fecha_firma'])]
+            : null,
+        'anulacion'       => $informe['estado'] === 'anulado'
+            ? ['por' => $informe['anulador_nombre'] ?? '—', 'fecha' => $fmt_dt($informe['fecha_anulacion']), 'motivo' => $informe['motivo_anulacion'] ?? '']
+            : null,
+    ],
+    'tipo' => [
+        'nombre'   => $informe['tipo_nombre']    ?? 'Ecografía',
+        'icono'    => $informe['tipo_icono']     ?? 'fa-solid fa-wave-square',
+        'categoria'=> $informe['tipo_categoria'] ?? '',
+    ],
+    'paciente' => [
+        'nombre' => $informe['paciente_nombre'] ?? '—',
+        'cedula' => $informe['paciente_cedula'] ?? '—',
+        'edad'   => $informe['paciente_edad']   ?? '—',
+    ],
+    'ecografista' => $informe['ecografista_nombre'] ?? '—',
+], JSON_UNESCAPED_UNICODE);
+
 $conex->close();
-?>

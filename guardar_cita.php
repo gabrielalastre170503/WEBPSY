@@ -1,54 +1,89 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
+require_once __DIR__ . '/lib/seguridad.php';
+require_once __DIR__ . '/lib/citas.php';
 
 // Seguridad: Solo roles autorizados pueden guardar una cita
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'secretaria', 'administrador'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'recepcionista', 'administrador'], true)) {
     header('Location: login.php');
     exit();
 }
 
-// Validar que los datos necesarios del formulario fueron enviados
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cita_id'], $_POST['fecha_cita'])) {
-    
-    $cita_id = $_POST['cita_id'];
-    $fecha_cita = $_POST['fecha_cita'];
-    $psicologo_id = null;
+$rol = $_SESSION['rol'];
+$wants_json = (!empty($_POST['ajax']) && $_POST['ajax'] === '1');
 
-    // --- LÓGICA CORREGIDA PARA ASIGNAR EL PSICÓLOGO ---
-    
-    // Si el usuario es psicólogo/psiquiatra, se asigna la cita a sí mismo.
-    if ($_SESSION['rol'] == 'psicologo' || $_SESSION['rol'] == 'psiquiatra') {
-        $psicologo_id = $_SESSION['usuario_id'];
-    } 
-    // Si es secretaria/admin, toma el ID del psicólogo que seleccionó en el formulario.
-    elseif (($_SESSION['rol'] == 'secretaria' || $_SESSION['rol'] == 'administrador') && !empty($_POST['psicologo_id'])) {
-        $psicologo_id = $_POST['psicologo_id'];
+function guardar_cita_redirect_base(): string
+{
+    global $rol;
+    if ($rol === 'recepcionista') {
+        return 'recepcion_citas_pendientes.php';
+    }
+    if ($rol === 'administrador') {
+        return 'dashboard_v2.php';
+    }
+    return 'panel.php';
+}
+
+// Validar que los datos necesarios del formulario fueron enviados
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cita_id'], $_POST['fecha_cita'])) {
+
+    $cita_id      = $_POST['cita_id'];
+    $fecha_cita   = $_POST['fecha_cita'];
+    $ecografista_id = null;
+
+    if ($rol === 'ecografista') {
+        $ecografista_id = (int)$_SESSION['usuario_id'];
+    } elseif (($rol === 'recepcionista' || $rol === 'administrador') && !empty($_POST['ecografista_id'])) {
+        $ecografista_id = (int)$_POST['ecografista_id'];
     }
 
-    // Si por alguna razón no tenemos un psicólogo asignado, detenemos el proceso.
-    if ($psicologo_id === null) {
-        header('Location: panel.php?error=no_psicologo');
+    if ($ecografista_id === null || $ecografista_id <= 0) {
+        if ($wants_json) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'message' => 'Debes seleccionar un ecografista.']);
+            exit();
+        }
+        header('Location: ' . guardar_cita_redirect_base() . '?error=no_psicologo');
         exit();
     }
 
-    // Actualizar la cita en la base de datos con la fecha, el psicólogo y el nuevo estado
-    $stmt = $conex->prepare("UPDATE citas SET fecha_cita = ?, psicologo_id = ?, estado = 'confirmada' WHERE id = ?");
-    $stmt->bind_param("sii", $fecha_cita, $psicologo_id, $cita_id);
+    $stmt = $conex->prepare('UPDATE citas SET fecha_cita = ?, ecografista_id = ?, estado = \'confirmada\' WHERE id = ?');
+    $stmt->bind_param('sii', $fecha_cita, $ecografista_id, $cita_id);
 
-    if ($stmt->execute()) {
-        // Redirigir de vuelta al panel con un mensaje de éxito
-        header('Location: panel.php?status=cita_programada');
-    } else {
-        // Redirigir con un mensaje de error
-        header('Location: panel.php?error=programacion_fallida');
-    }
-    
+    $ok = $stmt->execute();
     $stmt->close();
+
+    if ($ok) {
+        eco_auditar($conex, 'cita_programada', ['entidad' => 'cita', 'entidad_id' => $cita_id, 'detalle' => ['ecografista_id' => $ecografista_id, 'fecha' => $fecha_cita]]);
+        eco_cita_evento($conex, (int)$cita_id, 'confirmada', ['estado_nuevo' => 'confirmada', 'detalle' => ['ecografista_id' => $ecografista_id, 'fecha' => $fecha_cita]]);
+    }
+
+    if ($wants_json) {
+        header('Content-Type: application/json; charset=utf-8');
+        if ($ok) {
+            echo json_encode(['success' => true, 'message' => 'Cita programada correctamente.']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'No se pudo guardar la cita.']);
+        }
+        exit();
+    }
+
+    if ($ok) {
+        header('Location: ' . guardar_cita_redirect_base() . '?status=cita_programada');
+    } else {
+        header('Location: ' . guardar_cita_redirect_base() . '?error=programacion_fallida');
+    }
     exit();
 }
 
-// Si no se enviaron los datos correctos, simplemente redirigir al panel.
-header('Location: panel.php');
-$conex->close();
-?>
+if ($wants_json) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'message' => 'Solicitud inválida.']);
+    exit();
+}
+
+header('Location: ' . guardar_cita_redirect_base());
+if (isset($conex) && $conex instanceof mysqli) {
+    $conex->close();
+}

@@ -20,7 +20,12 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $profesional_id = (int)$_GET['id'];
 
 // Obtener todos los detalles del profesional
-$stmt = $conex->prepare("SELECT nombre_completo, cedula, correo, rol, estado, fecha_registro, especialidades FROM usuarios WHERE id = ?");
+$stmt = $conex->prepare("SELECT nombre_completo, cedula, correo, rol, estado, fecha_registro,
+        (SELECT GROUP_CONCAT(e.nombre ORDER BY e.nombre SEPARATOR ', ')
+           FROM usuario_especialidades ue
+           JOIN especialidades e ON e.id = ue.especialidad_id
+          WHERE ue.usuario_id = usuarios.id) AS especialidades
+    FROM usuarios WHERE id = ?");
 $stmt->bind_param("i", $profesional_id);
 $stmt->execute();
 $resultado = $stmt->get_result();

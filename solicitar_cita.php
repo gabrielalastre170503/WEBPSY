@@ -1,6 +1,7 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
+require_once __DIR__ . '/lib/citas.php';
 
 // Seguridad: Solo pacientes pueden solicitar
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
@@ -8,16 +9,17 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['motivo_consulta']) && !empty($_POST['psicologo_id'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['motivo_consulta']) && !empty($_POST['ecografista_id'])) {
     $paciente_id = $_SESSION['usuario_id'];
-    $psicologo_id = $_POST['psicologo_id'];
+    $ecografista_id = $_POST['ecografista_id'];
     $motivo = $_POST['motivo_consulta'];
 
-    // Consulta actualizada para incluir el psicologo_id
-    $stmt = $conex->prepare("INSERT INTO citas (paciente_id, psicologo_id, motivo_consulta, estado) VALUES (?, ?, ?, 'pendiente')");
-    $stmt->bind_param("iis", $paciente_id, $psicologo_id, $motivo);
+    // Consulta actualizada para incluir el ecografista_id
+    $stmt = $conex->prepare("INSERT INTO citas (paciente_id, ecografista_id, motivo_consulta, estado) VALUES (?, ?, ?, 'pendiente')");
+    $stmt->bind_param("iis", $paciente_id, $ecografista_id, $motivo);
     
     if ($stmt->execute()) {
+        eco_cita_evento($conex, (int)$stmt->insert_id, 'solicitada', ['estado_nuevo' => 'pendiente']);
         header('Location: panel.php?status=cita_solicitada');
     } else {
         header('Location: panel.php?error=solicitud_fallida');

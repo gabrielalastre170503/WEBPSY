@@ -1,505 +1,2000 @@
 <?php
-    // Tu lógica PHP se mantiene intacta
-    include("conexion.php"); 
+    include 'conexion.php';
     $contenido_web = [];
     $resultado = $conex->query("SELECT clave, valor FROM contenido_web");
     while ($fila = $resultado->fetch_assoc()) {
         $contenido_web[$fila['clave']] = $fila['valor'];
     }
-    include("send.php");
+    include 'send.php';
+
+    /* ───────────────────────────────────────────────────────────────
+       MÉTRICAS REALES desde la base de datos
+       ─────────────────────────────────────────────────────────────── */
+
+    // 1. Total de pacientes aprobados
+    $r = $conex->query("SELECT COUNT(*) c FROM usuarios WHERE rol='paciente' AND estado='aprobado'");
+    $total_pacientes = (int)($r->fetch_assoc()['c'] ?? 0);
+
+    // 2. Tipos de estudio activos (excluyendo sub-categorías técnicas)
+    $r = $conex->query("SELECT COUNT(*) c FROM tipos_ecografias
+                        WHERE activo=1 AND (categoria IS NULL
+                        OR categoria NOT IN ('Musculoesqueletica_Sub','Obstetrica_Sub','Partes_Blandas_Sub'))");
+    $total_tipos = (int)($r->fetch_assoc()['c'] ?? 0);
+
+    // 3. Promedio real de horas entre creación y firma del informe
+    $r = $conex->query("SELECT ROUND(AVG(TIMESTAMPDIFF(HOUR, creado_en, actualizado_en))) h
+                        FROM informes_estudios
+                        WHERE estado IN ('finalizado','firmado')
+                          AND TIMESTAMPDIFF(HOUR, creado_en, actualizado_en) BETWEEN 0 AND 720");
+    $avg_horas = (int)($r->fetch_assoc()['h'] ?? 0);
+
+    // 4. Tasa de conclusión real: % de citas completadas vs gestionadas
+    $r = $conex->query("SELECT
+            SUM(CASE WHEN estado='completada' THEN 1 ELSE 0 END) completadas,
+            SUM(CASE WHEN estado IN ('completada','cancelada','reprogramada') THEN 1 ELSE 0 END) gestionadas
+        FROM citas");
+    $row = $r->fetch_assoc();
+    $tasa_conclusion = ($row && (int)$row['gestionadas'] > 0)
+        ? (int)round(((int)$row['completadas'] / (int)$row['gestionadas']) * 100)
+        : 0;
+
+    // 5. Total de informes firmados/finalizados (métrica adicional para el hero)
+    $r = $conex->query("SELECT COUNT(*) c FROM informes_estudios WHERE estado IN ('finalizado','firmado')");
+    $total_informes = (int)($r->fetch_assoc()['c'] ?? 0);
+
+    /* Helpers de visualización honesta — si el dato real es 0, se muestra etiqueta de compromiso */
+    $f_pac = [
+        'value' => $total_pacientes > 0 ? number_format($total_pacientes, 0, ',', '.') . '+' : '—',
+        'label' => $total_pacientes > 0 ? 'Pacientes registrados' : 'Próximos pacientes',
+    ];
+    $f_tip = [
+        'value' => $total_tipos > 0 ? $total_tipos . '+' : '—',
+        'label' => 'Tipos de estudio',
+    ];
+    $f_hrs = [
+        'value' => $avg_horas > 0 ? $avg_horas . 'h' : '24h',
+        'label' => $avg_horas > 0 ? 'Promedio de informe' : 'Compromiso de entrega',
+    ];
+    $f_tasa = [
+        'value' => $tasa_conclusion > 0 ? $tasa_conclusion . '%' : '100%',
+        'label' => $tasa_conclusion > 0 ? 'Tasa de conclusión' : 'Compromiso clínico',
+    ];
+
+    /* Paleta por categoría — coherente con eco_colores_shell (Renal / Abdominal / Pélvica / etc.) */
+    $eco_palette = [
+        'Abdominal'          => ['c1' => '#02b1f4', 'soft' => '#e0f5fe', 'text' => '#0284c7'],
+        'Renal'              => ['c1' => '#0ea5e9', 'soft' => '#e0f2fe', 'text' => '#0369a1'],
+        'Obstetrica'         => ['c1' => '#ec4899', 'soft' => '#fce7f3', 'text' => '#be185d'],
+        'Cervical'           => ['c1' => '#14b8a6', 'soft' => '#ccfbf1', 'text' => '#0f766e'],
+        'Pelvica'            => ['c1' => '#8b5cf6', 'soft' => '#ede9fe', 'text' => '#6d28d9'],
+        'Musculoesqueletica' => ['c1' => '#22c55e', 'soft' => '#dcfce7', 'text' => '#15803d'],
+        'Prostatica'         => ['c1' => '#3b82f6', 'soft' => '#dbeafe', 'text' => '#1d4ed8'],
+        'Mamaria'            => ['c1' => '#f43f5e', 'soft' => '#ffe4e6', 'text' => '#be123c'],
+        'Partes Blandas'     => ['c1' => '#f59e0b', 'soft' => '#fef3c7', 'text' => '#b45309'],
+        'Testicular'         => ['c1' => '#6366f1', 'soft' => '#e0e7ff', 'text' => '#4338ca'],
+        'Pulmonar'           => ['c1' => '#0891b2', 'soft' => '#cffafe', 'text' => '#0e7490'],
+    ];
+    $eco_palette_default = ['c1' => '#64748b', 'soft' => '#f1f5f9', 'text' => '#475569'];
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebPSY | Futuro de la Salud Mental</title>
-    
+    <meta name="description" content="EcoMadelleine — Centro de diagnóstico ecográfico premium. Dra. Madelleine Toro. Informes digitales en 24 horas.">
+    <meta name="theme-color" content="#eaf3ff">
+    <title>EcoMadelleine · Diagnóstico Ecográfico Premium</title>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <style>
-    /* --- VARIABLES DE DISEÑO --- */
+    /* ════════════════════════════════════════════════════════════════
+       DESIGN TOKENS — Glass Clínico (Apple-style)
+       ════════════════════════════════════════════════════════════════ */
     :root {
-        --color-primario: #3b82f6;
-        --color-primario-rgb: 59, 130, 246;
-        --color-secundario: #2563eb;
-        --color-acento: #0ea5e9;
-        --color-fondo: #f8fafc;
-        --color-superficie: #ffffff;
-        --color-texto: #334155;
-        --color-texto-secundario: #64748b;
-        --color-blanco: #ffffff;
-        --sombra-suave: 0 10px 30px rgba(0, 0, 0, 0.08);
-        --sombra-neon: 0 0 15px rgba(var(--color-primario-rgb), 0.3), 0 0 5px rgba(var(--color-primario-rgb), 0.5);
-        --border-radius: 12px;
+        /* Fondo cielo-clínico */
+        --sky-1:        #eaf3ff;
+        --sky-2:        #f5f9ff;
+        --sky-3:        #dbeafe;
+        --white:        #ffffff;
+
+        /* Texto */
+        --ink:          #0c1a2e;
+        --ink-2:        #1e2a44;
+        --gris:         #4a5870;
+        --gris-soft:    #6b7689;
+        --gris-mute:    #94a3b8;
+
+        /* Brand */
+        --azul:         #02b1f4;
+        --azul-dark:    #014a82;
+        --azul-deep:    #003a66;
+        --azul-soft:    #e0f5fe;
+
+        /* Bordes plata (truco glass) */
+        --silver-top:   rgba(255, 255, 255, .85);
+        --silver-bot:   rgba(12, 26, 46, .06);
+        --silver-edge:  rgba(255, 255, 255, .55);
+
+        /* Glass surfaces */
+        --glass:        rgba(255, 255, 255, .55);
+        --glass-2:      rgba(255, 255, 255, .42);
+        --glass-strong: rgba(255, 255, 255, .72);
+
+        /* Sombras (luz + brand glow) */
+        --sh-soft:      0 1px 2px rgba(12, 26, 46, .04), 0 8px 24px rgba(12, 26, 46, .06);
+        --sh-glow:      0 24px 60px rgba(2, 177, 244, .18);
+        --sh-deep:      0 30px 80px rgba(12, 26, 46, .15);
+
+        --r-sm:         12px;
+        --r:            18px;
+        --r-lg:         24px;
+        --r-xl:         32px;
+        --r-2xl:        40px;
+
+        --ease:         cubic-bezier(.22, 1, .36, 1);
+        --ease-spring:  cubic-bezier(.34, 1.56, .64, 1);
+
+        --gutter:       28px;
+        --max:          1280px;
     }
 
-    /* --- ESTILOS GENERALES Y RESET --- */
-    * { 
-        margin: 0; 
-        padding: 0; 
-        box-sizing: border-box; 
-        font-family: 'Poppins', sans-serif;
-        max-width: 100%; /* <-- AJUSTE CLAVE 1: Fuerza a todos los elementos a no ser más anchos que su contenedor */
-    }
-    
-    html, body {
-        overflow-x: hidden; /* <-- AJUSTE CLAVE 2: Aplica la regla al HTML y al BODY para máxima efectividad */
-    }
-
-    body { 
-        background-color: var(--color-fondo); 
-        color: var(--color-texto); 
-        line-height: 1.7; 
-        width: 100vw; /* <-- AJUSTE CLAVE 3: Define el ancho del body al 100% del viewport */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    html, body { overflow-x: hidden; }
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: var(--sky-2);
+        color: var(--ink);
+        line-height: 1.55;
+        font-size: 15.5px;
+        font-weight: 400;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        position: relative;
+        min-height: 100vh;
     }
 
-    html { 
-        scroll-behavior: smooth; 
+    /* Fondo ambiental — gradient mesh estático + orbes muy sutiles */
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background:
+            radial-gradient(ellipse 80% 60% at 85% 0%,  rgba(2, 177, 244, .18) 0%, transparent 55%),
+            radial-gradient(ellipse 60% 50% at 0% 30%,  rgba(99, 179, 237, .14) 0%, transparent 55%),
+            radial-gradient(ellipse 70% 50% at 50% 100%, rgba(167, 139, 250, .10) 0%, transparent 55%),
+            linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 100%);
     }
-    
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-    h1, h2, h3 { font-weight: 600; line-height: 1.2; }
-    h2 { font-size: 2.5rem; text-align: center; margin-bottom: 50px; color: var(--color-primario); }
-    section { padding: 75px 0 !important; } /* Se quitó overflow-x:hidden de aquí porque ahora es global */
+    body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background-image:
+            radial-gradient(circle at 1px 1px, rgba(12, 26, 46, .035) 1px, transparent 0);
+        background-size: 28px 28px;
+    }
 
-    /* --- MENSAJES DE ESTADO --- */
-    .mensaje-estado { padding: 15px 20px; margin: 20px auto; text-align: center; border-radius: var(--border-radius); color: var(--color-blanco); font-weight: 500; width: 90%; max-width: 800px; box-shadow: var(--sombra-suave); }
-    .mensaje-exito { background: linear-gradient(90deg, #10b981, #059669); }
-    .mensaje-error { background: linear-gradient(90deg, #ef4444, #dc2626); }
+    img, svg { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; }
+    ::selection { background: var(--azul); color: #fff; }
 
-    /* --- HEADER Y NAVEGACIÓN --- */
+    .container { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+    /* Tipografía */
+    h1, h2, h3, h4 {
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        line-height: 1.08;
+        letter-spacing: -0.025em;
+        color: var(--ink);
+    }
+    .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.6px;
+        color: var(--azul-dark);
+        background: var(--glass);
+        backdrop-filter: blur(14px) saturate(1.6);
+        -webkit-backdrop-filter: blur(14px) saturate(1.6);
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--silver-edge);
+        box-shadow: inset 0 1px 0 var(--silver-top), 0 1px 2px var(--silver-bot);
+    }
+    .eyebrow i { font-size: 9px; color: var(--azul); }
+
+    .section-title {
+        font-size: clamp(32px, 4.6vw, 56px);
+        font-weight: 700;
+        margin-top: 18px;
+        margin-bottom: 16px;
+        max-width: 760px;
+    }
+    .section-title .grad {
+        background: linear-gradient(120deg, var(--azul) 0%, var(--azul-deep) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .section-sub {
+        font-size: 16.5px;
+        line-height: 1.65;
+        color: var(--gris);
+        max-width: 600px;
+        font-weight: 400;
+    }
+    .section-head { margin-bottom: 72px; max-width: 760px; }
+    .section-head--center { text-align: center; margin-left: auto; margin-right: auto; }
+    .section-head--center .section-title,
+    .section-head--center .section-sub { margin-left: auto; margin-right: auto; }
+
+    section { padding: 130px 0; position: relative; }
+
+    /* ────────────────────────────────────────────────
+       GLASS PRIMITIVE (reutilizable)
+       ──────────────────────────────────────────────── */
+    .glass {
+        background: var(--glass);
+        backdrop-filter: blur(24px) saturate(1.8);
+        -webkit-backdrop-filter: blur(24px) saturate(1.8);
+        border: 1px solid var(--silver-edge);
+        border-radius: var(--r-lg);
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            var(--sh-soft);
+    }
+
+    /* ────────────────────────────────────────────────
+       SCROLL PROGRESS
+       ──────────────────────────────────────────────── */
+    #scroll-progress {
+        position: fixed;
+        top: 0; left: 0;
+        height: 2px;
+        width: 0;
+        background: linear-gradient(90deg, var(--azul), var(--azul-deep));
+        z-index: 2000;
+        transition: width .12s linear;
+    }
+
+    /* ────────────────────────────────────────────────
+       MENSAJES DE ESTADO
+       ──────────────────────────────────────────────── */
+    .mensaje-estado {
+        position: fixed;
+        top: 100px; left: 50%;
+        transform: translateX(-50%);
+        z-index: 1500;
+        padding: 14px 22px;
+        border-radius: var(--r);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: var(--sh-deep);
+        animation: msgIn .5s var(--ease);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+    }
+    .mensaje-exito { background: linear-gradient(135deg, #16a34a, #15803d); }
+    .mensaje-error { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+    @keyframes msgIn {
+        from { opacity: 0; transform: translate(-50%, -16px); }
+        to   { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       HEADER GLASS
+       ════════════════════════════════════════════════════════════════ */
     .header {
         position: fixed;
-        width: 100%;
-        top: 0;
+        top: 16px; left: 50%;
+        transform: translateX(-50%);
         z-index: 1000;
-        padding: 20px 0;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        transition: background 0.3s ease, box-shadow 0.3s ease;
+        width: calc(100% - 32px);
+        max-width: 1250px;
+        padding: 12px 16px 12px 20px;
+        background: var(--glass-strong);
+        backdrop-filter: blur(24px) saturate(1.8);
+        -webkit-backdrop-filter: blur(24px) saturate(1.8);
+        border: 1px solid var(--silver-edge);
+        border-radius: 999px;
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            0 10px 40px rgba(12, 26, 46, .08);
+        transition: padding .3s var(--ease), transform .4s var(--ease);
     }
+    .header.scrolled { padding: 9px 14px 9px 18px; }
+    .header.hidden { transform: translateX(-50%) translateY(-130%); }
 
-    .menu { display: flex; justify-content: space-between; align-items: center; }
-    .logo { font-size: 1.5rem; font-weight: 700; color: var(--color-primario); text-decoration: none; }
-    .navbar ul { list-style: none; display: flex; gap: 25px; }
-    .navbar a { color: var(--color-texto-secundario); text-decoration: none; font-weight: 500; transition: color 0.3s ease; }
-    .navbar a:hover { color: var(--color-primario); }
+    .menu { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
 
-    /* --- CONTENIDO DEL HEADER Y PARTÍCULAS --- */
-    .hero-section {
-        height: 99vh;
-        display: flex;
+    .logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--ink);
+        letter-spacing: -0.015em;
+    }
+    .logo-icon {
+        width: 36px; height: 36px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--azul) 0%, var(--azul-dark) 100%);
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        color: #fff;
+        font-size: 14px;
+        box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.4),
+            0 6px 16px rgba(2, 177, 244, .35);
         position: relative;
-        text-align: center;
-        background: linear-gradient(135deg, var(--color-fondo), #e0f2fe);
+    }
+    .logo-text { display: flex; flex-direction: column; line-height: 1; }
+    .logo-text small {
+        font-size: 8.5px;
+        font-weight: 500;
+        color: var(--gris-mute);
+        text-transform: uppercase;
+        letter-spacing: 1.8px;
+        margin-top: 3px;
     }
 
-    #particles-js {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        z-index: 0; 
+    .navbar ul { list-style: none; display: flex; gap: 2px; align-items: center; }
+    .navbar a {
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--gris);
+        padding: 9px 14px;
+        border-radius: 999px;
+        transition: color .2s, background .25s var(--ease);
+    }
+    .navbar a:not(.nav-cta):hover { color: var(--ink); background: rgba(2, 177, 244, .08); }
+    .navbar .nav-cta {
+        background: var(--ink);
+        color: #fff;
+        padding: 10px 18px;
+        margin-left: 8px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        box-shadow: 0 8px 20px rgba(12, 26, 46, .25);
+        transition: transform .25s var(--ease), box-shadow .25s;
+    }
+    .navbar .nav-cta:hover { background: var(--azul-dark); transform: translateY(-1px); box-shadow: 0 12px 28px rgba(1, 74, 130, .35); }
+    .navbar .nav-cta i { font-size: 10px; }
+
+    .hamburger {
+        display: none;
+        background: transparent;
+        border: 1px solid var(--silver-edge);
+        border-radius: 999px;
+        width: 38px; height: 38px;
+        cursor: pointer;
+        color: var(--ink);
+        font-size: 14px;
+        align-items: center;
+        justify-content: center;
     }
 
-    .header-content { z-index: 1; position: relative; }
-    .header-txt h1 { font-size: 3.5rem; margin-bottom: 20px; color: var(--color-primario); }
-    
-    #typing-cursor {
+    /* ════════════════════════════════════════════════════════════════
+       HERO — Split 60/40 con visual abstracto + métricas glass
+       ════════════════════════════════════════════════════════════════ */
+    .hero {
+        padding-top: 125px;
+        padding-bottom: 100px;
+        position: relative;
+    }
+    .hero-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 64px;
+        align-items: center;
+    }
+
+    .hero-copy { position: relative; }
+    .hero-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 16px 8px 8px;
+        background: var(--glass);
+        backdrop-filter: blur(14px) saturate(1.6);
+        -webkit-backdrop-filter: blur(14px) saturate(1.6);
+        border: 1px solid var(--silver-edge);
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--ink-2);
+        margin-bottom: 32px;
+        box-shadow: inset 0 1px 0 var(--silver-top), 0 4px 12px rgba(12, 26, 46, .04);
+    }
+    .hero-tag .pill {
+        background: linear-gradient(135deg, var(--azul), var(--azul-dark));
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        box-shadow: 0 4px 10px rgba(2,177,244,.4);
+    }
+
+    .hero-copy h1 {
+        font-size: clamp(42px, 5.6vw, 72px);
+        font-weight: 800;
+        line-height: 1.02;
+        letter-spacing: -0.035em;
+        margin-bottom: 24px;
+    }
+    .hero-copy h1 .grad {
+        background: linear-gradient(120deg, var(--azul) 0%, var(--azul-deep) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
         display: inline-block;
-        background-color: var(--color-acento);
-        width: 3px;
-        height: 3.5rem;
-        animation: blink 1s infinite;
-        vertical-align: bottom;
     }
-    @keyframes blink { 50% { opacity: 0; } }
+    .hero-copy .lead {
+        font-size: 17.5px;
+        line-height: 1.6;
+        color: var(--gris);
+        max-width: 500px;
+        margin-bottom: 36px;
+    }
+    .hero-copy .lead strong { color: var(--ink); font-weight: 600; }
 
-    .header-txt p { font-size: 1.2rem; margin-bottom: 30px; color: var(--color-texto-secundario); max-width: 600px; margin-left:auto; margin-right:auto;}
-    
-    .btn-1 {
-        display: inline-block;
-        background-color: var(--color-primario);
-        color: var(--color-blanco);
-        padding: 12px 30px;
-        border-radius: 50px;
-        text-decoration: none;
+    .hero-ctas { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 40px; }
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 15px 26px;
+        border-radius: 999px;
         font-weight: 600;
-        box-shadow: 0 5px 20px rgba(var(--color-primario-rgb), 0.3);
-        transition: all 0.3s ease;
+        font-size: 14.5px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: transform .35s var(--ease), background .25s, color .25s, border-color .25s, box-shadow .35s;
+        will-change: transform;
+        font-family: inherit;
     }
-    .btn-1:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px 25px rgba(var(--color-primario-rgb), 0.5); }
+    .btn i { font-size: 13px; transition: transform .3s var(--ease); }
+    .btn-primary {
+        background: linear-gradient(135deg, var(--azul) 0%, var(--azul-dark) 100%);
+        color: #fff;
+        box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.3),
+            0 14px 30px rgba(2, 177, 244, .35);
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.3),
+            0 22px 44px rgba(2, 177, 244, .45);
+    }
+    .btn-primary:hover i { transform: translateX(3px); }
+    .btn-glass {
+        background: var(--glass-strong);
+        color: var(--ink);
+        border-color: var(--silver-edge);
+        backdrop-filter: blur(20px) saturate(1.6);
+        -webkit-backdrop-filter: blur(20px) saturate(1.6);
+        box-shadow: inset 0 1px 0 var(--silver-top), var(--sh-soft);
+    }
+    .btn-glass:hover { background: #fff; transform: translateY(-2px); }
 
-    /* --- SECCIONES GENERALES --- */
-    .about { 
-    display: flex; align-items: flex-start; /* <-- CAMBIA "center" POR "flex-start" */
-    gap: 51px; }
-    .about-img { margin-top: 100px; }
-    .about-img img { max-width: 400px; }
-    .about-txt p { color: var(--color-texto-secundario); margin-bottom: 15px; }
-    
-    #servicios {
-    padding-top: 50px; /* <-- ¡Ajusta este valor como necesites! */
+    .hero-trust {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .trust-avatars { display: flex; }
+    .trust-avatars span {
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--azul), var(--azul-dark));
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 600;
+        margin-left: -8px;
+        border: 2px solid #fff;
+        box-shadow: 0 4px 10px rgba(12, 26, 46, .12);
+    }
+    .trust-avatars span:first-child { margin-left: 0; }
+    .trust-avatars .sec { background: linear-gradient(135deg, #0ea5e9, #7dd3fc); }
+    .trust-avatars .ter { background: linear-gradient(135deg, #8b5cf6, #c4b5fd); }
+    .hero-trust .txt { font-size: 13px; color: var(--gris); line-height: 1.4; }
+    .hero-trust .txt strong { color: var(--ink); font-weight: 600; }
+    .hero-trust .stars { color: #f59e0b; font-size: 11px; letter-spacing: 1px; margin-bottom: 2px; display: block; }
+
+    /* ── Visual hero: panel ecográfico abstracto ── */
+    .hero-visual {
+        position: relative;
+        aspect-ratio: 1 / 1.08;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: 220px;
+        margin-top: -80px;
+        perspective: 1000px;
+    }
+    .hv-glow {
+        position: absolute;
+        inset: -10%;
+        background:
+            radial-gradient(circle at 30% 30%, rgba(2, 177, 244, .35), transparent 55%),
+            radial-gradient(circle at 80% 70%, rgba(139, 92, 246, .25), transparent 55%);
+        filter: blur(60px);
+        z-index: -1;
+        animation: glowMove 8s ease-in-out infinite alternate;
+    }
+    @keyframes glowMove {
+        from { transform: scale(1) translate(0, 0); }
+        to   { transform: scale(1.1) translate(-3%, 3%); }
     }
 
-    #contacto {
-    padding-top: 100px !important; /* <-- ¡Ajusta este valor como necesites! */
-    padding-bottom: 90px !important;
+    /* Tarjeta principal: monitor ecográfico */
+    .hv-monitor {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(160deg, rgba(255,255,255,.7) 0%, rgba(255,255,255,.4) 100%);
+        backdrop-filter: blur(30px) saturate(2);
+        -webkit-backdrop-filter: blur(30px) saturate(2);
+        border: 1px solid var(--silver-edge);
+        border-radius: var(--r-2xl);
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            var(--sh-deep);
+        overflow: hidden;
+        animation: floatY 10s ease-in-out infinite;
+    }
+    @keyframes floatY {
+        0%, 100% { transform: translateY(0); }
+        50%      { transform: translateY(-8px); }
+    }
+    .hv-monitor svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    /* Mini-cards glass flotantes — estáticas (sin bounce) */
+    .hv-pill {
+        position: absolute;
+        background: var(--glass-strong);
+        backdrop-filter: blur(22px) saturate(1.8);
+        -webkit-backdrop-filter: blur(22px) saturate(1.8);
+        border: 1px solid var(--silver-edge);
+        border-radius: var(--r-lg);
+        padding: 16px 22px 16px 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        width: max-content;
+        max-width: none;
+        white-space: nowrap;
+        z-index: 3;
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            0 18px 38px rgba(12, 26, 46, .14);
+        transition: transform .5s var(--ease), box-shadow .5s var(--ease);
+    }
+    .hv-pill:hover {
+        transform: translateY(-3px);
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            0 22px 48px rgba(12, 26, 46, .18);
+    }
+    .hv-pill.p1 { top: -4%;    left: -40px; right: auto; }
+    .hv-pill.p2 { bottom: 22%; left: auto;  right: 80px; }
+
+    .hv-pill .icn {
+        width: 46px; height: 46px;
+        border-radius: 13px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        flex-shrink: 0;
+    }
+    .hv-pill.p1 .icn { background: rgba(34, 197, 94, .15); color: #15803d; }
+    .hv-pill.p2 .icn { background: rgba(2, 177, 244, .15); color: var(--azul-dark); }
+    .hv-pill .txt {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        line-height: 1;
+        min-width: 0;
+    }
+    .hv-pill .lbl {
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--gris-soft);
+        font-weight: 600;
+        white-space: nowrap;
+        line-height: 1;
+    }
+    .hv-pill .val {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ink);
+        line-height: 1.15;
+        white-space: nowrap;
+        letter-spacing: -0.01em;
     }
 
-    #nosotros {
-    padding-top: 80px !important; /* <-- ¡Ajustá este valor como necesites! */
-}
-
-    /* --- TARJETAS DE SERVICIOS --- */
-    .servicios-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
-    .service-card {
-        background: var(--color-superficie);
-        padding: 40px 25px;
-        text-align: center;
-        border-radius: var(--border-radius);
-        text-decoration: none;
-        color: var(--color-texto);
-        border: 1px solid rgba(0,0,0,0.05);
-        box-shadow: var(--sombra-suave);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    /* Wave animado del monitor */
+    .ecg-wave {
+        stroke-dasharray: 1200;
+        stroke-dashoffset: 1200;
+        animation: drawWave 4.5s cubic-bezier(.65,.05,.36,1) infinite;
     }
-    .service-card:hover { transform: translateY(-10px); box-shadow: var(--sombra-neon); }
-    .service-card i { font-size: 3rem; color: var(--color-primario); margin-bottom: 20px; text-shadow: 0 0 10px rgba(var(--color-primario-rgb), 0.3); }
-    .service-card h3 { font-size: 1.4rem; color: var(--color-texto); }
-
-    /* --- FORMULARIO --- */
-    .formulario { background-color: var(--color-superficie); border-radius: var(--border-radius); padding: 75px; padding-bottom: 90px; border: 1px solid rgba(0,0,0,0.08); box-shadow: var(--sombra-suave); }
-    .formulario form { max-width: 600px; margin: 0 auto; }
-    .input-group { display: flex; flex-direction: column; gap: 20px; }
-    .input-container { position: relative; }
-    .input-container input, .input-container textarea {
-        width: 100%; padding: 15px 15px 15px 45px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; background: var(--color-fondo); color: var(--color-texto);
+    @keyframes drawWave {
+        0%   { stroke-dashoffset: 1200; opacity: .4; }
+        60%  { stroke-dashoffset: 0;    opacity: 1; }
+        100% { stroke-dashoffset: 0;    opacity: 0; }
     }
-    .input-container input:focus, .input-container textarea:focus { outline: none; border-color: var(--color-primario); box-shadow: 0 0 0 3px rgba(var(--color-primario-rgb), 0.2); }
-    .input-container i { position: absolute; top: 50%; left: 15px; transform: translateY(-50%); color: var(--color-texto-secundario); }
-    .btn { width: 100%; padding: 15px; border: none; background: linear-gradient(90deg, var(--color-primario), var(--color-acento)); color: var(--color-blanco); font-size: 1.1rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: opacity 0.3s ease; }
-    .btn:hover { opacity: 0.9; }
+    .pulse-ring {
+        transform-origin: center;
+        animation: pulseRing 2.6s ease-out infinite;
+    }
+    @keyframes pulseRing {
+        0%   { transform: scale(.55); opacity: .85; }
+        100% { transform: scale(1.7);  opacity: 0; }
+    }
 
-    /* --- FOOTER --- */
-    .footer { padding: 40px 0; text-align: center; border-top: 1px solid rgba(0, 0, 0, 0.08); background-color: var(--color-superficie); }
-    .footer .link ul { justify-content: center; }
-    .footer .link a { color: var(--color-texto-secundario); }
-    .footer .link .logo { color: var(--color-primario); }
-
-    /* --- ANIMACIONES DE SCROLL --- */
-    .animate-on-scroll {
+    /* ════════════════════════════════════════════════════════════════
+       STATS — 4 métricas REALES en cards glass
+       ════════════════════════════════════════════════════════════════ */
+    .stats-section {
+        padding: 60px 0 100px;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+    .stat-card {
+        background: var(--glass);
+        backdrop-filter: blur(22px) saturate(1.8);
+        -webkit-backdrop-filter: blur(22px) saturate(1.8);
+        border: 1px solid var(--silver-edge);
+        border-radius: var(--r-lg);
+        padding: 30px 26px;
+        position: relative;
+        overflow: hidden;
+        transition: transform .4s var(--ease), box-shadow .4s;
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            var(--sh-soft);
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%; right: -50%;
+        width: 200%; height: 200%;
+        background: radial-gradient(circle, rgba(2,177,244,.18) 0%, transparent 50%);
         opacity: 0;
-        transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        transition: opacity .5s var(--ease);
+        pointer-events: none;
     }
-    .animate-on-scroll.from-left { transform: translateX(-50px); }
-    .animate-on-scroll.from-right { transform: translateX(50px); }
-    .animate-on-scroll.is-visible { opacity: 1; transform: translateX(0); }
-    
-    /* --- Responsive --- */
-    @media (max-width: 768px) {
-        h1 { font-size: 2.5rem !important; }
-        h2 { font-size: 2rem; }
-        .header-content { flex-direction: column; }
-        .about { flex-direction: column; text-align: center; }
-        .about-img img { max-width: 80%; }
+    .stat-card:hover {
+        transform: translateY(-6px);
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            0 20px 50px rgba(2, 177, 244, .2);
+    }
+    .stat-card:hover::before { opacity: 1; }
+    .stat-card .ico {
+        width: 42px; height: 42px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--azul) 0%, var(--azul-dark) 100%);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        margin-bottom: 18px;
+        box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.3),
+            0 8px 18px rgba(2, 177, 244, .3);
+        position: relative;
+    }
+    .stat-card .num {
+        font-size: clamp(34px, 4.4vw, 46px);
+        font-weight: 800;
+        color: var(--ink);
+        line-height: 1;
+        letter-spacing: -0.035em;
+        margin-bottom: 6px;
+        position: relative;
+    }
+    .stat-card .num .grad {
+        background: linear-gradient(120deg, var(--azul) 0%, var(--azul-deep) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .stat-card .lbl {
+        font-size: 12px;
+        color: var(--gris-soft);
+        text-transform: uppercase;
+        letter-spacing: 1.4px;
+        font-weight: 600;
+        position: relative;
+    }
+    .stat-card .sub-meta {
+        font-size: 11px;
+        color: var(--gris-mute);
+        margin-top: 4px;
+        font-weight: 500;
+        position: relative;
     }
 
-    /* --- Estilos para el campo de Cédula combinado (SIN ICONO) --- */
-.cedula-group {
-    display: flex;
-    align-items: center;
-}
+    /* ════════════════════════════════════════════════════════════════
+       NOSOTROS — 3 cards glass con icono coloreado
+       ════════════════════════════════════════════════════════════════ */
+    #nosotros { padding-top: 80px; }
+    .mvv-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
+    }
+    .mvv-card {
+        background: var(--glass);
+        backdrop-filter: blur(24px) saturate(1.8);
+        -webkit-backdrop-filter: blur(24px) saturate(1.8);
+        border: 1px solid var(--silver-edge);
+        border-radius: var(--r-xl);
+        padding: 40px 34px;
+        position: relative;
+        overflow: hidden;
+        transition: transform .4s var(--ease), box-shadow .4s;
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            var(--sh-soft);
+    }
+    .mvv-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 4px;
+        background: linear-gradient(90deg, var(--azul), var(--azul-dark));
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform .5s var(--ease);
+    }
+    .mvv-card:hover {
+        transform: translateY(-6px);
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            var(--sh-glow);
+    }
+    .mvv-card:hover::before { transform: scaleX(1); }
+    .mvv-icon {
+        width: 56px; height: 56px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(2,177,244,.15), rgba(2,177,244,.05));
+        border: 1px solid var(--silver-edge);
+        color: var(--azul-dark);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        margin-bottom: 22px;
+        box-shadow: inset 0 1px 0 var(--silver-top);
+    }
+    .mvv-card h3 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 14px;
+        letter-spacing: -0.02em;
+    }
+    .mvv-card p {
+        font-size: 15px;
+        color: var(--gris);
+        line-height: 1.7;
+    }
 
-.cedula-select {
-    background-color: var(--color-fondo);
-    border: 1px solid #e2e8f0;
-    border-right: none; /* Quitamos el borde derecho para unirlo al input */
-    border-radius: 8px 0 0 8px; /* Redondeamos solo la esquina izquierda */
-    padding: 17px 9px;
-    height: 100%;
-    outline: none;
-    color: var(--color-texto);
-    cursor: pointer;
-    font-weight: 600;
-}
+    /* ════════════════════════════════════════════════════════════════
+       PROCESO CLÍNICO — 3 pasos conectados
+       ════════════════════════════════════════════════════════════════ */
+    #proceso { padding-bottom: 130px; }
+    .proceso-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
+        position: relative;
+    }
+    .proceso-card {
+        background: var(--glass);
+        backdrop-filter: blur(22px) saturate(1.8);
+        -webkit-backdrop-filter: blur(22px) saturate(1.8);
+        border: 1px solid var(--silver-edge);
+        border-radius: var(--r-xl);
+        padding: 36px 30px;
+        position: relative;
+        text-align: left;
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            var(--sh-soft);
+        transition: transform .4s var(--ease), box-shadow .4s;
+    }
+    .proceso-card:hover {
+        transform: translateY(-4px);
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            var(--sh-glow);
+    }
+    .proceso-num {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--azul-dark);
+        background: linear-gradient(135deg, rgba(2,177,244,.15), transparent);
+        border: 1px solid var(--silver-edge);
+        padding: 5px 12px;
+        border-radius: 999px;
+        display: inline-block;
+        margin-bottom: 18px;
+        letter-spacing: 1.5px;
+    }
+    .proceso-card .ico {
+        font-size: 28px;
+        color: var(--azul);
+        margin-bottom: 18px;
+        display: block;
+    }
+    .proceso-card h4 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    .proceso-card p {
+        font-size: 14.5px;
+        color: var(--gris);
+        line-height: 1.65;
+    }
 
-.cedula-input {
-    /* El input de número hereda los estilos del input-container general, 
-       solo necesitamos redondear la esquina correcta */
-    border-radius: 0 8px 8px 0 !important; 
-    padding-left: 20px !important; /* Ajustamos el padding izquierdo */
-}
+    /* ════════════════════════════════════════════════════════════════
+       SERVICIOS — Grid con glow por categoría
+       ════════════════════════════════════════════════════════════════ */
+    .servicios-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 18px;
+    }
+    .service-card {
+        --c1: var(--azul);
+        --soft: var(--azul-soft);
+        --tcolor: var(--azul-dark);
+        background: var(--glass);
+        backdrop-filter: blur(24px) saturate(1.8);
+        -webkit-backdrop-filter: blur(24px) saturate(1.8);
+        border: 1px solid var(--silver-edge);
+        border-radius: var(--r-xl);
+        padding: 28px 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 240px;
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        transition: transform .4s var(--ease), box-shadow .4s, border-color .35s;
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            var(--sh-soft);
+    }
+    .service-card::before {
+        content: '';
+        position: absolute;
+        top: -40%; right: -40%;
+        width: 180%; height: 180%;
+        background: radial-gradient(circle, var(--c1) 0%, transparent 50%);
+        opacity: 0;
+        transition: opacity .5s var(--ease);
+        pointer-events: none;
+        filter: blur(40px);
+    }
+    .service-card:hover {
+        transform: translateY(-8px);
+        border-color: var(--c1);
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            0 24px 50px color-mix(in srgb, var(--c1) 28%, transparent);
+    }
+    .service-card:hover::before { opacity: .25; }
+    .service-icon {
+        width: 50px; height: 50px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--soft) 0%, rgba(255,255,255,.5) 100%);
+        border: 1px solid var(--silver-edge);
+        color: var(--tcolor);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        position: relative;
+        z-index: 1;
+        box-shadow: inset 0 1px 0 var(--silver-top);
+        transition: transform .4s var(--ease-spring), background .35s, color .35s;
+    }
+    .service-card:hover .service-icon {
+        transform: scale(1.08) rotate(-6deg);
+        background: linear-gradient(135deg, var(--c1), color-mix(in srgb, var(--c1) 60%, #000 0%));
+        color: #fff;
+        box-shadow: 0 10px 24px color-mix(in srgb, var(--c1) 35%, transparent);
+    }
+    .service-cat {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1.6px;
+        font-weight: 700;
+        color: var(--tcolor);
+        position: relative;
+        z-index: 1;
+    }
+    .service-card h3 {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--ink);
+        line-height: 1.3;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+    .service-card p {
+        font-size: 13.5px;
+        color: var(--gris-soft);
+        line-height: 1.6;
+        margin: 0;
+        flex: 1;
+        position: relative;
+        z-index: 1;
+    }
+    .service-link {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--ink);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+        z-index: 1;
+        transition: gap .3s var(--ease), color .25s;
+    }
+    .service-link i { font-size: 10px; transition: transform .3s var(--ease); }
+    .service-card:hover .service-link { gap: 14px; color: var(--tcolor); }
 
-/* Efecto de foco para el grupo */
-.cedula-group:focus-within {
-    /* Este selector es opcional, pero mantiene el borde azul al hacer foco */
-    border-color: var(--color-primario);
-    box-shadow: 0 0 0 3px rgba(var(--color-primario-rgb), 0.2);
-    border-radius: 8px; /* Asegura que el redondeo se aplique al contorno */
-}
+    /* ════════════════════════════════════════════════════════════════
+       BENEFICIOS — Features minimal
+       ════════════════════════════════════════════════════════════════ */
+    .beneficios-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+    }
+    .beneficio {
+        background: var(--glass);
+        backdrop-filter: blur(22px) saturate(1.8);
+        -webkit-backdrop-filter: blur(22px) saturate(1.8);
+        border: 1px solid var(--silver-edge);
+        border-radius: var(--r-lg);
+        padding: 32px 26px;
+        text-align: center;
+        transition: transform .4s var(--ease), box-shadow .4s;
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            var(--sh-soft);
+    }
+    .beneficio:hover {
+        transform: translateY(-4px);
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            var(--sh-glow);
+    }
+    .beneficio-icon {
+        width: 58px; height: 58px;
+        margin: 0 auto 18px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--azul) 0%, var(--azul-dark) 100%);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.3),
+            0 10px 22px rgba(2, 177, 244, .3);
+    }
+    .beneficio h4 {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    .beneficio p {
+        font-size: 13.5px;
+        color: var(--gris-soft);
+        line-height: 1.6;
+    }
 
-.cedula-input:focus {
-    /* Evita que el input tenga su propio borde de foco, ya que lo maneja el grupo */
-    box-shadow: none !important;
-    z-index: 2;
-}
+    /* ════════════════════════════════════════════════════════════════
+       CONTACTO — info glass + form glass
+       ════════════════════════════════════════════════════════════════ */
+    .contacto-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.25fr;
+        gap: 24px;
+        align-items: stretch;
+    }
+    .contacto-info {
+        background: linear-gradient(160deg, var(--ink) 0%, var(--azul-deep) 100%);
+        color: #fff;
+        border-radius: var(--r-xl);
+        padding: 48px 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--sh-deep);
+    }
+    .contacto-info::before {
+        content: '';
+        position: absolute;
+        bottom: -80px; right: -80px;
+        width: 280px; height: 280px;
+        background: radial-gradient(circle, rgba(2,177,244,.4), transparent 60%);
+        filter: blur(20px);
+    }
+    .contacto-info::after {
+        content: '';
+        position: absolute;
+        top: -100px; left: -100px;
+        width: 240px; height: 240px;
+        background: radial-gradient(circle, rgba(139, 92, 246, .25), transparent 65%);
+        filter: blur(30px);
+    }
+    .contacto-info h3 {
+        font-size: 28px;
+        margin-bottom: 12px;
+        color: #fff;
+        position: relative;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+    .contacto-info > p {
+        font-size: 14.5px;
+        color: rgba(255,255,255,.75);
+        margin-bottom: 36px;
+        position: relative;
+        max-width: 320px;
+        line-height: 1.65;
+    }
+    .contacto-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        margin-bottom: 22px;
+        position: relative;
+    }
+    .contacto-info-item i {
+        width: 40px; height: 40px;
+        background: rgba(255,255,255,.08);
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: rgba(255,255,255,.9);
+        flex-shrink: 0;
+        backdrop-filter: blur(10px);
+    }
+    .contacto-info-item .lbl {
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 1.6px;
+        color: rgba(255,255,255,.55);
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+    .contacto-info-item .val {
+        font-size: 14.5px;
+        font-weight: 600;
+        color: #fff;
+    }
+    .contacto-socials {
+        display: flex;
+        gap: 10px;
+        margin-top: 32px;
+        position: relative;
+    }
+    .contacto-socials a {
+        width: 42px; height: 42px;
+        background: rgba(255,255,255,.08);
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 14px;
+        backdrop-filter: blur(10px);
+        transition: background .25s, transform .25s var(--ease), border-color .25s;
+    }
+    .contacto-socials a:hover {
+        background: var(--azul);
+        border-color: var(--azul);
+        transform: translateY(-2px);
+    }
 
-.about-txt p {
-    text-align: justify;
-}
-</style>
+    .formulario {
+        background: var(--glass-strong);
+        backdrop-filter: blur(28px) saturate(1.8);
+        -webkit-backdrop-filter: blur(28px) saturate(1.8);
+        border: 1px solid var(--silver-edge);
+        border-radius: var(--r-xl);
+        padding: 48px 42px;
+        box-shadow:
+            inset 0 1px 0 var(--silver-top),
+            inset 0 -1px 0 var(--silver-bot),
+            var(--sh-soft);
+    }
+    .formulario h3 {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        letter-spacing: -0.02em;
+    }
+    .formulario .form-sub {
+        font-size: 14px;
+        color: var(--gris-soft);
+        margin-bottom: 28px;
+    }
+    .input-group { display: flex; flex-direction: column; gap: 14px; }
+    .input-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .input-container > i {
+        position: absolute;
+        left: 16px;
+        color: var(--gris-mute);
+        font-size: 14px;
+        pointer-events: none;
+        z-index: 1;
+        transition: color .25s;
+    }
+    .input-container input,
+    .input-container textarea {
+        width: 100%;
+        padding: 14px 16px 14px 46px;
+        border: 1px solid var(--silver-edge);
+        border-radius: 14px;
+        font-size: 14.5px;
+        background: rgba(255,255,255,.6);
+        backdrop-filter: blur(10px);
+        color: var(--ink);
+        font-family: inherit;
+        transition: border-color .25s, background .25s, box-shadow .3s var(--ease);
+    }
+    .input-container input::placeholder { color: var(--gris-mute); }
+    .input-container input:focus,
+    .input-container textarea:focus {
+        outline: none;
+        border-color: var(--azul);
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(2, 177, 244, .14);
+    }
+    .input-container:focus-within > i { color: var(--azul-dark); }
+
+    .cedula-group { padding: 0 !important; border: none !important; }
+    .cedula-group .cedula-select {
+        background: rgba(255,255,255,.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--silver-edge);
+        border-right: none;
+        border-radius: 14px 0 0 14px;
+        padding: 14px 14px;
+        font-weight: 700;
+        color: var(--ink);
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 14px;
+        outline: none;
+    }
+    .cedula-group .cedula-input {
+        border-radius: 0 14px 14px 0 !important;
+        padding-left: 16px !important;
+    }
+    .cedula-group:focus-within .cedula-select {
+        border-color: var(--azul);
+        background: #fff;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 16px;
+        border: none;
+        background: linear-gradient(135deg, var(--azul) 0%, var(--azul-dark) 100%);
+        color: #fff;
+        font-size: 14.5px;
+        font-weight: 600;
+        border-radius: 14px;
+        cursor: pointer;
+        margin-top: 10px;
+        box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.3),
+            0 14px 30px rgba(2, 177, 244, .35);
+        transition: transform .25s var(--ease), box-shadow .3s;
+        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.3),
+            0 22px 44px rgba(2, 177, 244, .45);
+    }
+    .btn-submit i { transition: transform .3s var(--ease); }
+    .btn-submit:hover i { transform: translateX(3px); }
+
+    .form-legal {
+        font-size: 11.5px;
+        color: var(--gris-mute);
+        text-align: center;
+        margin-top: 16px;
+        line-height: 1.5;
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       FOOTER
+       ════════════════════════════════════════════════════════════════ */
+    .footer {
+        background: linear-gradient(180deg, transparent 0%, rgba(12, 26, 46, .04) 100%);
+        padding: 70px 0 24px;
+        margin-top: 60px;
+        border-top: 1px solid var(--silver-edge);
+    }
+    .footer-grid {
+        display: grid;
+        grid-template-columns: 1.8fr 1fr 1fr 1fr;
+        gap: 48px;
+        margin-bottom: 48px;
+        padding-bottom: 36px;
+        border-bottom: 1px solid var(--silver-edge);
+    }
+    .footer-brand .logo { margin-bottom: 16px; }
+    .footer-brand p {
+        font-size: 13.5px;
+        color: var(--gris);
+        max-width: 340px;
+        line-height: 1.7;
+    }
+    .footer h5 {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--ink);
+        margin-bottom: 18px;
+        font-weight: 700;
+    }
+    .footer ul { list-style: none; }
+    .footer ul li { margin-bottom: 11px; font-size: 13.5px; }
+    .footer ul a {
+        color: var(--gris);
+        transition: color .25s, padding-left .25s var(--ease);
+        display: inline-block;
+    }
+    .footer ul a:hover { color: var(--azul-dark); padding-left: 4px; }
+    .footer ul li i { color: var(--gris-mute); margin-right: 8px; font-size: 11px; }
+    .footer-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 12.5px;
+        color: var(--gris-soft);
+    }
+    .footer-bottom .made { font-weight: 500; color: var(--azul-dark); }
+
+    /* ════════════════════════════════════════════════════════════════
+       REVEAL ANIMATIONS
+       ════════════════════════════════════════════════════════════════ */
+    .reveal {
+        opacity: 0;
+        transform: translateY(28px);
+        transition: opacity .9s var(--ease), transform .9s var(--ease);
+    }
+    .reveal.in { opacity: 1; transform: none; }
+    .reveal[data-delay="1"] { transition-delay: .08s; }
+    .reveal[data-delay="2"] { transition-delay: .16s; }
+    .reveal[data-delay="3"] { transition-delay: .24s; }
+    .reveal[data-delay="4"] { transition-delay: .32s; }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: .01ms !important;
+            transition-duration: .01ms !important;
+        }
+        .reveal { opacity: 1; transform: none; }
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       RESPONSIVE
+       ════════════════════════════════════════════════════════════════ */
+    @media (max-width: 1080px) {
+        section { padding: 100px 0; }
+        .hero-grid { gap: 48px; }
+    }
+    @media (max-width: 960px) {
+        .hero { padding-top: 100px; padding-bottom: 70px; }
+        .hero-grid { grid-template-columns: 1fr; gap: 60px; }
+        .hero-visual { margin: 0 auto; max-width: 440px; }
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        .mvv-grid { grid-template-columns: 1fr; }
+        .proceso-grid { grid-template-columns: 1fr; }
+        .beneficios-grid { grid-template-columns: repeat(2, 1fr); }
+        .contacto-grid { grid-template-columns: 1fr; gap: 22px; }
+        .footer-grid { grid-template-columns: 1fr 1fr; gap: 36px; }
+    }
+    @media (max-width: 640px) {
+        :root { --gutter: 20px; }
+        section { padding: 80px 0; }
+        .navbar ul { display: none; }
+        .navbar ul.open {
+            display: flex;
+            position: absolute;
+            top: calc(100% + 10px); left: 0; right: 0;
+            background: var(--glass-strong);
+            backdrop-filter: blur(24px) saturate(1.8);
+            -webkit-backdrop-filter: blur(24px) saturate(1.8);
+            border: 1px solid var(--silver-edge);
+            flex-direction: column;
+            padding: 14px;
+            border-radius: var(--r-lg);
+            box-shadow: var(--sh-deep);
+            gap: 4px;
+        }
+        .navbar ul.open a { padding: 12px 16px; width: 100%; }
+        .navbar ul.open .nav-cta { margin-left: 0; margin-top: 6px; }
+        .hamburger { display: inline-flex; }
+        .hv-pill.p1 { left: 8px;   top: 4%;    right: auto; }
+        .hv-pill.p2 { left: auto;  right: 8px; bottom: 8%; }
+        .servicios-grid { grid-template-columns: 1fr 1fr; }
+        .beneficios-grid { grid-template-columns: 1fr; }
+        .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+        .formulario, .contacto-info { padding: 36px 26px; }
+    }
+    </style>
 </head>
 <body>
 
-    <?php if (isset($_GET['status'])): /* Tu código de mensajes PHP */ ?>
-        <?php
-        $mensaje = ''; $clase_css = '';
-        if ($_GET['status'] == 'success') { $mensaje = '¡Consulta agendada con éxito! Nos pondremos en contacto contigo pronto.'; $clase_css = 'mensaje-exito'; } 
-        elseif ($_GET['status'] == 'error') { $mensaje = 'Hubo un error al enviar tu consulta. Por favor, inténtalo de nuevo.'; $clase_css = 'mensaje-error'; }
-        if ($mensaje) { echo "<div class='mensaje-estado $clase_css'>$mensaje</div>"; }
-        ?>
-    <?php endif; ?>
+<div id="scroll-progress"></div>
 
-    <header id="inicio" class="header">
-        <div class="menu container">
-            <a href="#inicio" class="logo">WebPSY</a>
-            <nav class="navbar">
+<?php if (isset($_GET['status'])): ?>
+    <?php
+    $mensaje = ''; $clase_css = '';
+    if ($_GET['status'] == 'success') { $mensaje = '¡Solicitud enviada con éxito! Nos pondremos en contacto pronto.'; $clase_css = 'mensaje-exito'; }
+    elseif ($_GET['status'] == 'error') { $mensaje = 'Hubo un error al enviar tu consulta. Inténtalo de nuevo.'; $clase_css = 'mensaje-error'; }
+    if ($mensaje) { echo "<div class='mensaje-estado $clase_css' id='msg-estado'>$mensaje</div>"; }
+    ?>
+<?php endif; ?>
+
+<!-- ══════════ HEADER ══════════ -->
+<header id="inicio" class="header">
+    <div class="menu">
+        <a href="#inicio" class="logo">
+            <span class="logo-icon"><i class="fa-solid fa-wave-square"></i></span>
+            <span class="logo-text">
+                EcoMadelleine
+                <small>Centro de Diagnóstico</small>
+            </span>
+        </a>
+        <nav class="navbar">
+            <ul id="nav-list">
+                <li><a href="#nosotros">Nosotros</a></li>
+                <li><a href="#proceso">Proceso</a></li>
+                <li><a href="#servicios">Estudios</a></li>
+                <li><a href="#beneficios">Beneficios</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+                <li><a href="login.php" class="nav-cta"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</a></li>
+            </ul>
+            <button type="button" class="hamburger" id="hamburger" aria-label="Menú">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </nav>
+    </div>
+</header>
+
+<!-- ══════════ HERO ══════════ -->
+<section class="hero">
+    <div class="container hero-grid">
+        <div class="hero-copy reveal">
+            <span class="hero-tag">
+                <span class="pill">Premium</span>
+                Diagnóstico ecográfico con la <strong style="margin-left:4px;">Dra. Madelleine Toro</strong>
+            </span>
+            <h1>
+                Imagen clínica<br>
+                <span class="grad">de alta resolución</span><br>
+                con criterio humano.
+            </h1>
+            <p class="lead">
+                Estudios ecográficos realizados personalmente por la doctora, con
+                <strong>informes digitales detallados</strong> y agenda en línea.
+                Tecnología de punta al servicio de tu salud.
+            </p>
+            <div class="hero-ctas">
+                <a href="#contacto" class="btn btn-primary">
+                    Agendar estudio <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                <a href="login.php" class="btn btn-glass">
+                    <i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión
+                </a>
+            </div>
+            <div class="hero-trust">
+                <div class="trust-avatars">
+                    <span>MT</span>
+                    <span class="sec">EM</span>
+                    <span class="ter">+</span>
+                </div>
+                <div class="txt">
+                    <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span>
+                    <?php if ($total_pacientes > 0): ?>
+                        <strong><?php echo number_format($total_pacientes, 0, ',', '.'); ?></strong> pacientes confiaron en nosotros
+                    <?php else: ?>
+                        Centro <strong>recién inaugurado</strong> · sé uno de los primeros
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-visual reveal" data-delay="2">
+            <div class="hv-glow"></div>
+            <div class="hv-monitor">
+                <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+                    <defs>
+                        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#02b1f4" stop-opacity="0.15"/>
+                            <stop offset="100%" stop-color="#014a82" stop-opacity="0.05"/>
+                        </linearGradient>
+                        <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#02b1f4"/>
+                            <stop offset="100%" stop-color="#014a82"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Fondo del monitor -->
+                    <rect x="0" y="0" width="500" height="500" fill="url(#bgGrad)"/>
+
+                    <!-- Grid sutil -->
+                    <g stroke="rgba(2,177,244,.08)" stroke-width="1">
+                        <line x1="0" y1="125" x2="500" y2="125"/>
+                        <line x1="0" y1="250" x2="500" y2="250"/>
+                        <line x1="0" y1="375" x2="500" y2="375"/>
+                        <line x1="125" y1="0" x2="125" y2="500"/>
+                        <line x1="250" y1="0" x2="250" y2="500"/>
+                        <line x1="375" y1="0" x2="375" y2="500"/>
+                    </g>
+
+                    <!-- Cono ecográfico simulado -->
+                    <path d="M 250 80 L 100 420 L 400 420 Z"
+                          fill="rgba(2,177,244,.06)" stroke="rgba(2,177,244,.18)" stroke-width="1"/>
+
+                    <!-- Arcos de profundidad -->
+                    <path d="M 130 380 Q 250 320 370 380" stroke="rgba(2,177,244,.25)" stroke-width="1.5" fill="none"/>
+                    <path d="M 160 320 Q 250 270 340 320" stroke="rgba(2,177,244,.2)" stroke-width="1.5" fill="none"/>
+                    <path d="M 185 260 Q 250 225 315 260" stroke="rgba(2,177,244,.15)" stroke-width="1.5" fill="none"/>
+
+                    <!-- ECG line animado -->
+                    <path class="ecg-wave"
+                          d="M 30 250 L 110 250 L 130 210 L 150 295 L 170 165 L 190 325 L 210 250 L 290 250 L 310 210 L 330 295 L 350 165 L 370 250 L 470 250"
+                          stroke="url(#lineGrad)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+                    <!-- Pulse rings -->
+                    <circle class="pulse-ring" cx="250" cy="250" r="50" stroke="rgba(2,177,244,.4)" stroke-width="1.5" fill="none"/>
+                    <circle cx="250" cy="250" r="38" fill="rgba(2,177,244,.15)" stroke="rgba(2,177,244,.4)" stroke-width="1"/>
+                    <circle cx="250" cy="250" r="6" fill="#02b1f4"/>
+
+                    <!-- Etiquetas técnicas decorativas -->
+                    <text x="30" y="40" fill="rgba(1,74,130,.6)" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="2">SCAN · 12 MHz</text>
+                    <text x="30" y="475" fill="rgba(1,74,130,.5)" font-family="Inter,sans-serif" font-size="10" font-weight="500" letter-spacing="1.5">DEPTH 8.0 cm · GAIN 70%</text>
+                    <text x="470" y="40" text-anchor="end" fill="rgba(1,74,130,.6)" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="2">LIVE</text>
+                    <circle cx="430" cy="36" r="3" fill="#ef4444"><animate attributeName="opacity" values="1;.3;1" dur="1.5s" repeatCount="indefinite"/></circle>
+                </svg>
+            </div>
+
+            <div class="hv-pill p1">
+                <div class="icn"><i class="fa-solid fa-check"></i></div>
+                <div class="txt">
+                    <span class="lbl"><?php echo $avg_horas > 0 ? 'Promedio real' : 'Compromiso'; ?></span>
+                    <span class="val"><?php echo $avg_horas > 0 ? $avg_horas . ' h' : '24 h'; ?> · Informe</span>
+                </div>
+            </div>
+            <div class="hv-pill p2">
+                <div class="icn"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="txt">
+                    <span class="lbl">Datos clínicos</span>
+                    <span class="val">Confidencial</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ STATS REALES ══════════ -->
+<section class="stats-section">
+    <div class="container">
+        <div class="section-head section-head--center reveal" style="margin-bottom:48px;">
+            <span class="eyebrow"><i class="fa-solid fa-chart-line"></i> Datos en tiempo real</span>
+            <h2 class="section-title">Cifras del centro,<br><span class="grad">extraídas del sistema.</span></h2>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card reveal">
+                <div class="ico"><i class="fa-solid fa-user-group"></i></div>
+                <div class="num"><span class="grad" data-counter="<?php echo $total_pacientes; ?>" data-suffix="<?php echo $total_pacientes > 0 ? '+' : ''; ?>"><?php echo $total_pacientes > 0 ? '0' : '—'; ?></span></div>
+                <div class="lbl"><?php echo htmlspecialchars($f_pac['label']); ?></div>
+                <?php if ($total_pacientes == 0): ?>
+                    <div class="sub-meta">Sistema recién activo</div>
+                <?php endif; ?>
+            </div>
+            <div class="stat-card reveal" data-delay="1">
+                <div class="ico"><i class="fa-solid fa-wave-square"></i></div>
+                <div class="num"><span class="grad" data-counter="<?php echo $total_tipos; ?>" data-suffix="<?php echo $total_tipos > 0 ? '+' : ''; ?>"><?php echo $total_tipos > 0 ? '0' : '—'; ?></span></div>
+                <div class="lbl"><?php echo htmlspecialchars($f_tip['label']); ?></div>
+                <div class="sub-meta">Esquema clínico dinámico</div>
+            </div>
+            <div class="stat-card reveal" data-delay="2">
+                <div class="ico"><i class="fa-solid fa-clock"></i></div>
+                <div class="num"><span class="grad" data-counter="<?php echo $avg_horas > 0 ? $avg_horas : 24; ?>" data-suffix="h"><?php echo $avg_horas > 0 ? '0' : '24'; ?></span></div>
+                <div class="lbl"><?php echo htmlspecialchars($f_hrs['label']); ?></div>
+                <?php if ($avg_horas > 0): ?>
+                    <div class="sub-meta"><?php echo $total_informes; ?> informe<?php echo $total_informes !== 1 ? 's' : ''; ?> medidos</div>
+                <?php else: ?>
+                    <div class="sub-meta">SLA garantizado</div>
+                <?php endif; ?>
+            </div>
+            <div class="stat-card reveal" data-delay="3">
+                <div class="ico"><i class="fa-solid fa-heart-pulse"></i></div>
+                <div class="num"><span class="grad" data-counter="<?php echo $tasa_conclusion > 0 ? $tasa_conclusion : 100; ?>" data-suffix="%"><?php echo $tasa_conclusion > 0 ? '0' : '100'; ?></span></div>
+                <div class="lbl"><?php echo htmlspecialchars($f_tasa['label']); ?></div>
+                <?php if ($tasa_conclusion > 0): ?>
+                    <div class="sub-meta">Sobre <?php echo (int)$row['gestionadas']; ?> citas gestionadas</div>
+                <?php else: ?>
+                    <div class="sub-meta">Excelencia en cada estudio</div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ NOSOTROS ══════════ -->
+<section id="nosotros">
+    <div class="container">
+        <div class="section-head section-head--center reveal">
+            <span class="eyebrow"><i class="fa-solid fa-stethoscope"></i> Sobre nosotros</span>
+            <h2 class="section-title">Compromiso clínico,<br><span class="grad">criterio humano.</span></h2>
+            <p class="section-sub">Un centro especializado donde cada estudio es realizado por la doctora y entregado con el detalle que tu salud merece.</p>
+        </div>
+
+        <div class="mvv-grid">
+            <article class="mvv-card reveal" data-delay="1">
+                <div class="mvv-icon"><i class="fa-solid fa-bullseye"></i></div>
+                <h3>Misión</h3>
+                <p><?php echo nl2br(htmlspecialchars($contenido_web['mision'] ?? 'Brindar diagnóstico ecográfico de excelencia con calidez humana y precisión médica, acompañando a cada paciente desde el agendamiento hasta la entrega del informe.')); ?></p>
+            </article>
+            <article class="mvv-card reveal" data-delay="2">
+                <div class="mvv-icon"><i class="fa-solid fa-eye"></i></div>
+                <h3>Visión</h3>
+                <p><?php echo nl2br(htmlspecialchars($contenido_web['vision'] ?? 'Ser referencia regional en diagnóstico por imagen, integrando tecnología, criterio clínico y un trato profundamente humano en cada estudio.')); ?></p>
+            </article>
+            <article class="mvv-card reveal" data-delay="3">
+                <div class="mvv-icon"><i class="fa-solid fa-heart"></i></div>
+                <h3>Valores</h3>
+                <p><?php echo nl2br(htmlspecialchars($contenido_web['valores'] ?? 'Integridad. Precisión. Confidencialidad. Empatía. Excelencia en cada informe que firmamos.')); ?></p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ PROCESO ══════════ -->
+<section id="proceso">
+    <div class="container">
+        <div class="section-head section-head--center reveal">
+            <span class="eyebrow"><i class="fa-solid fa-route"></i> Cómo trabajamos</span>
+            <h2 class="section-title">Tres pasos.<br><span class="grad">Cero fricción.</span></h2>
+            <p class="section-sub">Desde el agendamiento hasta el informe firmado, el proceso está pensado para que tu única preocupación sea tu salud.</p>
+        </div>
+
+        <div class="proceso-grid">
+            <div class="proceso-card reveal" data-delay="1">
+                <span class="proceso-num">PASO 01</span>
+                <i class="fa-regular fa-calendar-check ico"></i>
+                <h4>Agendas en línea</h4>
+                <p>Reserva tu cita 24/7 desde el panel. Recibes confirmación por correo y recordatorio antes del estudio.</p>
+            </div>
+            <div class="proceso-card reveal" data-delay="2">
+                <span class="proceso-num">PASO 02</span>
+                <i class="fa-solid fa-wave-square ico"></i>
+                <h4>Estudio con la doctora</h4>
+                <p>La Dra. Madelleine Toro realiza personalmente la ecografía y captura los hallazgos en el formulario clínico estructurado.</p>
+            </div>
+            <div class="proceso-card reveal" data-delay="3">
+                <span class="proceso-num">PASO 03</span>
+                <i class="fa-regular fa-file-lines ico"></i>
+                <h4>Informe en 24 horas</h4>
+                <p>Recibes el informe en PDF profesional listo para tu médico tratante, con esquema clínico detallado por tipo de estudio.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ SERVICIOS ══════════ -->
+<section id="servicios">
+    <div class="container">
+        <div class="section-head section-head--center reveal">
+            <span class="eyebrow"><i class="fa-solid fa-wave-square"></i> Cartera clínica</span>
+            <h2 class="section-title">Nuestros estudios<br><span class="grad">ecográficos.</span></h2>
+            <p class="section-sub">Esquemas dinámicos por tipo de estudio (Renal, Abdominal, Pélvica, Obstétrica y más) con captura estructurada e informes listos para impresión profesional.</p>
+        </div>
+
+        <div class="servicios-grid">
+            <?php
+            $tipos_publicos = $conex->query("SELECT codigo, nombre, categoria, descripcion, icono FROM tipos_ecografias WHERE activo = 1 AND (categoria IS NULL OR categoria NOT IN ('Musculoesqueletica_Sub', 'Obstetrica_Sub', 'Partes_Blandas_Sub')) ORDER BY categoria, nombre");
+            $idx = 0;
+            if ($tipos_publicos && $tipos_publicos->num_rows > 0):
+                while ($t = $tipos_publicos->fetch_assoc()):
+                    $cat = $t['categoria'] ?? '';
+                    $pal = $eco_palette[$cat] ?? $eco_palette_default;
+                    $icono = htmlspecialchars($t['icono'] ?: 'fa-solid fa-wave-square');
+                    $desc  = htmlspecialchars(mb_strimwidth($t['descripcion'] ?? 'Estudio ecográfico clínico con informe detallado.', 0, 95, '…', 'UTF-8'));
+                    $delay = ($idx % 4) + 1;
+                    $idx++;
+            ?>
+                <a href="login.php" class="service-card reveal" data-delay="<?php echo $delay; ?>"
+                   style="--c1:<?php echo $pal['c1']; ?>;--soft:<?php echo $pal['soft']; ?>;--tcolor:<?php echo $pal['text']; ?>;">
+                    <div class="service-icon"><i class="<?php echo $icono; ?>"></i></div>
+                    <?php if ($cat !== ''): ?>
+                        <span class="service-cat"><?php echo htmlspecialchars($cat); ?></span>
+                    <?php endif; ?>
+                    <h3><?php echo htmlspecialchars($t['nombre']); ?></h3>
+                    <p><?php echo $desc; ?></p>
+                    <span class="service-link">Ver detalles <i class="fa-solid fa-arrow-right"></i></span>
+                </a>
+            <?php
+                endwhile;
+            else:
+            ?>
+                <a href="login.php" class="service-card"><div class="service-icon"><i class="fa-solid fa-wave-square"></i></div><h3>Ecografía Abdominal</h3></a>
+                <a href="login.php" class="service-card"><div class="service-icon"><i class="fa-solid fa-baby"></i></div><h3>Ecografía Obstétrica</h3></a>
+                <a href="login.php" class="service-card"><div class="service-icon"><i class="fa-solid fa-user-doctor"></i></div><h3>Ecografía de Tiroides</h3></a>
+            <?php endif; ?>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ BENEFICIOS ══════════ -->
+<section id="beneficios">
+    <div class="container">
+        <div class="section-head section-head--center reveal">
+            <span class="eyebrow"><i class="fa-solid fa-medal"></i> Por qué EcoMadelleine</span>
+            <h2 class="section-title">La diferencia<br><span class="grad">está en el detalle.</span></h2>
+            <p class="section-sub">Cuatro pilares que separan nuestro enfoque del de un centro tradicional.</p>
+        </div>
+
+        <div class="beneficios-grid">
+            <div class="beneficio reveal" data-delay="1">
+                <div class="beneficio-icon"><i class="fa-solid fa-user-doctor"></i></div>
+                <h4>Atención personalizada</h4>
+                <p>Cada estudio es realizado e interpretado directamente por la doctora.</p>
+            </div>
+            <div class="beneficio reveal" data-delay="2">
+                <div class="beneficio-icon"><i class="fa-solid fa-file-waveform"></i></div>
+                <h4>Informes digitales</h4>
+                <p>Formularios estructurados y descarga PDF lista para imprimir.</p>
+            </div>
+            <div class="beneficio reveal" data-delay="3">
+                <div class="beneficio-icon"><i class="fa-solid fa-bolt"></i></div>
+                <h4>Entrega en 24h</h4>
+                <p>Resultados rápidos sin sacrificar el detalle clínico necesario.</p>
+            </div>
+            <div class="beneficio reveal" data-delay="4">
+                <div class="beneficio-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <h4>Datos confidenciales</h4>
+                <p>Tu historial protegido en un sistema seguro y privado.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ CONTACTO ══════════ -->
+<section id="contacto">
+    <div class="container">
+        <div class="section-head section-head--center reveal">
+            <span class="eyebrow"><i class="fa-regular fa-calendar"></i> Agenda tu cita</span>
+            <h2 class="section-title">Crea tu cuenta<br><span class="grad">y solicita tu estudio.</span></h2>
+            <p class="section-sub">Te contactaremos en menos de 24 horas para confirmar el día y la hora de tu ecografía.</p>
+        </div>
+
+        <div class="contacto-grid">
+            <aside class="contacto-info reveal">
+                <h3>Conversemos.</h3>
+                <p>Resolvemos cualquier duda sobre tu estudio antes y después de la consulta.</p>
+
+                <div class="contacto-info-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div>
+                        <div class="lbl">Teléfono</div>
+                        <div class="val">0412-8517770</div>
+                    </div>
+                </div>
+                <div class="contacto-info-item">
+                    <i class="fa-regular fa-envelope"></i>
+                    <div>
+                        <div class="lbl">Correo</div>
+                        <div class="val">contacto@ecomadelleine.com</div>
+                    </div>
+                </div>
+                <div class="contacto-info-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div>
+                        <div class="lbl">Consultorio</div>
+                        <div class="val">Centro de Diagnóstico EcoMadelleine</div>
+                    </div>
+                </div>
+                <div class="contacto-info-item">
+                    <i class="fa-regular fa-clock"></i>
+                    <div>
+                        <div class="lbl">Horario</div>
+                        <div class="val">Lun — Vie · 8:00 a 17:00</div>
+                    </div>
+                </div>
+
+                <div class="contacto-socials">
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                </div>
+            </aside>
+
+            <div class="formulario reveal" data-delay="1">
+                <h3>Crea tu cuenta</h3>
+                <p class="form-sub">Regístrate para agendar tu próxima ecografía.</p>
+                <form method="post" autocomplete="off">
+                    <div class="input-group">
+                        <div class="input-container">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" name="name" placeholder="Nombre y Apellido" required>
+                        </div>
+                        <div class="input-container">
+                            <i class="fa-solid fa-calendar-day"></i>
+                            <input type="text" id="fecha_nacimiento_flatpickr" name="fecha_nacimiento" placeholder="Fecha de nacimiento" required>
+                        </div>
+                        <div class="input-container cedula-group">
+                            <select name="nacionalidad" class="cedula-select" required>
+                                <option value="V">V</option>
+                                <option value="E">E</option>
+                                <option value="P">P</option>
+                            </select>
+                            <input type="text" name="cedula_numero" class="cedula-input" placeholder="Número de documento" required pattern="\d{7,8}" title="Ingresa entre 7 y 8 números" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        </div>
+                        <div class="input-container">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" name="email" placeholder="Correo electrónico" required>
+                        </div>
+                        <div class="input-container">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" name="password" placeholder="Crea una contraseña" required
+                                   pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}"
+                                   title="Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.">
+                        </div>
+                        <button type="submit" name="send" class="btn-submit">
+                            Registrarme y solicitar estudio <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                        <p class="form-legal">Al registrarte aceptas el tratamiento confidencial de tus datos clínicos.</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <a href="#inicio" class="logo">
+                    <span class="logo-icon"><i class="fa-solid fa-wave-square"></i></span>
+                    <span class="logo-text">EcoMadelleine<small>Centro de Diagnóstico</small></span>
+                </a>
+                <p>Centro de diagnóstico ecográfico premium dirigido por la Dra. Madelleine Toro. Tecnología, criterio clínico y atención humana en un solo lugar.</p>
+            </div>
+            <div>
+                <h5>Navegación</h5>
                 <ul>
                     <li><a href="#inicio">Inicio</a></li>
                     <li><a href="#nosotros">Nosotros</a></li>
-                    <li><a href="#servicios">Servicios</a></li>
-                    <li><a href="#contacto">Contacto</a></li>
+                    <li><a href="#proceso">Proceso</a></li>
+                    <li><a href="#servicios">Estudios</a></li>
+                    <li><a href="#beneficios">Beneficios</a></li>
                 </ul>
-            </nav>
-        </div>
-    </header>
-
-    <section id="hero-section" class="hero-section">
-        <div id="particles-js"></div> 
-        <div class="header-content container">
-            <div class="header-txt">
-                <h1 id="typing-headline">Software de Gestión de pacientes</h1><span id="typing-cursor"></span>
-                <p>Un sistema innovador y seguro para la gestión integral de pacientes en consultorios de Psicología y Psiquiatría.</p>
-                <a href="login.php" class="btn-1">INICIAR SESIÓN</a>
+            </div>
+            <div>
+                <h5>Acceso</h5>
+                <ul>
+                    <li><a href="login.php">Iniciar sesión</a></li>
+                    <li><a href="#contacto">Crear cuenta</a></li>
+                    <li><a href="#contacto">Agendar estudio</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5>Contacto</h5>
+                <ul>
+                    <li><i class="fa-solid fa-phone"></i> 0412-8517770</li>
+                    <li><i class="fa-regular fa-envelope"></i> contacto@ecomadelleine.com</li>
+                    <li><i class="fa-regular fa-clock"></i> Lun — Vie · 8:00 — 17:00</li>
+                </ul>
             </div>
         </div>
-    </section>
-
-    <section id="nosotros" class="container">
-        <div class="about animate-on-scroll from-left">
-            <div class="about-img">
-                <img src="Images/Psicologo.jpg" alt="Equipo de profesionales">
-            </div>
-            <div class="about-txt">
-                <h2>Sobre Nosotros</h2>
-                <p><strong>MISIÓN:</strong><br> <?php echo htmlspecialchars($contenido_web['mision'] ?? 'Misión no definida.'); ?></p>
-                <p><strong>VISIÓN:</strong><br> <?php echo htmlspecialchars($contenido_web['vision'] ?? 'Visión no definida.'); ?></p>
-                <p><strong>VALORES:</strong><br> <?php echo htmlspecialchars($contenido_web['valores'] ?? 'Valores no definidos.'); ?></p>
-            </div>
+        <div class="footer-bottom">
+            <span>&copy; <?php echo date('Y'); ?> EcoMadelleine · Centro de Diagnóstico Ecográfico</span>
+            <span class="made">Diseñado con criterio clínico · Dra. Madelleine Toro</span>
         </div>
-    </section>
+    </div>
+</footer>
 
-    <main id="servicios" class="container animate-on-scroll from-right">
-        <h2>Nuestros Servicios</h2>
-        <div class="servicios-content">
-            <a href="profesionales.php?rol=psicologo" class="service-card">
-                <i class="fa-sharp fa-solid fa-hospital-user"></i><h3>Psicología</h3>
-            </a>
-            <a href="profesionales.php?rol=psiquiatra" class="service-card">
-                <i class="fa-sharp fa-solid fa-stethoscope"></i><h3>Psiquiatría</h3>
-            </a>
-            <a href="terapias.php" class="service-card">
-                <i class="fa-solid fa-bed-pulse"></i><h3>Terapia</h3>
-            </a>
-        </div>
-    </main>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
 
-    <section id="contacto" class="container animate-on-scroll from-left">
-        <div class="formulario">
-            <form method="post" autocomplete="off">
-                <h2>Crea tu cuenta y agenda</h2>
-                <p style="text-align:center; margin-top: -40px; margin-bottom: 30px; color: var(--color-texto-secundario);">Da el primer paso hacia tu bienestar.</p>
-                <div class="input-group">
-                    <div class="input-container"><i class="fa-solid fa-user"></i><input type="text" name="name" placeholder="Nombre y Apellido" required></div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
 
-                    <div class="input-container">
-    <i class="fa-solid fa-calendar-day"></i>
-    <input type="text" id="fecha_nacimiento_flatpickr" name="fecha_nacimiento" placeholder="Fecha de nacimiento" required>
-</div>
-                    <div class="input-container cedula-group">
-    <select name="nacionalidad" class="cedula-select" required>
-        <option value="V">V</option>
-        <option value="E">E</option>
-        <option value="P">P</option>
-    </select>
-    <input type="text" name="cedula_numero" class="cedula-input" placeholder="Número de Documento" required pattern="\d{7,8}" title="Ingresa entre 7 y 8 números" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-</div>
-                    <div class="input-container"><i class="fa-solid fa-envelope"></i><input type="email" name="email" placeholder="Correo Electrónico" required></div>
-                    <div class="input-container">
-    <i class="fa-solid fa-lock"></i>
-    <input type="password" name="password" placeholder="Crea una contraseña" required 
-           pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}"
-           title="La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.">
-</div>
-                    <input type="submit" name="send" class="btn" value="Registrarme y Solicitar Cita">
-                </div>
-            </form>
-        </div>
-    </section>
+    /* Flatpickr */
+    if (window.flatpickr) {
+        flatpickr("#fecha_nacimiento_flatpickr", {
+            locale: "es",
+            dateFormat: "d-m-Y",
+            maxDate: "today",
+            altInput: true,
+            altFormat: "j F, Y",
+        });
+    }
 
-    <footer class="footer">
-        <div class="footer-content container">
-            <div class="link"><a href="#inicio" class="logo">WebPSY</a></div>
-            <div class="link"><nav class="navbar"><ul><li><a href="#inicio">Inicio</a></li><li><a href="#nosotros">Nosotros</a></li><li><a href="#servicios">Servicios</a></li><li><a href="#contacto">Contacto</a></li></ul></nav></div>
-        </div>
-    </footer>
+    /* Header scroll state + hide-on-scroll-down */
+    const header = document.querySelector('.header');
+    let lastY = window.scrollY;
+    const onScroll = () => {
+        const y = window.scrollY;
+        header.classList.toggle('scrolled', y > 24);
+        if (y > 140 && y - lastY > 6)      header.classList.add('hidden');
+        else if (lastY - y > 4 || y < 80)  header.classList.remove('hidden');
+        lastY = y;
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-
-        // --- ACTIVACIÓN DE FLATICKR ---
-    flatpickr("#fecha_nacimiento_flatpickr", {
-        locale: "es", // Usa la traducción a español que incluimos
-        dateFormat: "d-m-Y", // Formato de la fecha: día-mes-año
-        maxDate: "today", // No se pueden seleccionar fechas futuras
-        altInput: true, // Muestra un formato amigable al usuario
-        altFormat: "j F, Y", // Formato amigable: 29 Agosto, 2025
-    });
-
-        // --- ANIMACIÓN DE ESCRITURA ---
-        const headline = document.getElementById('typing-headline');
-        const text = headline.textContent;
-        headline.textContent = '';
-        let i = 0;
-        function typeWriter() {
-            if (i < text.length) {
-                headline.textContent += text.charAt(i);
-                i++;
-                setTimeout(typeWriter, 80); // Velocidad de escritura
-            }
-        }
-        setTimeout(typeWriter, 500); // Inicia después de medio segundo
-
-        // --- ANIMACIONES AL HACER SCROLL ---
-        const sections = document.querySelectorAll('.animate-on-scroll');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                    // observer.unobserve(entry.target); // Desactiva si quieres que se repita la animación al volver a hacer scroll
-                } else {
-                    // entry.target.classList.remove('is-visible'); // Reactiva si quieres que se desanime al salir de la vista
-                }
-            });
-        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }); // Ajusta rootMargin si es necesario
-        sections.forEach(section => observer.observe(section));
-
-        // --- ANIMACIÓN DE PARTÍCULAS (versión corregida con color visible) ---
-const particlesContainer = document.getElementById('particles-js');
-if (particlesContainer) {
-    const canvas = document.createElement('canvas');
-    particlesContainer.appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    let mouse = { x: null, y: null, radius: 100 };
-
-    const resizeCanvas = () => {
-        canvas.width = particlesContainer.offsetWidth;
-        canvas.height = particlesContainer.offsetHeight;
-        particles = [];
-        init();
+        const h = document.documentElement;
+        const total = h.scrollHeight - h.clientHeight;
+        const pct = total > 0 ? (y / total) * 100 : 0;
+        const bar = document.getElementById('scroll-progress');
+        if (bar) bar.style.width = pct + '%';
     };
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
 
-    canvas.addEventListener('mousemove', (e) => {
-        mouse.x = e.clientX; // Corregido para usar clientX
-        mouse.y = e.clientY; // Corregido para usar clientY
-    });
-    canvas.addEventListener('mouseout', () => {
-        mouse.x = null;
-        mouse.y = null;
-    });
+    /* Hamburger */
+    const ham = document.getElementById('hamburger');
+    const navList = document.getElementById('nav-list');
+    if (ham && navList) {
+        ham.addEventListener('click', () => navList.classList.toggle('open'));
+        navList.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navList.classList.remove('open')));
+    }
 
-    const particleCount = Math.floor(canvas.width / 20);
-
-    class Particle {
-        constructor() {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.vx = Math.random() * 0.4 - 0.2;
-            this.vy = Math.random() * 0.4 - 0.2;
-            this.radius = Math.random() * 2 + 1;
-            // --- ¡AQUÍ ESTÁ LA CORRECCIÓN DE COLOR! ---
-            // Usamos un gris oscuro (51, 65, 85) en lugar del azul claro.
-            this.color = `rgba(51, 65, 85, ${Math.random() * 0.5 + 0.2})`;
-        }
-        update() {
-            if (mouse.x && mouse.y) {
-                const dx_mouse = this.x - mouse.x;
-                const dy_mouse = this.y - mouse.y;
-                const dist_mouse = Math.sqrt(dx_mouse * dx_mouse + dy_mouse * dy_mouse);
-                if (dist_mouse < mouse.radius) {
-                    const forceDirectionX = dx_mouse / dist_mouse;
-                    const forceDirectionY = dy_mouse / dist_mouse;
-                    const force = (mouse.radius - dist_mouse) / mouse.radius;
-                    this.x += forceDirectionX * force * 2;
-                    this.y += forceDirectionY * force * 2;
-                }
+    /* Reveal on scroll */
+    const reveals = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.classList.add('in');
+                io.unobserve(e.target);
             }
-            this.x += this.vx; this.y += this.vy;
-            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-        }
-        draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = this.color;
-            ctx.fill();
-        }
-    }
-    
-    function init() { for (let i = 0; i < particleCount; i++) particles.push(new Particle()); }
-    
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for(let i = 0; i < particles.length; i++){
-            particles[i].update();
-            particles[i].draw();
-            for(let j = i; j < particles.length; j++){
-                const dx = particles[i].x - particles[j].x;
-                const dy = particles[i].y - particles[j].y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                if(distance < 150){
-                    ctx.beginPath();
-                    // --- ¡Y AQUÍ TAMBIÉN CORREGIMOS EL COLOR DE LAS LÍNEAS! ---
-                    ctx.strokeStyle = `rgba(51, 65, 85, ${0.3 - (distance / 150 * 0.3)})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.moveTo(particles[i].x, particles[i].y);
-                    ctx.lineTo(particles[j].x, particles[j].y);
-                    ctx.stroke();
-                }
-            }
-        }
-        requestAnimationFrame(animate);
-    }
-    init(); animate();
-    }
+        });
+    }, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
+    reveals.forEach(el => io.observe(el));
+
+    /* Stat counters — solo si hay valor numérico real */
+    const counters = document.querySelectorAll('[data-counter]');
+    const ioCount = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (!e.isIntersecting) return;
+            const el = e.target;
+            const target = parseInt(el.getAttribute('data-counter'), 10);
+            const suffix = el.getAttribute('data-suffix') || '';
+            if (isNaN(target) || target === 0) { ioCount.unobserve(el); return; }
+            const duration = 1600;
+            const start = performance.now();
+            const step = (now) => {
+                const t = Math.min((now - start) / duration, 1);
+                const eased = 1 - Math.pow(1 - t, 3);
+                const val = Math.round(target * eased);
+                el.textContent = val.toLocaleString('es-VE') + (t === 1 ? suffix : '');
+                if (t < 1) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+            ioCount.unobserve(el);
+        });
+    }, { threshold: 0.4 });
+    counters.forEach(el => ioCount.observe(el));
+
+    /* Magnetic CTA */
+    document.querySelectorAll('.btn-primary, .btn-submit').forEach(btn => {
+        btn.addEventListener('mousemove', (e) => {
+            const r = btn.getBoundingClientRect();
+            const x = e.clientX - r.left - r.width / 2;
+            const y = e.clientY - r.top - r.height / 2;
+            btn.style.transform = `translate(${x * 0.12}px, ${y * 0.18}px)`;
+        });
+        btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
     });
-    </script>
+
+    /* Spotlight follow en el hero visual */
+    const hv = document.querySelector('.hero-visual');
+    if (hv) {
+        hv.addEventListener('mousemove', (e) => {
+            const r = hv.getBoundingClientRect();
+            const x = ((e.clientX - r.left) / r.width - 0.5) * 14;
+            const y = ((e.clientY - r.top) / r.height - 0.5) * 14;
+            const monitor = hv.querySelector('.hv-monitor');
+            if (monitor) monitor.style.transform = `translateY(${y * -0.4}px) rotateX(${-y}deg) rotateY(${x}deg)`;
+        });
+        hv.addEventListener('mouseleave', () => {
+            const monitor = hv.querySelector('.hv-monitor');
+            if (monitor) monitor.style.transform = '';
+        });
+    }
+
+    /* Auto-hide status message */
+    const msg = document.getElementById('msg-estado');
+    if (msg) {
+        setTimeout(() => {
+            msg.style.transition = 'opacity .4s, transform .4s';
+            msg.style.opacity = '0';
+            msg.style.transform = 'translate(-50%, -20px)';
+            setTimeout(() => msg.remove(), 500);
+        }, 5500);
+    }
+});
+</script>
 </body>
 </html>

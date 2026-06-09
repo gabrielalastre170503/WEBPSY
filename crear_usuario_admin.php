@@ -10,18 +10,21 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
 
 $mensaje = '';
 $rol_seleccionado = $_GET['rol'] ?? 'usuario'; // Rol por defecto por si no se especifica
-$roles_permitidos = ['psicologo', 'psiquiatra', 'secretaria', 'paciente'];
+$roles_permitidos = ['ecografista', 'recepcionista', 'paciente'];
 if (!in_array($rol_seleccionado, $roles_permitidos)) {
     die("Rol no válido.");
 }
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    require_csrf();
     $nombre_completo = trim($_POST['nombre_completo']);
     $fecha_nacimiento = $_POST['fecha_nacimiento'];
     $cedula_tipo = $_POST['cedula_tipo'];
     $cedula_numero = trim($_POST['cedula_numero']);
     $cedula = $cedula_tipo . $cedula_numero;
+    $direccion = trim($_POST['direccion'] ?? '');
+    $telefono = trim($_POST['telefono'] ?? '');
     $correo = trim($_POST['correo']);
     $contrasena = $_POST['contrasena'];
     $confirmar_contrasena = $_POST['confirmar_contrasena'];
@@ -51,9 +54,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mensaje = "El correo electrónico o la cédula ya están registrados.";
         } else {
             $contrasena_hasheada = password_hash($contrasena, PASSWORD_DEFAULT);
-            
-            $insert_stmt = $conex->prepare("INSERT INTO usuarios (nombre_completo, fecha_nacimiento, edad, cedula, correo, contrasena, rol, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $insert_stmt->bind_param("ssisssss", $nombre_completo, $fecha_nacimiento, $edad, $cedula, $correo, $contrasena_hasheada, $rol, $estado);
+            $email_verificado = 1; // creado por el administrador → cuenta de confianza
+
+            $insert_stmt = $conex->prepare("INSERT INTO usuarios (nombre_completo, fecha_nacimiento, cedula, direccion, telefono, correo, contrasena, rol, estado, email_verificado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $insert_stmt->bind_param("sssssssssi", $nombre_completo, $fecha_nacimiento, $cedula, $direccion, $telefono, $correo, $contrasena_hasheada, $rol, $estado, $email_verificado);
             
             if ($insert_stmt->execute()) {
                 // Redirigir al panel con un mensaje de éxito
@@ -105,6 +109,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <form method="POST" action="crear_usuario_admin.php?rol=<?php echo htmlspecialchars($rol_seleccionado); ?>">
             <input type="hidden" name="rol" value="<?php echo htmlspecialchars($rol_seleccionado); ?>">
+            <?= csrf_field() ?>
 
             <div class="input-group">
                 <i class="fa-solid fa-user"></i>
@@ -134,8 +139,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <input type="email" name="correo" placeholder="Correo Electrónico" required>
             </div>
             <div class="input-group">
+                <i class="fa-solid fa-location-dot"></i>
+                <input type="text" name="direccion" placeholder="Dirección física (estado, sector)" required maxlength="255">
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-phone"></i>
+                <input type="tel" name="telefono" placeholder="Teléfono" required maxlength="30">
+            </div>
+            <div class="input-group">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" name="contrasena" id="contrasena" placeholder="Contraseña" required 
+                <input type="password" name="contrasena" id="contrasena" placeholder="Contraseña" required
                        minlength="8" 
                        pattern="(?=.*[A-Z])(?=.*[\W_]).{8,}" 
                        title="Mínimo 8 caracteres, una mayúscula y un símbolo.">

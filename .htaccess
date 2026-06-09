@@ -1,0 +1,30 @@
+# ============================================================
+#  EcoMadelleine — Configuración Apache (Fase 0 de seguridad)
+# ============================================================
+
+# --- Arranque global: carga bootstrap.php antes de cada script PHP ---
+# (requiere mod_php, como en XAMPP por defecto)
+php_value auto_prepend_file "C:/xampp/htdocs/Sistema_EcoMadelleineV1/bootstrap.php"
+
+# --- Proteger archivos sensibles (no servirlos por HTTP) ---
+<FilesMatch "(^\.env|^\.env\.|\.env$|^bootstrap\.php$|^env_loader\.php$|^config_correo\.php$|composer\.(json|lock)$)">
+    Require all denied
+</FilesMatch>
+
+# Bloquear cualquier archivo que empiece por punto (.env, .git, etc.)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# --- Cabeceras de seguridad (si mod_headers está activo) ---
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set X-XSS-Protection "1; mode=block"
+    # Cookies de sesión con flags seguros (refuerza lo fijado en PHP)
+    Header always edit Set-Cookie ^(.*)$ "$1; HttpOnly; SameSite=Lax"
+</IfModule>
+
+# --- No listar directorios ---
+Options -Indexes

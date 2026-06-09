@@ -1,0 +1,336 @@
+/* Gestión de pacientes — Recepción (alineado con Mis Pacientes ecografista) */
+
+body.rx-gestion-pacientes-page .page-header {
+    align-items: center;
+    margin-bottom: 14px;
+    gap: 12px;
+}
+body.rx-gestion-pacientes-page .page-header h1 {
+    margin: 0 0 2px;
+    font-size: 22px;
+}
+body.rx-gestion-pacientes-page .page-header p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.35;
+}
+body.rx-gestion-pacientes-page .page-header-actions {
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Grid buscador + total */
+.rx-controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+@media (max-width: 768px) {
+    .rx-controls-grid { grid-template-columns: 1fr; }
+}
+.rx-controls-grid .card { padding: 14px 18px; }
+.rx-search-wrap { position: relative; }
+.rx-search-wrap .fa-magnifying-glass {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+.rx-search-input {
+    width: 100%;
+    padding: 11px 14px 11px 40px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13.5px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-sizing: border-box;
+}
+.rx-total-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.rx-total-card__icon {
+    width: 36px;
+    height: 36px;
+    background: var(--accent-soft);
+    color: var(--accent-text);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.rx-total-card__label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: .04em;
+}
+.rx-total-card__value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+/* Botón alta extendida */
+.rx-btn-alta-ext {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    line-height: 1.25;
+    color: var(--accent-text, #0d9488);
+    background: linear-gradient(180deg, rgba(13, 148, 136, .08) 0%, rgba(13, 148, 136, .04) 100%);
+    border: 1.5px solid rgba(13, 148, 136, .28);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s, box-shadow .2s;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+.rx-btn-alta-ext:hover {
+    background: linear-gradient(180deg, rgba(13, 148, 136, .14) 0%, rgba(13, 148, 136, .08) 100%);
+    border-color: rgba(13, 148, 136, .45);
+    box-shadow: 0 2px 8px rgba(13, 148, 136, .12);
+}
+
+/* Tabla */
+#rx-pac-list-card .rx-pac-wrap.data-table {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+}
+.rx-pac-wrap .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+.rx-pac-wrap .rx-pac-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    font-size: 14px;
+    table-layout: fixed;
+}
+.rx-pac-wrap .rx-pac-table th,
+.rx-pac-wrap .rx-pac-table td {
+    padding: 15px 11px;
+    border-bottom: 1px solid var(--border-soft);
+    vertical-align: middle;
+    text-align: left;
+    overflow: hidden;
+}
+.rx-pac-wrap .rx-pac-table col.col-paciente { width: 24%; }
+.rx-pac-wrap .rx-pac-table col.col-cedula { width: 12%; }
+.rx-pac-wrap .rx-pac-table col.col-correo { width: 24%; }
+.rx-pac-wrap .rx-pac-table col.col-ingreso { width: 14%; }
+.rx-pac-wrap .rx-pac-table col.col-acciones { width: 26%; }
+
+.rx-pac-cell-nombre {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+.rx-pac-avatar {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), #38bdf8);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11.5px;
+    letter-spacing: .02em;
+}
+.rx-pac-td-nombre {
+    text-transform: capitalize;
+    overflow: visible;
+}
+.rx-pac-td-nombre strong {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 13px;
+}
+.rx-pac-td-cedula {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.rx-pac-td-email {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.rx-pac-td-ingreso {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.rx-pac-wrap .rx-pac-table thead th {
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 700;
+    background: var(--bg-muted);
+    border-bottom: 1px solid var(--border);
+}
+
+/* Cabeceras ordenables */
+.rx-pac-wrap .rx-sort-th {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.rx-pac-wrap .rx-sort-th:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+.rx-pac-wrap .rx-sort-th:focus-visible {
+    outline: 2px solid rgba(109, 40, 217, 0.45);
+    outline-offset: -2px;
+}
+.rx-pac-wrap .rx-sort-th__inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+}
+.rx-pac-wrap .rx-sort-th__label {
+    line-height: 1.2;
+}
+.rx-pac-wrap .rx-sort-icons {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 0.55;
+    flex-shrink: 0;
+    gap: 1px;
+}
+.rx-pac-wrap .rx-sort-icon {
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0.3;
+    transition: opacity 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+.rx-pac-wrap .rx-sort-th--asc .rx-sort-up,
+.rx-pac-wrap .rx-sort-th--desc .rx-sort-down {
+    color: #6d28d9;
+    opacity: 1;
+}
+.rx-pac-wrap .rx-sort-th--asc .rx-sort-down,
+.rx-pac-wrap .rx-sort-th--desc .rx-sort-up {
+    opacity: 0.15;
+}
+.rx-pac-wrap .rx-pac-table tbody.rx-sorting tr {
+    transition: background 0.12s ease;
+}
+.rx-pac-wrap .rx-pac-table th.rx-th-acciones,
+.rx-pac-wrap .rx-pac-table td.rx-td-acciones {
+    text-align: right;
+    overflow: visible;
+}
+.rx-pac-wrap .rx-pac-table tbody tr:hover {
+    background: var(--bg-muted);
+}
+.rx-pac-wrap .acciones-wrapper {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    justify-content: flex-end;
+    align-items: center;
+}
+.rx-pac-wrap .rx-btn {
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.rx-pac-wrap .rx-btn i { font-size: 11px; }
+.rx-pac-wrap .rx-btn--prim {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+.rx-pac-wrap .rx-btn--prim:hover { filter: brightness(0.94); }
+.rx-pac-wrap .rx-btn--sec {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+.rx-pac-wrap .rx-btn--sec:hover {
+    border-color: var(--accent-text);
+    color: var(--accent-text);
+}
+.rx-pac-wrap .rx-btn--muted {
+    background: rgba(139, 92, 246, .1);
+    color: #6d28d9;
+    border-color: rgba(139, 92, 246, .25);
+}
+.rx-pac-wrap .rx-btn--muted:hover { background: rgba(139, 92, 246, .18); }
+
+.rx-pac-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Mis Pacientes — ecografista (8 columnas) */
+.rx-pac-wrap .eco-mis-pac-table {
+    min-width: 1220px;
+    table-layout: fixed;
+}
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-paciente { width: 18%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-cedula { width: 9%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-edad { width: 6%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-correo { width: 15%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-direccion { width: 9%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-citas { width: 7%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-informes { width: 8%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-ingreso { width: 9%; }
+.rx-pac-wrap .eco-mis-pac-table col.col-eco-acciones { width: 18%; }
+.rx-pac-wrap .eco-mis-pac-table .rx-pac-td-nombre {
+    text-transform: capitalize;
+    overflow: visible;
+}
+/* Encabezado "PACIENTE" un poco más a la derecha */
+.rx-pac-wrap .eco-mis-pac-table thead th:first-child {
+    padding-left: 20px;
+}
+.rx-pac-wrap .eco-mis-pac-table .rx-pac-td-direccion {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rx-pac-wrap .eco-mis-pac-table th.rx-th-acciones,
+.rx-pac-wrap .eco-mis-pac-table td.rx-td-acciones {
+    text-align: right;
+    overflow: visible;
+    padding-right: 90px !important;
+}

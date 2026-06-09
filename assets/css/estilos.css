@@ -1,0 +1,201 @@
+/**
+ * estilos.css — Formularios premium en modales (inputs homogéneos).
+ * Complementa shell-modals.css; usado en registro de personal y formularios shell.
+ */
+
+.eco-modal .staff-register-form .eco-field,
+.eco-modal .eco-field {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.eco-modal .eco-field .eco-input,
+.eco-modal .eco-field input[type="password"] {
+    display: block;
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13.5px;
+    line-height: 1.4;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.eco-modal .eco-field input[type="password"].eco-input:focus,
+.eco-modal .eco-field .eco-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.eco-modal .eco-field-hint {
+    margin: 6px 0 0;
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.eco-modal .eco-field-hint i {
+    margin-right: 4px;
+    color: var(--accent-text);
+    font-size: 10px;
+}
+
+/* —— Modal perfil personal: footer de acciones (refuerzo; principal en admin-personal-modals.css) —— */
+#eco-modal-staff-perfil .contenedor-botones-modal.staff-perfil-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    padding: 16px 24px;
+    margin: 0;
+    box-sizing: border-box;
+    flex-wrap: nowrap;
+    min-width: 0;
+    border-top: 1px solid var(--border-soft);
+    background: var(--bg-surface, #fff);
+}
+
+#eco-modal-staff-perfil .contenedor-botones-modal[hidden] {
+    display: none !important;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: auto;
+    max-width: 100%;
+    flex: 0 0 auto;
+    height: 40px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn i {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--reset {
+    background: rgba(2, 177, 244, 0.06);
+    border: 1px solid rgba(2, 177, 244, 0.45);
+    color: var(--accent-text, #0284c7);
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--reset:hover {
+    background: rgba(2, 177, 244, 0.12);
+    border-color: var(--accent, #02b1f4);
+    box-shadow: 0 2px 8px rgba(2, 177, 244, 0.12);
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--disable {
+    background: #fff;
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    color: #64748b;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--disable:hover {
+    background: #f8fafc;
+    border-color: rgba(185, 28, 28, 0.35);
+    color: #9f1239;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--enable {
+    background: #fff;
+    border: 1px solid rgba(34, 197, 94, 0.45);
+    color: #15803d;
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn--enable:hover {
+    background: rgba(34, 197, 94, 0.06);
+    border-color: rgba(34, 197, 94, 0.65);
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.1);
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-soft, rgba(2, 177, 244, 0.2));
+}
+
+#eco-modal-staff-perfil .staff-perfil-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+#eco-modal-staff-perfil .staff-perfil-self-hint {
+    margin: 16px 24px 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: var(--bg-muted);
+    border-radius: 8px;
+    border: 1px dashed var(--border);
+    box-sizing: border-box;
+}
+
+#eco-modal-staff-perfil .staff-perfil-self-hint[hidden] {
+    display: none !important;
+}
+
+#eco-modal-staff-perfil .staff-perfil-self-hint i {
+    margin-right: 6px;
+    color: var(--accent-text);
+}
+
+@media (max-width: 560px) {
+    #eco-modal-staff-perfil .contenedor-botones-modal.staff-perfil-footer {
+        flex-wrap: wrap;
+    }
+}
+
+/* —— gestionar_textos.php: editor Misión / Visión / Valores (ancho completo) —— */
+body.cw-textos-page .cw-textos-form,
+body.cw-textos-page .cw-textos-layout,
+body.cw-textos-page .cw-textos-editor,
+body.cw-textos-page .cw-textos-editor-card,
+body.cw-textos-page .cw-texto-card,
+body.cw-textos-page .cw-texto-card__field {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+body.cw-textos-page .cw-texto-card {
+    width: calc(100% - 36px);
+}
+
+body.cw-textos-page .cw-texto-card__input,
+body.cw-textos-page .cw-texto-card textarea {
+    display: block;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0;
+    min-height: 120px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: auto;
+    resize: vertical;
+    field-sizing: content;
+}

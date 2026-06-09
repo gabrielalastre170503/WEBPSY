@@ -1,19 +1,22 @@
 <?php
 session_start();
 include 'conexion.php';
+require_once __DIR__ . '/lib/seguridad.php';
 
 // Seguridad: Solo administradores
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
     die("Acceso denegado.");
 }
 
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+// Exige POST + token CSRF (cierra el hueco de CSRF por enlace GET).
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['id']) || !is_numeric($_POST['id'])) {
     header('Location: ver_usuarios.php?error=parametros_invalidos');
     exit();
 }
+require_csrf();
 
-$usuario_id_a_resetear = $_GET['id'];
-$filtro_origen = $_GET['filtro'] ?? 'aprobados';
+$usuario_id_a_resetear = (int)$_POST['id'];
+$filtro_origen = $_POST['filtro'] ?? 'aprobados';
 
 // Seguridad: El administrador no puede restablecer su propia contraseña desde aquí
 if ($usuario_id_a_resetear == $_SESSION['usuario_id']) {
@@ -30,6 +33,7 @@ $stmt = $conex->prepare("UPDATE usuarios SET contrasena = ? WHERE id = ?");
 $stmt->bind_param("si", $contrasena_hasheada, $usuario_id_a_resetear);
 
 if ($stmt->execute()) {
+    eco_auditar($conex, 'password_reset', ['entidad' => 'usuario', 'entidad_id' => $usuario_id_a_resetear]);
     // 3. Redirigir de vuelta a la lista de usuarios con la contraseña en la URL
     $redirect_url = 'ver_usuarios.php?filtro=' . urlencode($filtro_origen) . '&status=password_reset&temp_pass=' . urlencode($contrasena_temporal);
     header('Location: ' . $redirect_url);

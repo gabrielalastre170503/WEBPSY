@@ -1,0 +1,278 @@
+/* Recepción — Gestión pacientes: modales programar cita, informes, alta extendida */
+(function () {
+    'use strict';
+
+    function esc(s) {
+        if (s === null || typeof s === 'undefined') return '';
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function byId(id) {
+        return document.getElementById(id);
+    }
+
+    function rxSetErr(idEl, msg) {
+        var el = byId(idEl);
+        if (!el) return;
+        el.textContent = msg || '';
+        el.style.display = msg ? 'block' : 'none';
+    }
+
+    function destroyFp(inp) {
+        if (inp && inp._flatpickr) inp._flatpickr.destroy();
+    }
+
+    /** --- Programar cita --- */
+    var rxProgFp = null;
+    function initRxProgFp() {
+        var fecha = byId('rx-prog-fecha');
+        if (!fecha || typeof flatpickr === 'undefined') return;
+        destroyFp(fecha);
+        rxProgFp = null;
+        fecha.value = '';
+        rxProgFp = flatpickr(fecha, {
+            enableTime: true,
+            dateFormat: 'Y-m-d H:i',
+            altInput: true,
+            altFormat: 'd/m/Y h:i K',
+            locale: flatpickr.l10ns && flatpickr.l10ns.es ? flatpickr.l10ns.es : 'es',
+            minuteIncrement: 15
+        });
+    }
+
+    window.rxAbrirProgramarCita = function (pacienteId, pacienteNombre) {
+        var modal = byId('eco-modal-rx-programar-cita');
+        var pidIn = byId('rx-prog-paciente-id');
+        var nameEl = byId('rx-prog-paciente-nombre');
+        if (!modal || !pidIn || !nameEl || !window.EcoModal) return;
+
+        pidIn.value = pacienteId;
+        nameEl.textContent = pacienteNombre || '—';
+        rxSetErr('rx-prog-error', '');
+        var form = byId('rx-form-programar-cita');
+        if (form) form.reset();
+        pidIn.value = pacienteId;
+        nameEl.textContent = pacienteNombre || '—';
+
+        EcoModal.open('eco-modal-rx-programar-cita');
+        setTimeout(initRxProgFp, 0);
+    };
+
+    /** --- Informes --- */
+    window.rxAbrirInformesPaciente = function (pacienteId, pacienteNombre) {
+        var modal = byId('eco-modal-rx-informes-paciente');
+        var sub = byId('rx-inf-sub');
+        var body = byId('rx-inf-body');
+        if (!modal || !body || !window.EcoModal) return;
+
+        if (sub) {
+            sub.textContent = (pacienteNombre || '') + ' · Cargando…';
+        }
+        body.innerHTML = '<p class="eco-modal__body-text" style="margin:16px 0;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando informes…</p>';
+        EcoModal.open('eco-modal-rx-informes-paciente');
+
+        fetch('get_informes_paciente.php?paciente_id=' + encodeURIComponent(pacienteId))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.error) {
+                    if (sub) sub.textContent = esc(pacienteNombre || '');
+                    body.innerHTML = '<p class="eco-modal__body-text" style="color:var(--danger);">' + esc(data.error) + '</p>';
+                    return;
+                }
+                var pn = esc(data.paciente_nombre || pacienteNombre || '');
+                var ci = esc(data.paciente_cedula || '');
+                var tot = typeof data.total === 'number' ? data.total : 0;
+                if (sub) sub.textContent = pn + (ci ? ' · CI ' + ci : '') + ' · ' + tot + ' informe(s)';
+
+                var list = data.informes || [];
+                if (!list.length) {
+                    body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;"><i class="fa-regular fa-folder-open" style="font-size:2.2rem;display:block;margin-bottom:10px;opacity:.45;"></i>No hay estudios registrados para este paciente.</div>';
+                    return;
+                }
+
+                var html = '<div style="display:flex;flex-direction:column;gap:10px;max-height:min(62vh,520px);overflow-y:auto;padding-right:4px;">';
+                list.forEach(function (inf) {
+                    html += '<div style="border:1px solid var(--border-soft);border-radius:var(--radius);padding:12px 14px;background:var(--bg-muted);">';
+                    html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">';
+                    html += '<div style="flex:1;min-width:0;">';
+                    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><i class="' + esc(inf.tipo_icono || 'fa-solid fa-wave-square') + '" style="color:var(--accent-text);"></i>';
+                    html += '<strong style="font-size:13px;">' + esc(inf.tipo_nombre || '') + '</strong></div>';
+                    html += '<div style="font-size:12px;color:var(--text-secondary);">';
+                    html += 'Nº ' + esc(inf.numero_informe || '-') + ' · ' + esc(inf.fecha_formateada || '—');
+                    html += ' · <span style="color:var(--text-muted);">' + esc(inf.ecografista || '—') + '</span>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '<div style="display:flex;align-items:center;gap:8px;">';
+                    html += '<span style="font-size:11px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent-text);">' + esc(inf.estado_label || inf.estado || '') + '</span>';
+                    html += '<a class="btn-primary" style="padding:6px 12px;font-size:12px;text-decoration:none;white-space:nowrap;" href="ver_informe_estudio.php?informe_id=' + encodeURIComponent(inf.id) + '" target="_blank" rel="noopener">' +
+                        '<i class="fa-solid fa-file-lines"></i> Ver detalle</a>';
+                    html += '</div></div></div>';
+                });
+                html += '</div>';
+                body.innerHTML = html;
+            })
+            .catch(function () {
+                if (sub) sub.textContent = esc(pacienteNombre || '');
+                body.innerHTML = '<p style="color:var(--danger);font-size:13px;">No se pudieron cargar los informes.</p>';
+            });
+    };
+
+    /** --- Alta extendida --- */
+    var rxExtFp = null;
+    function initRxExtFp() {
+        var fn = byId('rx-ext-fnac');
+        if (!fn || typeof flatpickr === 'undefined') return;
+        destroyFp(fn);
+        rxExtFp = null;
+        fn.value = '';
+        var loc = flatpickr.l10ns && flatpickr.l10ns.es ? flatpickr.l10ns.es : undefined;
+        rxExtFp = flatpickr(fn, { locale: loc, dateFormat: 'Y-m-d', maxDate: 'today', altInput: true, altFormat: 'd/m/Y' });
+    }
+
+    window.rxAbrirCrearPacienteExtendido = function () {
+        if (!window.EcoModal) return;
+        var form = byId('rx-form-crear-paciente-extendido');
+        rxSetErr('rx-ext-error', '');
+        if (form) form.reset();
+        destroyFp(byId('rx-ext-fnac'));
+        EcoModal.open('eco-modal-rx-crear-paciente-extendido');
+        setTimeout(initRxExtFp, 0);
+    };
+
+    /** Compatibilidad con buscar_pacientes_secretaria (onclick antiguo) */
+    window.abrirModalProgramarCita = function (id, nombre) {
+        rxAbrirProgramarCita(id, nombre || '');
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var wrapRx = byId('rx-pac-wrap');
+        if (wrapRx && window.EcoTableSort) {
+            EcoTableSort.init(wrapRx);
+        }
+        if (wrapRx) {
+            wrapRx.addEventListener('click', function (e) {
+                var bFicha = e.target.closest('.rx-js-ficha');
+                if (bFicha) {
+                    e.preventDefault();
+                    var fid = parseInt(bFicha.getAttribute('data-rx-pid'), 10);
+                    if (fid && typeof window.abrirModalGestionarPaciente === 'function') {
+                        window.abrirModalGestionarPaciente(fid);
+                    }
+                    return;
+                }
+                var bProg = e.target.closest('.rx-js-prog');
+                if (bProg) {
+                    e.preventDefault();
+                    var pid = parseInt(bProg.getAttribute('data-rx-pid'), 10);
+                    var nom = bProg.getAttribute('data-rx-nom');
+                    if (nom === null) nom = '';
+                    if (pid) window.rxAbrirProgramarCita(pid, nom);
+                    return;
+                }
+                var bInf = e.target.closest('.rx-js-inf');
+                if (bInf) {
+                    e.preventDefault();
+                    var pid2 = parseInt(bInf.getAttribute('data-rx-pid'), 10);
+                    var nom2 = bInf.getAttribute('data-rx-nom');
+                    if (nom2 === null) nom2 = '';
+                    if (pid2) window.rxAbrirInformesPaciente(pid2, nom2);
+                }
+            });
+        }
+
+        var fProg = byId('rx-form-programar-cita');
+        if (fProg) {
+            fProg.addEventListener('submit', function (e) {
+                e.preventDefault();
+                rxSetErr('rx-prog-error', '');
+                var btn = byId('rx-prog-submit');
+                if (!byId('rx-prog-ecografista') || !byId('rx-prog-ecografista').value) {
+                    rxSetErr('rx-prog-error', 'Seleccione un ecografista.');
+                    return;
+                }
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando…';
+                }
+                fetch('guardar_cita_directa.php', { method: 'POST', body: new FormData(fProg) })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa-solid fa-check"></i> Guardar cita';
+                        }
+                        if (data.success) {
+                            if (typeof EcoModal !== 'undefined') EcoModal.close('eco-modal-rx-programar-cita');
+                            window.alert(data.message || 'Cita guardada.');
+                            if (typeof window.buscarPacientesRecepcion === 'function') {
+                                var inp = byId('buscador-pacientes-rx');
+                                window.buscarPacientesRecepcion(inp ? inp.value : '');
+                            } else {
+                                window.location.reload();
+                            }
+                        } else {
+                            rxSetErr('rx-prog-error', data.message || 'No se pudo guardar.');
+                        }
+                    })
+                    .catch(function () {
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa-solid fa-check"></i> Guardar cita';
+                        }
+                        rxSetErr('rx-prog-error', 'Error de red.');
+                    });
+            });
+        }
+
+        var fExt = byId('rx-form-crear-paciente-extendido');
+        if (fExt) {
+            fExt.addEventListener('submit', function (e) {
+                e.preventDefault();
+                rxSetErr('rx-ext-error', '');
+                var p1 = byId('rx-ext-pass');
+                var p2 = byId('rx-ext-pass2');
+                if (p1 && p2 && p1.value !== p2.value) {
+                    rxSetErr('rx-ext-error', 'Las contraseñas no coinciden.');
+                    return;
+                }
+                var btn = byId('rx-ext-submit');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando…';
+                }
+                fetch('guardar_paciente_extendido_ajax.php', { method: 'POST', body: new FormData(fExt) })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa-solid fa-check"></i> Registrar';
+                        }
+                        if (data.success) {
+                            EcoModal.close('eco-modal-rx-crear-paciente-extendido');
+                            window.alert(data.message || 'Paciente registrado.');
+                            if (typeof window.buscarPacientesRecepcion === 'function') {
+                                var inp = byId('buscador-pacientes-rx');
+                                window.buscarPacientesRecepcion(inp ? inp.value : '');
+                            } else {
+                                window.location.reload();
+                            }
+                        } else {
+                            rxSetErr('rx-ext-error', data.message || 'No se pudo registrar.');
+                        }
+                    })
+                    .catch(function () {
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa-solid fa-check"></i> Registrar';
+                        }
+                        rxSetErr('rx-ext-error', 'Error de red.');
+                    });
+            });
+        }
+    });
+})();

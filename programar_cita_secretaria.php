@@ -1,9 +1,9 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
 // Seguridad: Solo secretarias y administradores pueden acceder
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['secretaria', 'administrador'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['recepcionista', 'administrador'])) {
     header('Location: login.php');
     exit();
 }
@@ -25,13 +25,13 @@ if (!$cita) {
 }
 
 // Obtenemos la lista de todos los psicólogos disponibles para el selector
-$psicologos_result = $conex->query("SELECT id, nombre_completo FROM usuarios WHERE rol IN ('psicologo', 'psiquiatra') AND estado = 'aprobado'");
+$ecografistas_result = $conex->query("SELECT id, nombre_completo FROM usuarios WHERE rol IN ('ecografista') AND estado = 'aprobado'");
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Programar Cita - WebPSY</title>
+    <title>Programar Cita - EcoMadelleine</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -111,11 +111,11 @@ $psicologos_result = $conex->query("SELECT id, nombre_completo FROM usuarios WHE
             <input type="hidden" name="cita_id" value="<?php echo $cita['id']; ?>">
             
             <div class="form-group">
-                <label for="psicologo_id">Asignar a Profesional:</label>
-                <select name="psicologo_id" id="psicologo_id" required>
+                <label for="ecografista_id">Asignar a Profesional:</label>
+                <select name="ecografista_id" id="ecografista_id" required>
                     <option value="">-- Seleccione un profesional --</option>
-                    <?php while($psicologo = $psicologos_result->fetch_assoc()): ?>
-                        <option value="<?php echo $psicologo['id']; ?>"><?php echo htmlspecialchars($psicologo['nombre_completo']); ?></option>
+                    <?php while($ecografista = $ecografistas_result->fetch_assoc()): ?>
+                        <option value="<?php echo $ecografista['id']; ?>"><?php echo htmlspecialchars($ecografista['nombre_completo']); ?></option>
                     <?php endwhile; ?>
                 </select>
             </div>

@@ -1,106 +1,91 @@
 <?php
 session_start();
 include 'conexion.php';
+require_once __DIR__ . '/lib/seguridad.php';
 
-header('Content-Type: application/json');
-$response = ['success' => false, 'message' => 'Ocurrió un error inesperado.'];
+header('Content-Type: application/json; charset=utf-8');
+$response = ['success' => false, 'message' => 'Ocurrio un error inesperado.'];
 
-// Seguridad
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra', 'administrador', 'secretaria'])) {
-    $response['message'] = 'Acceso no autorizado.';
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
     http_response_code(403);
+    $response['message'] = 'Acceso no autorizado.';
     echo json_encode($response);
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Validamos que todos los campos lleguen
-    if (empty($_POST['nombre_completo']) || empty($_POST['fecha_nacimiento']) || empty($_POST['cedula_tipo']) || empty($_POST['cedula_numero']) || empty($_POST['correo'])) {
-        $response['message'] = 'Todos los campos son obligatorios.';
-        echo json_encode($response);
-        exit();
-    }
-
-    $nombre = $_POST['nombre_completo'];
-    $fecha_nacimiento = $_POST['fecha_nacimiento']; // <-- Campo nuevo
-    $correo = $_POST['correo'];
-    $cedula_tipo = $_POST['cedula_tipo'];
-    $cedula_numero = $_POST['cedula_numero'];
-
-    $usuarioActualId = $_SESSION['usuario_id'];
-    $rolUsuario = $_SESSION['rol'];
-    $psicologo_id = $usuarioActualId;
-
-    if ($rolUsuario === 'secretaria') {
-        if (empty($_POST['profesional_asignado'])) {
-            $response['message'] = 'Selecciona el profesional responsable para este paciente.';
-            http_response_code(400);
-            echo json_encode($response);
-            exit();
-        }
-
-        $psicologo_id = (int)$_POST['profesional_asignado'];
-
-        $validarProfesional = $conex->prepare("SELECT id FROM usuarios WHERE id = ? AND rol IN ('psicologo','psiquiatra') AND estado = 'aprobado'");
-        $validarProfesional->bind_param("i", $psicologo_id);
-        $validarProfesional->execute();
-        if ($validarProfesional->get_result()->num_rows === 0) {
-            $response['message'] = 'El profesional seleccionado no es válido.';
-            $validarProfesional->close();
-            http_response_code(400);
-            echo json_encode($response);
-            exit();
-        }
-        $validarProfesional->close();
-    }
-
-    if (strlen($cedula_numero) < 7 || strlen($cedula_numero) > 8) {
-        $response['message'] = 'El número de cédula debe tener entre 7 y 8 dígitos.';
-        echo json_encode($response);
-        exit();
-    }
-    
-    $cedula = $cedula_tipo . $cedula_numero;
-
-    // Verificar si el correo o la cédula ya existen
-    $check_stmt = $conex->prepare("SELECT id FROM usuarios WHERE correo = ? OR cedula = ?");
-    $check_stmt->bind_param("ss", $correo, $cedula);
-    $check_stmt->execute();
-    if ($check_stmt->get_result()->num_rows > 0) {
-        $response['message'] = 'El correo electrónico o la cédula ya están registrados en el sistema.';
-        echo json_encode($response);
-        exit();
-    }
-    $check_stmt->close();
-
-    // --- LÓGICA PARA CALCULAR LA EDAD ---
-    $fecha_nac = new DateTime($fecha_nacimiento);
-    $hoy = new DateTime();
-    $edad = $hoy->diff($fecha_nac)->y;
-    // --- FIN DE LA LÓGICA ---
-
-    // Generar contraseña temporal
-    $contrasena_temporal = bin2hex(random_bytes(4));
-    $contrasena_hasheada = password_hash($contrasena_temporal, PASSWORD_DEFAULT);
-    
-    $rol = 'paciente';
-    $estado = 'aprobado';
-
-    // --- CONSULTA Y BIND_PARAM ACTUALIZADOS ---
-    $insert_stmt = $conex->prepare("INSERT INTO usuarios (nombre_completo, fecha_nacimiento, edad, cedula, correo, contrasena, rol, estado, creado_por_psicologo_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $insert_stmt->bind_param("ssisssssi", $nombre, $fecha_nacimiento, $edad, $cedula, $correo, $contrasena_hasheada, $rol, $estado, $psicologo_id);
-    
-    if ($insert_stmt->execute()) {
-        $response['success'] = true;
-        $response['message'] = '¡Paciente creado con éxito!';
-        $response['nombre'] = $nombre;
-        $response['password'] = $contrasena_temporal;
-    } else {
-        $response['message'] = 'Error al guardar en la base de datos.';
-    }
-    $insert_stmt->close();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode($response);
+    exit();
 }
 
+require_csrf();
+
+if (empty($_POST['nombre_completo']) || empty($_POST['fecha_nacimiento']) || empty($_POST['cedula_tipo']) || empty($_POST['cedula_numero']) || empty($_POST['correo'])) {
+    $response['message'] = 'Todos los campos son obligatorios.';
+    echo json_encode($response);
+    exit();
+}
+
+$nombre           = trim($_POST['nombre_completo']);
+$fecha_nacimiento = $_POST['fecha_nacimiento'];
+$correo           = trim($_POST['correo']);
+$cedula_tipo      = $_POST['cedula_tipo'];
+$cedula_numero    = trim($_POST['cedula_numero']);
+$direccion        = trim((string)($_POST['direccion'] ?? ''));
+$telefono         = trim((string)($_POST['telefono'] ?? ''));
+$creado_por_id    = (int)$_SESSION['usuario_id'];
+
+if (!preg_match('/^\d{7,8}$/', $cedula_numero)) {
+    $response['message'] = 'El numero de cedula debe tener entre 7 y 8 digitos.';
+    echo json_encode($response);
+    exit();
+}
+
+$cedula = $cedula_tipo . $cedula_numero;
+
+$check = $conex->prepare("SELECT id FROM usuarios WHERE correo = ? OR cedula = ?");
+$check->bind_param("ss", $correo, $cedula);
+$check->execute();
+if ($check->get_result()->num_rows > 0) {
+    $response['message'] = 'El correo electronico o la cedula ya estan registrados.';
+    $check->close();
+    echo json_encode($response);
+    exit();
+}
+$check->close();
+
+try {
+    $fecha_nac = new DateTime($fecha_nacimiento);
+    $edad = (new DateTime('today'))->diff($fecha_nac)->y;
+} catch (Exception $e) {
+    $response['message'] = 'Fecha de nacimiento invalida.';
+    echo json_encode($response);
+    exit();
+}
+
+$contrasena_temporal = bin2hex(random_bytes(4));
+$contrasena_hash     = password_hash($contrasena_temporal, PASSWORD_DEFAULT);
+$rol = 'paciente';
+$estado = 'aprobado';
+
+$email_verificado = 1; // creado por un profesional → cuenta de confianza
+$insert = $conex->prepare("INSERT INTO usuarios (nombre_completo, fecha_nacimiento, cedula, direccion, telefono, correo, contrasena, rol, estado, email_verificado, creado_por_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$insert->bind_param("sssssssssii", $nombre, $fecha_nacimiento, $cedula, $direccion, $telefono, $correo, $contrasena_hash, $rol, $estado, $email_verificado, $creado_por_id);
+
+if ($insert->execute()) {
+    eco_auditar($conex, 'paciente_creado', ['entidad' => 'usuario', 'entidad_id' => $insert->insert_id, 'detalle' => ['correo' => $correo]]);
+    $response['success']  = true;
+    $response['message']  = 'Paciente creado con exito.';
+    $response['nombre']   = $nombre;
+    $response['password'] = $contrasena_temporal;
+} else {
+    // FIX SEGURIDAD: log interno + mensaje genérico; detecta duplicado (correo/cédula).
+    error_log('guardar_paciente: ' . $insert->error);
+    $response['message'] = ($insert->errno === 1062)
+        ? 'El correo o la cédula ya están registrados.'
+        : 'No se pudo crear el paciente. Inténtalo de nuevo.';
+}
+
+$insert->close();
 $conex->close();
 echo json_encode($response);
-?>

@@ -474,3 +474,21 @@ composer.lock
 .env
 *.env
 .env*
+
+##### EcoMadelleine - credenciales locales (NO subir al repositorio)
+config_correo.php
+
+##### EcoMadelleine - respaldos de base de datos (contienen datos reales)
+database/backups/
+backup_err.txt
+
+##### EcoMadelleine - archivos medicos subidos (imagenes/adjuntos de pacientes, NO subir)
+uploads/*
+!uploads/.htaccess
+
+##### EcoMadelleine - tooling local y artefactos generados (NO subir)
+.claude/
+.agents/
+graphify-out/
+skills-lock.json
+_*.php

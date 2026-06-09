@@ -1,20 +1,20 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
 // Seguridad: Solo roles autorizados pueden acceder
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['psicologo', 'psiquiatra'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista'])) {
     header('Location: login.php');
     exit();
 }
 if (!isset($_GET['cita_id'])) { die("Error: No se especificó una cita."); }
 
 $cita_id = $_GET['cita_id'];
-$psicologo_id = $_SESSION['usuario_id'];
+$ecografista_id = $_SESSION['usuario_id'];
 
 // Buscamos la cita para asegurarnos de que pertenece a este psicólogo
-$stmt = $conex->prepare("SELECT c.id, c.fecha_cita, u.nombre_completo as paciente_nombre, c.motivo_consulta FROM citas c JOIN usuarios u ON c.paciente_id = u.id WHERE c.id = ? AND c.psicologo_id = ?");
-$stmt->bind_param("ii", $cita_id, $psicologo_id);
+$stmt = $conex->prepare("SELECT c.id, c.fecha_cita, u.nombre_completo as paciente_nombre, c.motivo_consulta FROM citas c JOIN usuarios u ON c.paciente_id = u.id WHERE c.id = ? AND c.ecografista_id = ?");
+$stmt->bind_param("ii", $cita_id, $ecografista_id);
 $stmt->execute();
 $cita = $stmt->get_result()->fetch_assoc();
 

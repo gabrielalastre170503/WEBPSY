@@ -1,0 +1,11 @@
+INSERT INTO tipos_ecografias (codigo, nombre, categoria, descripcion, icono, esquema_campos, esquema_version, activo) VALUES
+('ECO_ABD_REN',  'Ecografia Abdominal/Renal',   'Abdominal',          'Estudio combinado de organos abdominales y rinones.',                           'fa-solid fa-droplet',         '{"secciones":[]}', 1, 1),
+('ECO_RENAL',    'Ecografia Renal',              'Renal',              'Evaluacion ecografica de rinones, ureteres y vejiga.',                           'fa-solid fa-shield-halved',   '{"secciones":[]}', 1, 1),
+('ECO_PELVICA',  'Ecografia Pelvica',            'Pelvica',            'Exploracion de organos de la cavidad pelvica femenina.',                        'fa-solid fa-venus',           '{"secciones":[]}', 1, 1),
+('ECO_MUSCU',    'Ecografia Musculoesqueletica', 'Musculoesqueletica', 'Estudio de musculos, tendones, ligamentos y articulaciones.',                   'fa-solid fa-bone',            '{"secciones":[]}', 1, 1),
+('ECO_PROST',    'Ecografia Prostatica',         'Prostatica',         'Evaluacion de la glandula prostatica via abdominal o transrectal.',             'fa-solid fa-user-doctor',     '{"secciones":[]}', 1, 1),
+('ECO_MAMA',     'Ecografia Mamaria',            'Mamaria',            'Estudio ecografico de tejido mamario para diagnostico complementario.',          'fa-solid fa-ribbon',          '{"secciones":[]}', 1, 1),
+('ECO_PBLANCAS', 'Ecografia de Partes Blandas',  'Partes Blandas',     'Exploracion de tejidos blandos superficiales: quistes, nodulos y masas.',       'fa-solid fa-hand',            '{"secciones":[]}', 1, 1),
+('ECO_TEST',     'Ecografia Testicular',         'Testicular',         'Evaluacion ecografica del escroto y testiculos.',                                'fa-solid fa-shield',          '{"secciones":[]}', 1, 1),
+('ECO_CUELLO',   'Ecografia de Cuello',          'Cervical',           'Estudio de estructuras cervicales: ganglios, glandulas salivales y carotidas.',  'fa-solid fa-head-side-virus', '{"secciones":[]}', 1, 1),
+('ECO_TRANSV',   'Ecografia Transvaginal',       'Pelvica',            'Evaluacion intracavitaria del utero, ovarios y estructuras pelvicas.',           'fa-solid fa-heart-pulse',     '{"secciones":[]}', 1, 1);

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include 'conexion.php';
 
@@ -23,7 +23,7 @@ $paciente_id = $_SESSION['usuario_id'];
 // Obtener todos los detalles de la cita y del profesional
 $sql = "SELECT c.*, p.nombre_completo as profesional_nombre, p.rol as profesional_rol
         FROM citas c
-        LEFT JOIN usuarios p ON c.psicologo_id = p.id
+        LEFT JOIN usuarios p ON c.ecografista_id = p.id
         WHERE c.id = ? AND c.paciente_id = ?";
 $stmt = $conex->prepare($sql);
 $stmt->bind_param("ii", $cita_id, $paciente_id);

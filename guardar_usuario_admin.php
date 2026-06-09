@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'conexion.php';
+require_once __DIR__ . '/lib/seguridad.php';
 
 // Seguridad
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
@@ -15,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $rol = $_POST['rol']; // Rol seleccionado por el admin
 
     // Validar que el rol sea uno de los permitidos
-    if (!in_array($rol, ['psicologo', 'psiquiatra', 'secretaria'])) {
+    if (!in_array($rol, ['ecografista', 'recepcionista'])) {
         die("Rol no válido.");
     }
 
@@ -38,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $insert_stmt->bind_param("ssssss", $nombre, $cedula, $correo, $contrasena_hasheada, $rol, $estado);
     
     if ($insert_stmt->execute()) {
+        eco_auditar($conex, 'usuario_creado', ['entidad' => 'usuario', 'entidad_id' => $insert_stmt->insert_id, 'detalle' => ['rol' => $rol, 'correo' => $correo]]);
         $_SESSION['nuevo_paciente_nombre'] = $nombre; // Reutilizamos la variable de sesión
         $_SESSION['contrasena_temporal'] = $contrasena_temporal;
         header('Location: panel.php?vista=admin-dashboard'); // Volver al dashboard del admin
