@@ -1,25 +1,21 @@
-﻿<?php
-session_start();
+<?php
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/seguridad.php';
 require_once __DIR__ . '/lib/citas.php';
 
-header('Content-Type: application/json');
-$response = ['success' => false, 'message' => 'Datos inválidos.'];
-
-// Seguridad
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista'])) {
-    $response['message'] = 'Acceso no autorizado.';
-    http_response_code(403);
-    echo json_encode($response);
-    exit();
+api_json();
+if (!in_array(api_rol(), ['ecografista'], true)) {
+    api_fail('Acceso no autorizado.', 403);
 }
+
+$response = ['success' => false, 'message' => 'Datos inválidos.'];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cita_id'], $_POST['nueva_fecha_cita'], $_POST['motivo_reprogramacion'])) {
     $cita_id = $_POST['cita_id'];
     $nueva_fecha = $_POST['nueva_fecha_cita'];
     $motivo = $_POST['motivo_reprogramacion'];
-    $ecografista_id = $_SESSION['usuario_id'];
+    $ecografista_id = api_uid();
 
     $fecha_formateada = date('d/m/Y \a \l\a\s h:i A', strtotime($nueva_fecha));
     $notificacion = "Su cita ha sido reprogramada para el <strong>{$fecha_formateada}</strong>. Motivo: <em>\"" . htmlspecialchars($motivo) . "\"</em>. Si no está de acuerdo, por favor contáctenos a través de la sección de Ayuda.";
@@ -42,4 +38,3 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cita_id'], $_POST['nue
 
 $conex->close();
 echo json_encode($response);
-?>

@@ -1,17 +1,15 @@
 <?php
-session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/seguridad.php';
 
-header('Content-Type: application/json'); // Importante: indicar que la respuesta es JSON
+api_json();
 
 $response = ['success' => false, 'message' => 'Acción no permitida.'];
 
 // Seguridad: Solo administradores
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
-    http_response_code(403);
-    echo json_encode($response);
-    exit();
+if (api_rol() !== 'administrador') {
+    api_fail('Acción no permitida.', 403);
 }
 
 // Usamos POST para recibir los datos de JavaScript
@@ -27,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['nuevo_es
     }
 
     // Seguridad: El administrador no puede inhabilitarse a sí mismo
-    if ($usuario_id == $_SESSION['usuario_id']) {
+    if ($usuario_id == api_uid()) {
         $response['message'] = 'No puedes cambiar tu propio estado.';
         echo json_encode($response);
         exit();
@@ -49,4 +47,3 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['nuevo_es
 
 $conex->close();
 echo json_encode($response);
-?>

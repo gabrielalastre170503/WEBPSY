@@ -159,3 +159,27 @@ if (!function_exists('api_str')) {
         return $v === null ? $default : trim((string)$v);
     }
 }
+
+if (!function_exists('api_get')) {
+    /** Lee un parametro de la query string ($_GET). */
+    function api_get(string $key, $default = null)
+    {
+        return $_GET[$key] ?? $default;
+    }
+}
+
+if (!function_exists('api_get_int')) {
+    /** Parametro de query string como entero. */
+    function api_get_int(string $key, int $default = 0): int
+    {
+        return isset($_GET[$key]) ? (int)$_GET[$key] : $default;
+    }
+}
+
+if (!function_exists('api_get_str')) {
+    /** Parametro de query string como string recortado. */
+    function api_get_str(string $key, string $default = ''): string
+    {
+        return isset($_GET[$key]) ? trim((string)$_GET[$key]) : $default;
+    }
+}

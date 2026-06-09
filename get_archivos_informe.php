@@ -2,23 +2,19 @@
 /**
  * Lista (JSON) los archivos de un informe. Acceso: autor/admin o paciente dueno.
  */
-session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/informes.php';
 require_once __DIR__ . '/lib/archivos.php';
 
-header('Content-Type: application/json; charset=utf-8');
-
-if (!isset($_SESSION['usuario_id'])) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'No autorizado', 'archivos' => []]);
-    exit;
+api_json();
+if (api_uid() <= 0) {
+    api_fail('No autorizado', 403, ['archivos' => []]);
 }
 
-$informe_id = isset($_GET['informe_id']) ? (int)$_GET['informe_id'] : 0;
+$informe_id = api_get_int('informe_id');
 if ($informe_id <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Informe invalido', 'archivos' => []]);
-    exit;
+    api_fail('Informe invalido', 200, ['archivos' => []]);
 }
 
 $st = $conex->prepare("SELECT ecografista_id, paciente_id FROM informes_estudios WHERE id = ?");
@@ -27,18 +23,15 @@ $st->execute();
 $inf = $st->get_result()->fetch_assoc();
 $st->close();
 if (!$inf) {
-    echo json_encode(['success' => false, 'message' => 'Informe no encontrado', 'archivos' => []]);
-    exit;
+    api_fail('Informe no encontrado', 200, ['archivos' => []]);
 }
 
-$rol = (string)($_SESSION['rol'] ?? '');
-$uid = (int)$_SESSION['usuario_id'];
+$rol = api_rol();
+$uid = api_uid();
 $puede_editar = eco_puede_gestionar_informe($rol, $uid, (int)$inf['ecografista_id']);
 $puede_ver    = $puede_editar || ($rol === 'paciente' && $uid === (int)$inf['paciente_id']);
 if (!$puede_ver) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Sin acceso', 'archivos' => []]);
-    exit;
+    api_fail('Sin acceso', 403, ['archivos' => []]);
 }
 
 $archivos = array_map(static function (array $a): array {
@@ -54,4 +47,4 @@ $archivos = array_map(static function (array $a): array {
     ];
 }, eco_archivos_de_informe($conex, $informe_id));
 
-echo json_encode(['success' => true, 'archivos' => $archivos, 'puede_editar' => $puede_editar]);
+api_ok(['archivos' => $archivos, 'puede_editar' => $puede_editar]);

@@ -6,26 +6,22 @@
  * inyectar en cualquier modal de detalle de cita (ecografista/admin/recep/paciente).
  * Acceso segun rol: admin/recep cualquiera; ecografista y paciente solo las suyas.
  */
-session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/citas.php';
 
-header('Content-Type: application/json; charset=utf-8');
-
-if (!isset($_SESSION['usuario_id'])) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'No autenticado.']);
-    exit();
+api_json();
+if (api_uid() <= 0) {
+    api_fail('No autenticado.', 403);
 }
 
-$cita_id = isset($_GET['cita_id']) ? (int)$_GET['cita_id'] : 0;
+$cita_id = api_get_int('cita_id');
 if ($cita_id <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Cita no valida.']);
-    exit();
+    api_fail('Cita no valida.', 200);
 }
 
-$rol = (string)$_SESSION['rol'];
-$uid = (int)$_SESSION['usuario_id'];
+$rol = api_rol();
+$uid = api_uid();
 
 $st = $conex->prepare("SELECT paciente_id, ecografista_id FROM citas WHERE id = ?");
 $st->bind_param('i', $cita_id);
@@ -34,8 +30,7 @@ $cita = $st->get_result()->fetch_assoc();
 $st->close();
 
 if (!$cita) {
-    echo json_encode(['success' => false, 'message' => 'Cita no encontrada.']);
-    exit();
+    api_fail('Cita no encontrada.', 200);
 }
 
 $puede = in_array($rol, ['administrador', 'recepcionista'], true)
@@ -43,14 +38,11 @@ $puede = in_array($rol, ['administrador', 'recepcionista'], true)
     || ($rol === 'paciente'    && $uid === (int)$cita['paciente_id']);
 
 if (!$puede) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Sin acceso a esta cita.']);
-    exit();
+    api_fail('Sin acceso a esta cita.', 403);
 }
 
 $eventos = eco_cita_eventos($conex, $cita_id);
-echo json_encode([
-    'success' => true,
-    'total'   => count($eventos),
-    'html'    => eco_cita_timeline_html($eventos),
+api_ok([
+    'total' => count($eventos),
+    'html'  => eco_cita_timeline_html($eventos),
 ]);

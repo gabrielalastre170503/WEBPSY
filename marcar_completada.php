@@ -1,28 +1,26 @@
-﻿<?php
-session_start();
+<?php
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/seguridad.php';
 require_once __DIR__ . '/lib/citas.php';
 require_once __DIR__ . '/lib/notificaciones.php';
 
-header('Content-Type: application/json');
+api_json();
 $response = ['success' => false];
 
-// Seguridad: Solo psicólogos y psiquiatras pueden marcar citas como completadas
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista'])) {
-    $response['message'] = 'Acceso denegado.';
-    echo json_encode($response);
-    exit();
+// Seguridad: Solo ecografistas pueden marcar citas como completadas
+if (!in_array(api_rol(), ['ecografista'], true)) {
+    api_fail('Acceso denegado.', 200);
 }
 
-require_csrf();
+api_require_csrf();
 
 if (isset($_POST['cita_id'])) {
     $cita_id = (int)$_POST['cita_id'];
-    $ecografista_id = $_SESSION['usuario_id'];
+    $ecografista_id = api_uid();
 
     // Preparamos la consulta para actualizar el estado de la cita a 'completada'
-    // Nos aseguramos de que el psicólogo solo pueda modificar sus propias citas
+    // Nos aseguramos de que el ecografista solo pueda modificar sus propias citas
     $stmt = $conex->prepare("UPDATE citas SET estado = 'completada' WHERE id = ? AND ecografista_id = ?");
     $stmt->bind_param("ii", $cita_id, $ecografista_id);
 
@@ -53,4 +51,3 @@ if (isset($_POST['cita_id'])) {
 
 $conex->close();
 echo json_encode($response);
-?>

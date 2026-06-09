@@ -1,19 +1,15 @@
 <?php
-session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 
-header('Content-Type: application/json; charset=utf-8');
-
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'] ?? '', ['recepcionista', 'administrador'], true)) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'pacientes' => [], 'message' => 'Acceso denegado.']);
-    exit;
+api_json();
+if (!in_array(api_rol(), ['recepcionista', 'administrador'], true)) {
+    api_fail('Acceso denegado.', 403, ['pacientes' => []]);
 }
 
-$q = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
+$q = api_get_str('q');
 if (mb_strlen($q) < 2) {
-    echo json_encode(['success' => true, 'pacientes' => []]);
-    exit;
+    api_ok(['pacientes' => []]);
 }
 
 $busqueda = '%' . $q . '%';
@@ -26,8 +22,7 @@ $sql = "SELECT id, nombre_completo, cedula
 
 $stmt = $conex->prepare($sql);
 if (!$stmt) {
-    echo json_encode(['success' => false, 'pacientes' => [], 'message' => 'Error de consulta.']);
-    exit;
+    api_fail('Error de consulta.', 200, ['pacientes' => []]);
 }
 
 $stmt->bind_param('ss', $busqueda, $busqueda);
@@ -44,4 +39,4 @@ while ($row = $res->fetch_assoc()) {
 $stmt->close();
 $conex->close();
 
-echo json_encode(['success' => true, 'pacientes' => $pacientes]);
+api_ok(['pacientes' => $pacientes]);
