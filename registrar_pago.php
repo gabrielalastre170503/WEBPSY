@@ -4,11 +4,12 @@
  * Acciones: cobrar (fija monto_total y suma un abono), exonerar.
  */
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/facturacion.php';
 require_once __DIR__ . '/lib/citas.php';
 
-header('Content-Type: application/json; charset=utf-8');
+api_json();
 $response = ['success' => false, 'message' => 'Ocurrio un error.'];
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'] ?? '', ['recepcionista', 'administrador', 'ecografista'], true)) {
@@ -24,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-require_csrf();
+api_require_csrf();
 
 $cita_id  = isset($_POST['cita_id']) ? (int)$_POST['cita_id'] : 0;
 $accion   = ($_POST['accion'] ?? 'cobrar') === 'exonerar' ? 'exonerar' : 'cobrar';

@@ -1,5 +1,6 @@
 ﻿<?php
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/seguridad.php';
 require_once __DIR__ . '/lib/citas.php';
@@ -40,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cita_id'], $_POST['fe
 
     if ($ecografista_id === null || $ecografista_id <= 0) {
         if ($wants_json) {
-            header('Content-Type: application/json; charset=utf-8');
+            api_json();
             echo json_encode(['success' => false, 'message' => 'Debes seleccionar un ecografista.']);
             exit();
         }
@@ -60,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cita_id'], $_POST['fe
     }
 
     if ($wants_json) {
-        header('Content-Type: application/json; charset=utf-8');
+        api_json();
         if ($ok) {
             echo json_encode(['success' => true, 'message' => 'Cita programada correctamente.']);
         } else {
@@ -78,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cita_id'], $_POST['fe
 }
 
 if ($wants_json) {
-    header('Content-Type: application/json; charset=utf-8');
+    api_json();
     echo json_encode(['success' => false, 'message' => 'Solicitud inválida.']);
     exit();
 }

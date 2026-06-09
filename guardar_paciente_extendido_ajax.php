@@ -3,9 +3,10 @@
  * Alta paciente desde recepción con contraseña elegida por el usuario (AJAX JSON).
  */
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 
-header('Content-Type: application/json; charset=utf-8');
+api_json();
 $response = ['success' => false, 'message' => ''];
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'] ?? '', ['recepcionista', 'administrador'], true)) {
@@ -20,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-require_csrf();
+api_require_csrf();
 
 $nombre_completo  = trim((string)($_POST['nombre_completo'] ?? ''));
 $fecha_nacimiento = (string)($_POST['fecha_nacimiento'] ?? '');

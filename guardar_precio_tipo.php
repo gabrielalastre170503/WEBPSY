@@ -3,9 +3,10 @@
  * Actualiza el precio de un tipo de estudio (solo administrador).
  */
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 
-header('Content-Type: application/json; charset=utf-8');
+api_json();
 $response = ['success' => false, 'message' => 'Ocurrio un error.'];
 
 if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'administrador') {
@@ -19,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-require_csrf();
+api_require_csrf();
 
 $tipo_id = isset($_POST['tipo_id']) ? (int)$_POST['tipo_id'] : 0;
 $precio  = isset($_POST['precio']) ? (float)$_POST['precio'] : -1;

@@ -1,8 +1,9 @@
 ﻿<?php
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 
-header('Content-Type: application/json');
+api_json();
 $response = ['conflict' => false, 'paciente_nombre' => '']; // Respuesta por defecto
 
 // Seguridad

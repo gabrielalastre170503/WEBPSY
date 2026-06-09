@@ -1,10 +1,11 @@
 ﻿<?php
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/seguridad.php';
 require_once __DIR__ . '/lib/citas.php';
 
-header('Content-Type: application/json; charset=utf-8');
+api_json();
 $response = ['success' => false, 'message' => 'Datos invalidos.'];
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {

@@ -1,8 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 
-header('Content-Type: application/json; charset=utf-8');
+api_json();
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
     http_response_code(403);

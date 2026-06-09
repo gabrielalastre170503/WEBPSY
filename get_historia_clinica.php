@@ -4,10 +4,11 @@
  * informes de estudio, notas de sesion y citas. Solo lectura (JSON).
  */
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/facturacion.php';
 
-header('Content-Type: application/json; charset=utf-8');
+api_json();
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'], true)) {
     http_response_code(403);

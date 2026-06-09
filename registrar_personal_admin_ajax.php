@@ -1,8 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 
-header('Content-Type: application/json; charset=utf-8');
+api_json();
 $response = ['success' => false, 'message' => ''];
 
 if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'administrador') {
@@ -17,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-require_csrf();
+api_require_csrf();
 
 $rol = trim((string)($_POST['rol'] ?? ''));
 if (!in_array($rol, ['ecografista', 'recepcionista'], true)) {

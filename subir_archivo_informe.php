@@ -4,12 +4,13 @@
  * Solo el ecografista autor del informe o un administrador.
  */
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/informes.php';
 require_once __DIR__ . '/lib/archivos.php';
 require_once __DIR__ . '/lib/seguridad.php';
 
-header('Content-Type: application/json; charset=utf-8');
+api_json();
 $response = ['success' => false, 'message' => 'Ocurrio un error inesperado.'];
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador'], true)) {
@@ -23,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode($response);
     exit();
 }
-require_csrf();
+api_require_csrf();
 
 $rol        = (string)$_SESSION['rol'];
 $usuario_id = (int)$_SESSION['usuario_id'];

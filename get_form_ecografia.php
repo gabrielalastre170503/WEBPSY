@@ -1,10 +1,11 @@
 <?php
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/estudios_render.php';
 require_once __DIR__ . '/lib/informes.php';
 
-header('Content-Type: application/json; charset=utf-8');
+api_json();
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 header('Expires: 0');

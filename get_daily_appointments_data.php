@@ -1,12 +1,13 @@
 <?php
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 
 // --- ESTA ES LA LÍNEA CLAVE QUE LO ARREGLA ---
 // Forzamos la zona horaria a la de Venezuela
 date_default_timezone_set('America/Caracas');
 
-header('Content-Type: application/json');
+api_json();
 
 // Seguridad: Solo administradores
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {

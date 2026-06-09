@@ -1,8 +1,9 @@
 ﻿<?php
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 
-header('Content-Type: application/json');
+api_json();
 
 // Seguridad
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente' || !isset($_GET['ecografista_id'])) {

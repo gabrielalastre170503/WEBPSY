@@ -1,7 +1,8 @@
 ﻿<?php
 session_start();
+require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
-header('Content-Type: application/json');
+api_json();
 
 if (!isset($_SESSION['usuario_id'])) { exit(); }
 $ecografista_id = $_SESSION['usuario_id'];
