@@ -2621,6 +2621,26 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     <script src="assets/js/shell-modals.js"></script>
 
     <script>window.ECO_PANEL = { csrf: '<?= csrf_token() ?>', usuarioId: <?= (int)$usuario_id ?> };</script>
+    <!-- CSRF: inyecta automáticamente el token en todas las peticiones fetch() same-origin -->
+    <script>
+        (function () {
+            var token = (window.ECO_PANEL && window.ECO_PANEL.csrf) || '';
+            if (!token || !window.fetch) return;
+            var _fetch = window.fetch;
+            window.fetch = function (input, init) {
+                init = init || {};
+                var url = (typeof input === 'string') ? input : (input && input.url) || '';
+                var sameOrigin = (url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0)
+                    || url.indexOf(window.location.origin) === 0;
+                if (sameOrigin) {
+                    var headers = new Headers(init.headers || (typeof input !== 'string' && input.headers) || {});
+                    if (!headers.has('X-CSRF-Token')) headers.set('X-CSRF-Token', token);
+                    init.headers = headers;
+                }
+                return _fetch(input, init);
+            };
+        })();
+    </script>
     <script src="assets/js/panel.js?v=<?= @filemtime(__DIR__ . '/assets/js/panel.js') ?>"></script>
 
 

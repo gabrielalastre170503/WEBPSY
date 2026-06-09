@@ -119,6 +119,7 @@ if (!$cita) { die("Error: La cita solicitada no fue encontrada."); }
         </div>
 
         <form action="guardar_cita.php" method="POST">
+            <?= csrf_field() ?>
             <input type="hidden" name="cita_id" value="<?php echo $cita['id']; ?>">
             <div class="form-group">
                 <label for="calendario">Seleccionar Fecha y Hora:</label>

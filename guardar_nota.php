@@ -9,6 +9,8 @@ if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'ecografista
     echo json_encode(['ok' => false, 'error' => 'Acceso denegado']); exit;
 }
 
+api_require_csrf();
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['ok' => false, 'error' => 'Método inválido']); exit;
 }

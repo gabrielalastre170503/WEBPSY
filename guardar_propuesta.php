@@ -14,6 +14,8 @@ if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista
     exit();
 }
 
+api_require_csrf();
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['cita_id'], $_POST['fecha_propuesta'], $_POST['motivo_reprogramacion'])) {
     echo json_encode($response);
     $conex->close();

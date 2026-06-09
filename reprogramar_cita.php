@@ -143,6 +143,7 @@ if (!$cita) { die("Error: Cita no encontrada o no tienes permiso para modificarl
             <p><strong>Fecha Actual:</strong> <?php echo date('d/m/Y h:i A', strtotime($cita['fecha_cita'])); ?></p>
         </div>
         <form action="actualizar_cita.php" method="POST">
+            <?= csrf_field() ?>
             <input type="hidden" name="cita_id" value="<?php echo $cita['id']; ?>">
             <div class="form-group">
                 <label for="calendario">Seleccionar Nueva Fecha y Hora:</label>

@@ -152,6 +152,7 @@ $href_volver = ($rol_usuario === 'recepcionista') ? 'recepcion_gestion_pacientes
         <p class="subtitulo">Para el paciente: <strong><?php echo htmlspecialchars($paciente['nombre_completo']); ?></strong></p>
         
         <form action="guardar_cita_directa.php" method="POST">
+            <?= csrf_field() ?>
             <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
 
             <?php if ($rol_usuario === 'recepcionista'): ?>

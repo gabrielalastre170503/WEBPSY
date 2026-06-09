@@ -15,6 +15,8 @@ if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista
     exit();
 }
 
+api_require_csrf();
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['paciente_id'], $_POST['fecha_cita'], $_POST['tipo_ecografia_id'])) {
     echo json_encode($response);
     exit();

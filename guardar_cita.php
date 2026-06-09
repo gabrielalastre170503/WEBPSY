@@ -11,6 +11,8 @@ if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista
     exit();
 }
 
+api_require_csrf();
+
 $rol = $_SESSION['rol'];
 $wants_json = (!empty($_POST['ajax']) && $_POST['ajax'] === '1');
 

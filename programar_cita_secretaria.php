@@ -108,6 +108,7 @@ $ecografistas_result = $conex->query("SELECT id, nombre_completo FROM usuarios W
             <p><strong>Motivo:</strong> <?php echo htmlspecialchars($cita['motivo_consulta']); ?></p>
         </div>
         <form action="guardar_cita.php" method="POST">
+            <?= csrf_field() ?>
             <input type="hidden" name="cita_id" value="<?php echo $cita['id']; ?>">
             
             <div class="form-group">

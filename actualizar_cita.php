@@ -9,6 +9,8 @@ if (!in_array(api_rol(), ['ecografista'], true)) {
     api_fail('Acceso no autorizado.', 403);
 }
 
+api_require_csrf();
+
 $response = ['success' => false, 'message' => 'Datos inválidos.'];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cita_id'], $_POST['nueva_fecha_cita'], $_POST['motivo_reprogramacion'])) {

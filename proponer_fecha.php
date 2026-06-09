@@ -129,6 +129,7 @@ if (!$cita) { die("Error: Cita no encontrada."); }
             <p><strong>Fecha solicitada por el paciente:</strong> <?php echo date('d/m/Y h:i A', strtotime($cita['fecha_cita'])); ?></p>
         </div>
         <form action="guardar_propuesta.php" method="POST">
+            <?= csrf_field() ?>
             <input type="hidden" name="cita_id" value="<?php echo $cita['id']; ?>">
             <div class="form-group">
                 <label for="calendario">Sugerir nueva fecha y hora:</label>
