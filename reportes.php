@@ -9,13 +9,16 @@ require_once __DIR__ . '/lib/reportes.php';
 require_once __DIR__ . '/lib/facturacion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: login.php'); exit; }
-if (($_SESSION['rol'] ?? '') !== 'administrador') { header('Location: dashboard_v2.php'); exit; }
+if (!in_array($_SESSION['rol'] ?? '', ['administrador', 'recepcionista'], true)) { header('Location: dashboard_v2.php'); exit; }
 
 [$desde, $hasta] = eco_reporte_rango($_GET['desde'] ?? null, $_GET['hasta'] ?? null);
 $resumen      = eco_reporte_resumen($conex, $desde, $hasta);
 $por_tipo     = eco_reporte_por_tipo($conex, $desde, $hasta);
 $por_eco      = eco_reporte_por_ecografista($conex, $desde, $hasta);
 $serie        = eco_reporte_serie_diaria($conex, $desde, $hasta);
+$por_metodo   = eco_reporte_por_metodo_pago($conex, $desde, $hasta);
+$top_pac      = eco_reporte_top_pacientes($conex, $desde, $hasta, 10);
+$comparativa  = eco_reporte_comparativa_meses($conex, 6);
 
 $qs = 'desde=' . urlencode($desde) . '&hasta=' . urlencode($hasta);
 
@@ -52,6 +55,7 @@ ob_start();
         <button type="submit" class="btn-primary" style="padding:9px 16px;"><i class="fa-solid fa-filter"></i> Aplicar</button>
         <div style="flex:1;"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?formato=pdf&<?= $qs ?>"><i class="fa-solid fa-file-pdf" style="color:#b91c1c;"></i> PDF</a>
             <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?r=resumen&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Resumen</a>
             <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?r=tipos&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Por tipo</a>
             <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?r=ecografistas&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Por ecografista</a>
@@ -82,6 +86,12 @@ ob_start();
     <?php else: ?>
         <div style="position:relative;height:280px;"><canvas id="repo-chart"></canvas></div>
     <?php endif; ?>
+</div>
+
+<!-- Comparativa mensual (independiente del rango) -->
+<div class="card" style="padding:18px;margin-bottom:16px;">
+    <h3 style="margin:0 0 12px;font-size:15px;color:var(--text-primary);"><i class="fa-solid fa-chart-column" style="color:var(--accent);"></i> Comparativa últimos 6 meses</h3>
+    <div style="position:relative;height:260px;"><canvas id="repo-meses"></canvas></div>
 </div>
 
 <!-- Tablas -->
@@ -132,19 +142,65 @@ ob_start();
         </table>
     </div>
 </div>
+
+<!-- Método de pago + Top pacientes -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-top:16px;">
+    <div class="card" style="padding:18px;">
+        <h3 style="margin:0 0 12px;font-size:15px;color:var(--text-primary);"><i class="fa-solid fa-money-bill-transfer" style="color:var(--accent);"></i> Ingresos por método de pago</h3>
+        <table class="eco-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="text-align:left;color:var(--text-secondary);border-bottom:1px solid var(--border-soft);">
+                <th style="padding:8px 6px;">Método</th><th style="padding:8px 6px;text-align:right;">Pagos</th><th style="padding:8px 6px;text-align:right;">Cobrado</th>
+            </tr></thead>
+            <tbody>
+            <?php if (empty($por_metodo)): ?>
+                <tr><td colspan="3" style="padding:12px 6px;color:var(--text-secondary);">Sin pagos registrados.</td></tr>
+            <?php else: foreach ($por_metodo as $r): ?>
+                <tr style="border-bottom:1px solid var(--border-soft);">
+                    <td style="padding:8px 6px;color:var(--text-primary);"><?= htmlspecialchars($r['metodo']) ?></td>
+                    <td style="padding:8px 6px;text-align:right;"><?= (int)$r['pagos'] ?></td>
+                    <td style="padding:8px 6px;text-align:right;"><?= htmlspecialchars(eco_money($r['cobrado'])) ?></td>
+                </tr>
+            <?php endforeach; endif; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" style="padding:18px;">
+        <h3 style="margin:0 0 12px;font-size:15px;color:var(--text-primary);"><i class="fa-solid fa-ranking-star" style="color:var(--accent);"></i> Top 10 pacientes</h3>
+        <table class="eco-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="text-align:left;color:var(--text-secondary);border-bottom:1px solid var(--border-soft);">
+                <th style="padding:8px 6px;">Paciente</th><th style="padding:8px 6px;text-align:right;">Citas</th><th style="padding:8px 6px;text-align:right;">Cobrado</th>
+            </tr></thead>
+            <tbody>
+            <?php if (empty($top_pac)): ?>
+                <tr><td colspan="3" style="padding:12px 6px;color:var(--text-secondary);">Sin datos.</td></tr>
+            <?php else: foreach ($top_pac as $r): ?>
+                <tr style="border-bottom:1px solid var(--border-soft);">
+                    <td style="padding:8px 6px;color:var(--text-primary);"><?= htmlspecialchars($r['paciente']) ?></td>
+                    <td style="padding:8px 6px;text-align:right;"><?= (int)$r['citas'] ?></td>
+                    <td style="padding:8px 6px;text-align:right;"><?= htmlspecialchars(eco_money($r['cobrado'])) ?></td>
+                </tr>
+            <?php endforeach; endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
 <?php
 $page_content = ob_get_clean();
 
 $chart_labels = json_encode(array_map(fn($r) => $r['dia'], $serie));
 $chart_citas  = json_encode(array_map(fn($r) => $r['citas'], $serie));
 $chart_cobr   = json_encode(array_map(fn($r) => $r['cobrado'], $serie));
+$mes_labels   = json_encode(array_map(fn($r) => $r['mes'], $comparativa));
+$mes_citas    = json_encode(array_map(fn($r) => $r['citas'], $comparativa));
+$mes_cobr     = json_encode(array_map(fn($r) => $r['cobrado'], $comparativa));
 
 $page_scripts_extra = <<<HTML
 <script>
 (function () {
+    if (typeof Chart === 'undefined') return;
     var el = document.getElementById('repo-chart');
-    if (!el || typeof Chart === 'undefined') return;
-    new Chart(el, {
+    if (el) new Chart(el, {
         type: 'line',
         data: {
             labels: {$chart_labels},
@@ -156,6 +212,25 @@ $page_scripts_extra = <<<HTML
         options: {
             responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
+            scales: {
+                y:  { type: 'linear', position: 'left',  beginAtZero: true, title: { display: true, text: 'Citas' } },
+                y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: 'Cobrado' } }
+            }
+        }
+    });
+
+    var elm = document.getElementById('repo-meses');
+    if (elm) new Chart(elm, {
+        type: 'bar',
+        data: {
+            labels: {$mes_labels},
+            datasets: [
+                { label: 'Citas', data: {$mes_citas}, backgroundColor: '#0284c7', yAxisID: 'y' },
+                { label: 'Cobrado', data: {$mes_cobr}, backgroundColor: '#15803d', yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
             scales: {
                 y:  { type: 'linear', position: 'left',  beginAtZero: true, title: { display: true, text: 'Citas' } },
                 y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: 'Cobrado' } }

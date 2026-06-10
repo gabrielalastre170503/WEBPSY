@@ -147,6 +147,113 @@ if (!function_exists('eco_reporte_por_ecografista')) {
     }
 }
 
+if (!function_exists('eco_reporte_por_metodo_pago')) {
+    /** Ingresos cobrados agrupados por metodo de pago. @return list<array> */
+    function eco_reporte_por_metodo_pago(mysqli $conex, string $desde, string $hasta): array
+    {
+        $ini = $desde . ' 00:00:00';
+        $fin = $hasta . ' 23:59:59';
+        $sql = "SELECT
+                    COALESCE(NULLIF(metodo_pago, ''), 'Sin método') AS metodo,
+                    COUNT(*) AS pagos,
+                    COALESCE(SUM(monto_pagado), 0) AS cobrado
+                FROM citas
+                WHERE fecha_cita BETWEEN ? AND ? AND monto_pagado > 0
+                GROUP BY metodo
+                ORDER BY cobrado DESC, metodo ASC";
+        $st = $conex->prepare($sql);
+        $st->bind_param('ss', $ini, $fin);
+        $st->execute();
+        $res = $st->get_result();
+        $rows = [];
+        while ($r = $res->fetch_assoc()) {
+            $rows[] = [
+                'metodo'  => $r['metodo'],
+                'pagos'   => (int)$r['pagos'],
+                'cobrado' => (float)$r['cobrado'],
+            ];
+        }
+        $st->close();
+        return $rows;
+    }
+}
+
+if (!function_exists('eco_reporte_top_pacientes')) {
+    /** Pacientes con mayor monto cobrado en el periodo. @return list<array> */
+    function eco_reporte_top_pacientes(mysqli $conex, string $desde, string $hasta, int $limit = 10): array
+    {
+        $ini = $desde . ' 00:00:00';
+        $fin = $hasta . ' 23:59:59';
+        $limit = max(1, min($limit, 50));
+        $sql = "SELECT
+                    u.nombre_completo AS paciente,
+                    COUNT(*) AS citas,
+                    COALESCE(SUM(c.monto_pagado), 0) AS cobrado
+                FROM citas c
+                JOIN usuarios u ON u.id = c.paciente_id
+                WHERE c.fecha_cita BETWEEN ? AND ?
+                GROUP BY c.paciente_id, paciente
+                ORDER BY cobrado DESC, citas DESC
+                LIMIT ?";
+        $st = $conex->prepare($sql);
+        $st->bind_param('ssi', $ini, $fin, $limit);
+        $st->execute();
+        $res = $st->get_result();
+        $rows = [];
+        while ($r = $res->fetch_assoc()) {
+            $rows[] = [
+                'paciente' => $r['paciente'],
+                'citas'    => (int)$r['citas'],
+                'cobrado'  => (float)$r['cobrado'],
+            ];
+        }
+        $st->close();
+        return $rows;
+    }
+}
+
+if (!function_exists('eco_reporte_comparativa_meses')) {
+    /**
+     * Comparativa de los ultimos $n meses (citas e ingresos cobrados),
+     * rellenando con cero los meses sin actividad.
+     * @return list<array{mes:string,citas:int,cobrado:float}>
+     */
+    function eco_reporte_comparativa_meses(mysqli $conex, int $n = 6): array
+    {
+        $n = max(2, min($n, 24));
+        $cursor = new DateTime(date('Y-m-01'));
+        $cursor->modify('-' . ($n - 1) . ' months');
+        $desde = $cursor->format('Y-m-d') . ' 00:00:00';
+
+        $meses = [];
+        $c = clone $cursor;
+        for ($i = 0; $i < $n; $i++) {
+            $k = $c->format('Y-m');
+            $meses[$k] = ['mes' => $k, 'citas' => 0, 'cobrado' => 0.0];
+            $c->modify('+1 month');
+        }
+
+        $sql = "SELECT DATE_FORMAT(fecha_cita, '%Y-%m') AS mes,
+                       COUNT(*) AS citas,
+                       COALESCE(SUM(monto_pagado), 0) AS cobrado
+                FROM citas
+                WHERE fecha_cita >= ?
+                GROUP BY mes";
+        $st = $conex->prepare($sql);
+        $st->bind_param('s', $desde);
+        $st->execute();
+        $res = $st->get_result();
+        while ($r = $res->fetch_assoc()) {
+            if (isset($meses[$r['mes']])) {
+                $meses[$r['mes']]['citas']   = (int)$r['citas'];
+                $meses[$r['mes']]['cobrado'] = (float)$r['cobrado'];
+            }
+        }
+        $st->close();
+        return array_values($meses);
+    }
+}
+
 if (!function_exists('eco_reporte_serie_diaria')) {
     /** Serie diaria (citas e ingresos cobrados) para grafico de tendencia. @return list<array> */
     function eco_reporte_serie_diaria(mysqli $conex, string $desde, string $hasta): array

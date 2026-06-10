@@ -62,7 +62,7 @@ $menu = [
             'label' => 'Reportes',
             'icon' => 'fa-solid fa-chart-line',
             'href' => 'reportes.php',
-            'roles' => ['administrador'],
+            'roles' => ['administrador', 'recepcionista'],
         ],
 
         /* === ECOGRAFISTA === */
