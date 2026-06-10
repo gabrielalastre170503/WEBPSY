@@ -709,6 +709,7 @@ $total_pacientes = (int)($r->fetch_assoc()['c'] ?? 0);
 
         <div class="form-footer">
             ¿Aún no tienes una cuenta? <a href="registro.php">Regístrate aquí</a>
+            <div style="margin-top:8px;"><a href="privacidad.php">Aviso de privacidad</a></div>
         </div>
     </section>
 </main>

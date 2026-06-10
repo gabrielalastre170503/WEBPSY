@@ -808,6 +808,7 @@ $total_tipos = (int)($r->fetch_assoc()['c'] ?? 0);
 
         <div class="form-footer">
             ¿Ya tienes una cuenta? <a href="login.php">Inicia sesión aquí</a>
+            <div style="margin-top:8px;">Al registrarte aceptas nuestro <a href="privacidad.php">Aviso de privacidad</a></div>
         </div>
     </section>
 </main>
