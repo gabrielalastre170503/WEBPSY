@@ -26,6 +26,17 @@ if (!isset($_SESSION['usuario_id'])) {
     exit;
 }
 
+// Gate de consentimiento informado (cumplimiento médico): el paciente debe
+// aceptar la versión vigente antes de usar el sistema. Defensivo: solo si hay
+// conexión disponible (las vistas de paciente incluyen conexion.php).
+if (($_SESSION['rol'] ?? '') === 'paciente' && isset($conex) && $conex instanceof mysqli) {
+    require_once __DIR__ . '/../lib/consentimiento.php';
+    if (!eco_consentimiento_vigente($conex, (int)$_SESSION['usuario_id'])) {
+        header('Location: consentimiento.php');
+        exit;
+    }
+}
+
 $page_title          = $page_title          ?? 'Panel';
 $page_subtitle       = $page_subtitle       ?? '';
 $browser_title       = $browser_title       ?? '';
