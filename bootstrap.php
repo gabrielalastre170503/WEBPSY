@@ -43,6 +43,32 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
 }
 
+/* ── 1b. Cabeceras de seguridad HTTP ──────────────────────────────────
+ * CSP con allowlist de los CDNs realmente usados (jsdelivr, cdnjs, Google
+ * Fonts, npmcdn/unpkg para el locale de flatpickr). Se permite 'unsafe-inline'
+ * porque el código tiene mucho <script>/<style>/onclick inline. Aun así limita
+ * orígenes externos, bloquea objetos y el framing por terceros (anti-clickjacking).
+ * No se usa upgrade-insecure-requests para no romper el desarrollo en http. */
+if (!headers_sent()) {
+    header('Content-Security-Policy: ' . implode('; ', [
+        "default-src 'self'",
+        "base-uri 'self'",
+        "object-src 'none'",
+        "frame-ancestors 'self'",
+        "form-action 'self'",
+        "img-src 'self' data: blob: https:",
+        "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://npmcdn.com https://unpkg.com",
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://npmcdn.com https://unpkg.com",
+        "connect-src 'self'",
+        "frame-src 'self'",
+    ]));
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
+}
+
 /* ── 2. Helpers CSRF ──────────────────────────────────────────────── */
 if (!function_exists('csrf_token')) {
 
