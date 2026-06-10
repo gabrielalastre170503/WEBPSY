@@ -31,12 +31,18 @@ $satisf       = eco_reporte_satisfaccion($conex, $desde, $hasta, $ecoId);
 // Análisis clínico (solo ecografista): gráficos de su actividad y pacientes.
 $clin = null;
 if ($ecoId) {
+    // Top tipos de estudio: derivado de $por_tipo (ya eco-scopeado), sin query extra.
+    $tipos_top = array_slice($por_tipo, 0, 8);
     $clin = [
         'dia'    => eco_reporte_eco_dia_semana($conex, $ecoId, $desde, $hasta),
         'hora'   => eco_reporte_eco_hora($conex, $ecoId, $desde, $hasta),
         'edad'   => eco_reporte_eco_edad($conex, $ecoId, $desde, $hasta),
         'dir'    => eco_reporte_eco_direccion($conex, $ecoId, $desde, $hasta, 10),
         'nuevos' => eco_reporte_eco_pacientes_nuevos($conex, $ecoId, 6),
+        'tipos'  => [
+            'labels' => array_map(fn($r) => $r['tipo'], $tipos_top),
+            'data'   => array_map(fn($r) => (int)$r['citas'], $tipos_top),
+        ],
     ];
 }
 
@@ -220,6 +226,10 @@ ob_start();
         <div style="position:relative;height:260px;"><canvas id="clin-nuevos"></canvas></div>
     </div>
     <div class="card" style="padding:18px;">
+        <h3 style="margin:0 0 12px;font-size:15px;color:var(--text-primary);"><i class="fa-solid fa-wave-square" style="color:var(--accent);"></i> Estudios más frecuentes</h3>
+        <div style="position:relative;height:260px;"><canvas id="clin-tipos"></canvas></div>
+    </div>
+    <div class="card" style="padding:18px;">
         <h3 style="margin:0 0 12px;font-size:15px;color:var(--text-primary);"><i class="fa-solid fa-chart-simple" style="color:var(--accent);"></i> Actividad por día</h3>
         <div style="position:relative;height:260px;"><canvas id="clin-dia"></canvas></div>
     </div>
@@ -308,6 +318,10 @@ if ($clin) {
     mk('clin-nuevos', { type:'line',
         data:{ labels:D.nuevos.labels, datasets:[{ label:'Pacientes', data:D.nuevos.data, borderColor:'#22c55e', backgroundColor:hexA('#22c55e',.12), fill:true, tension:.35, pointRadius:3, borderWidth:2 }] },
         options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true,ticks:{precision:0},grid:{color:grid}}, x:{grid:{display:false}} } } });
+
+    mk('clin-tipos', { type:'bar',
+        data:{ labels:D.tipos.labels, datasets:[{ label:'Estudios', data:D.tipos.data, backgroundColor:'#0284c7', borderRadius:6 }] },
+        options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{beginAtZero:true,ticks:{precision:0},grid:{color:grid}}, y:{grid:{display:false}} } } });
 
     mk('clin-dia', { type:'bar',
         data:{ labels:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'], datasets:[{ label:'Citas', data:D.dia, backgroundColor:'#8b5cf6', borderRadius:6, maxBarThickness:34 }] },
