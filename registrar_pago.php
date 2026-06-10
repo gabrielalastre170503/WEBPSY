@@ -12,12 +12,7 @@ require_once __DIR__ . '/lib/citas.php';
 api_json();
 $response = ['success' => false, 'message' => 'Ocurrio un error.'];
 
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'] ?? '', ['recepcionista', 'administrador', 'ecografista'], true)) {
-    http_response_code(403);
-    $response['message'] = 'Acceso no autorizado.';
-    echo json_encode($response);
-    exit();
-}
+api_require_roles(['recepcionista', 'administrador', 'ecografista']);
 $rol_sesion = (string)$_SESSION['rol'];
 $uid_sesion = (int)$_SESSION['usuario_id'];
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

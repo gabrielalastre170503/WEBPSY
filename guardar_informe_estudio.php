@@ -32,12 +32,7 @@ function eco_facturar_si_aplica(mysqli $conex, int $pacienteId, int $ecografista
 api_json();
 $response = ['success' => false, 'message' => 'Ocurrio un error inesperado.'];
 
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador'])) {
-    http_response_code(403);
-    $response['message'] = 'Acceso no autorizado.';
-    echo json_encode($response);
-    exit();
-}
+api_require_roles(['ecografista', 'administrador']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $response['message'] = 'Metodo no permitido.';

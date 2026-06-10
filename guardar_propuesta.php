@@ -7,12 +7,7 @@ require_once __DIR__ . '/lib/citas.php';
 api_json();
 $response = ['success' => false, 'message' => 'Datos inválidos.'];
 
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista'], true)) {
-    $response['message'] = 'Acceso no autorizado.';
-    http_response_code(403);
-    echo json_encode($response);
-    exit();
-}
+api_require_roles(['ecografista']);
 
 api_require_csrf();
 
