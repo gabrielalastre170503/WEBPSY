@@ -14,10 +14,10 @@ $usuario_id = $_SESSION['usuario_id'];
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion'])) {
     require_csrf();
 
-    // --- ACTIVAR / DESACTIVAR 2FA (solo admin y ecografista) ---
+    // --- ACTIVAR / DESACTIVAR 2FA (todos los roles con correo) ---
     if ($_POST['accion'] == 'toggle_2fa') {
         $rol = $_SESSION['rol'] ?? '';
-        if (!in_array($rol, ['administrador', 'ecografista'], true)) {
+        if (!in_array($rol, ['administrador', 'ecografista', 'recepcionista', 'paciente'], true)) {
             header('Location: perfil.php');
             exit();
         }

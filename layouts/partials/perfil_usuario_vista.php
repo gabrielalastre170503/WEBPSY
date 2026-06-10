@@ -121,7 +121,7 @@ if (!isset($avatarInicial) || $avatarInicial === '') {
             </form>
         </div>
 
-        <?php if (in_array($rol_usuario, ['administrador', 'ecografista'], true)): ?>
+        <?php if (in_array($rol_usuario, ['administrador', 'ecografista', 'recepcionista', 'paciente'], true)): ?>
         <div class="profile-card">
             <h4><i class="fa-solid fa-shield-halved"></i> Verificación en dos pasos (2FA)</h4>
             <p style="font-size:13px;color:var(--text-secondary,#64748b);line-height:1.55;margin:0 0 14px;">
@@ -158,7 +158,9 @@ if (!isset($avatarInicial) || $avatarInicial === '') {
                 <?php endif; ?>
                 <li><i class="fa-solid fa-shield<?= !empty($dosFactorActivo) ? '-halved' : '' ?>"></i> 2FA: <?= !empty($dosFactorActivo) ? 'activada' : 'desactivada' ?>.</li>
             </ul>
-            <a href="#" class="perfil-action-link" onclick="return false;"><i class="fa-solid fa-download"></i> Descargar historial</a>
+            <?php if ($rol_usuario === 'paciente'): ?>
+            <a href="descargar_historial.php" class="perfil-action-link"><i class="fa-solid fa-download"></i> Descargar historial</a>
+            <?php endif; ?>
         </div>
     </div>
 

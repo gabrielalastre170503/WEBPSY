@@ -44,9 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 eco_login_registrar($conex, $correo, true);
                 eco_login_limpiar($conex, $correo);
                 if ($usuario['estado'] == 'aprobado') {
-                    // ── 2FA por correo (opcional) para admin/ecografista ──
-                    if ((int)$usuario['two_factor_enabled'] === 1
-                        && in_array($usuario['rol'], ['administrador', 'ecografista'], true)) {
+                    // ── 2FA por correo (opcional, opt-in desde el perfil) — cualquier rol ──
+                    if ((int)$usuario['two_factor_enabled'] === 1) {
                         $otp = eco_otp_codigo();
                         $_SESSION['2fa_pending'] = [
                             'user_id'    => (int)$usuario['id'],

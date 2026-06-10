@@ -115,8 +115,28 @@ ob_start();
     padding:9px 16px; border-radius:9px; font-size:13px; font-weight:600;
     background:var(--accent-soft); color:var(--accent-text); border:1px solid rgba(2,177,244,.25);
     text-decoration:none; transition:all .2s ease; white-space:nowrap;
+    cursor:pointer; font-family:inherit;
 }
 .inf-btn:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+/* Modal "Ver informe" */
+.inf-modal { position:fixed; inset:0; z-index:1000; display:none; }
+.inf-modal.is-open { display:block; }
+.inf-modal__backdrop { position:absolute; inset:0; background:rgba(12,26,46,.55); }
+.inf-modal__dialog {
+    position:relative; margin:3vh auto; width:min(980px,95vw); height:94vh;
+    background:var(--bg-surface,#fff); border-radius:16px; box-shadow:0 30px 80px rgba(0,0,0,.32);
+    display:flex; flex-direction:column; overflow:hidden;
+}
+.inf-modal__head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 18px; border-bottom:1px solid var(--border,#e5e7eb); flex-shrink:0; }
+.inf-modal__head h3 { margin:0; font-size:15px; display:flex; align-items:center; gap:8px; color:var(--text-primary,#0c1a2e); min-width:0; }
+.inf-modal__head h3 span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.inf-modal__actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.inf-modal__close { background:transparent; border:none; font-size:18px; cursor:pointer; color:var(--text-secondary,#64748b); width:34px; height:34px; border-radius:8px; }
+.inf-modal__close:hover { background:var(--bg-muted,#f1f5f9); color:var(--text-primary,#0c1a2e); }
+.inf-modal__body { flex:1; min-height:0; background:#f0f2f5; }
+#inf-modal-frame { width:100%; height:100%; border:0; display:block; }
+body.inf-modal-lock { overflow:hidden; }
 
 .inf-empty { text-align:center; padding:48px 24px; color:var(--text-muted); }
 .inf-empty > i { font-size:42px; color:var(--accent); opacity:.5; margin-bottom:14px; display:block; }
@@ -215,9 +235,9 @@ ob_start();
 
                     <div class="inf-side">
                         <span class="badge <?= $badge ?>"><?= htmlspecialchars($etiqueta) ?></span>
-                        <a class="inf-btn" href="ver_informe_estudio.php?informe_id=<?= (int)$inf['id'] ?>" target="_blank" rel="noopener">
+                        <button type="button" class="inf-btn" data-informe-id="<?= (int)$inf['id'] ?>" data-informe-titulo="<?= htmlspecialchars($titulo, ENT_QUOTES) ?>">
                             <i class="fa-solid fa-eye"></i> Ver informe
-                        </a>
+                        </button>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -230,6 +250,22 @@ ob_start();
         </div>
 
     <?php endif; ?>
+</div>
+
+<div id="inf-modal" class="inf-modal" aria-hidden="true">
+    <div class="inf-modal__backdrop" data-inf-close></div>
+    <div class="inf-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="inf-modal-title">
+        <div class="inf-modal__head">
+            <h3 id="inf-modal-title"><i class="fa-solid fa-file-medical" style="color:var(--accent);"></i> <span id="inf-modal-titulo">Informe</span></h3>
+            <div class="inf-modal__actions">
+                <a id="inf-modal-open" class="inf-btn" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> Abrir / Imprimir</a>
+                <button type="button" class="inf-modal__close" data-inf-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+        <div class="inf-modal__body">
+            <iframe id="inf-modal-frame" title="Informe del estudio" src="about:blank"></iframe>
+        </div>
+    </div>
 </div>
 
 <?php
@@ -269,6 +305,44 @@ $page_scripts_extra = <<<'HTML'
     });
 
     if (search) search.addEventListener('input', aplicar);
+})();
+</script>
+<script>
+(function () {
+    var modal   = document.getElementById('inf-modal');
+    if (!modal) return;
+    var frame   = document.getElementById('inf-modal-frame');
+    var titulo  = document.getElementById('inf-modal-titulo');
+    var openLnk = document.getElementById('inf-modal-open');
+
+    function abrir(id, t) {
+        var url = 'ver_informe_estudio.php?informe_id=' + encodeURIComponent(id);
+        frame.src = url;
+        openLnk.href = url;
+        titulo.textContent = t || 'Informe';
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('inf-modal-lock');
+    }
+    function cerrar() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('inf-modal-lock');
+        frame.src = 'about:blank';
+    }
+
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.inf-btn[data-informe-id]');
+        if (btn) {
+            e.preventDefault();
+            abrir(btn.getAttribute('data-informe-id'), btn.getAttribute('data-informe-titulo'));
+            return;
+        }
+        if (e.target.closest('[data-inf-close]')) cerrar();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) cerrar();
+    });
 })();
 </script>
 HTML;
