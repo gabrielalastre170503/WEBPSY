@@ -78,6 +78,13 @@ $resultado = $conex->query($sql);
             content: ' \25BC'; /* Flecha hacia abajo */
             color: #02b1f4;
         }
+
+        /* --- PAGINACIÓN --- */
+        .eco-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+        .eco-pager__btn { background: #02b1f4; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background .2s; }
+        .eco-pager__btn:hover:not(:disabled) { background: #0299d6; }
+        .eco-pager__btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .eco-pager__info { color: #555; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -137,11 +144,13 @@ $resultado = $conex->query($sql);
         const contenedorTabla = document.getElementById('tabla-citas-admin-container');
 
         // --- FUNCIÓN PARA BUSCAR Y RECARGAR LA TABLA ---
-        function buscarCitas(query) {
+        let queryActualCitas = '';
+        function buscarCitas(query, page = 1) {
+            queryActualCitas = query;
             fetch('buscar_citas_admin.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `query=${encodeURIComponent(query)}`
+                body: `query=${encodeURIComponent(query)}&page=${page}`
             })
             .then(response => response.text())
             .then(data => {
@@ -153,9 +162,17 @@ $resultado = $conex->query($sql);
         // Carga inicial de la tabla
         buscarCitas('');
 
-        // Búsqueda en tiempo real al escribir
+        // Búsqueda en tiempo real al escribir (vuelve a la página 1)
         buscador.addEventListener('keyup', function() {
-            buscarCitas(this.value);
+            buscarCitas(this.value, 1);
+        });
+
+        // Paginación: los botones del footer reenvían la búsqueda con el mismo término.
+        contenedorTabla.addEventListener('click', function(event) {
+            const btn = event.target.closest('.eco-pager__btn');
+            if (!btn || btn.disabled) return;
+            const page = parseInt(btn.dataset.page, 10);
+            if (page >= 1) buscarCitas(queryActualCitas, page);
         });
 
         // --- LÓGICA CORREGIDA PARA ORDENAR LA TABLA (DELEGACIÓN DE EVENTOS) ---

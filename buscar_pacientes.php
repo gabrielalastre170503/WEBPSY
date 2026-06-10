@@ -7,20 +7,37 @@ if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista
     exit('Acceso denegado');
 }
 
+require_once __DIR__ . '/lib/paginacion.php';
+[$page, $perPage, $offset] = eco_paginacion_args(25);
+
 $ecografista_id = $_SESSION['usuario_id'];
 $termino_busqueda = isset($_POST['query']) ? $_POST['query'] : '';
 $busqueda = "%" . $termino_busqueda . "%";
+
+$where = "WHERE u.rol = 'paciente' AND u.estado = 'aprobado'
+        AND (u.creado_por_id = ? OR c.ecografista_id = ?)
+        AND (u.nombre_completo LIKE ? OR u.cedula LIKE ? OR u.direccion LIKE ?)";
+
+// Total para la paginación (COUNT DISTINCT por el LEFT JOIN a citas).
+$cstmt = $conex->prepare("SELECT COUNT(DISTINCT u.id) AS n
+        FROM usuarios u
+        LEFT JOIN citas c ON u.id = c.paciente_id
+        $where");
+$cstmt->bind_param("iisss", $ecografista_id, $ecografista_id, $busqueda, $busqueda, $busqueda);
+$cstmt->execute();
+$total = (int)($cstmt->get_result()->fetch_assoc()['n'] ?? 0);
+$cstmt->close();
 
 // --- CONSULTA ACTUALIZADA PARA INCLUIR fecha_registro ---
 $sql = "SELECT DISTINCT u.id, u.nombre_completo, u.correo, u.cedula, u.direccion, u.fecha_registro
         FROM usuarios u
         LEFT JOIN citas c ON u.id = c.paciente_id
-        WHERE u.rol = 'paciente' AND u.estado = 'aprobado'
-        AND (u.creado_por_id = ? OR c.ecografista_id = ?)
-        AND (u.nombre_completo LIKE ? OR u.cedula LIKE ? OR u.direccion LIKE ?)";
+        $where
+        ORDER BY u.nombre_completo ASC
+        LIMIT ? OFFSET ?";
 
 $stmt = $conex->prepare($sql);
-$stmt->bind_param("iisss", $ecografista_id, $ecografista_id, $busqueda, $busqueda, $busqueda);
+$stmt->bind_param("iisssii", $ecografista_id, $ecografista_id, $busqueda, $busqueda, $busqueda, $perPage, $offset);
 $stmt->execute();
 $resultado = $stmt->get_result();
 
@@ -46,6 +63,7 @@ if ($resultado->num_rows > 0) {
 } else {
     echo "<p>No se encontraron pacientes que coincidan con tu búsqueda.</p>";
 }
+echo eco_paginacion_html($page, $perPage, $total, 'pacientes');
 $stmt->close();
 $conex->close();
 ?>

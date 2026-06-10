@@ -3617,12 +3617,14 @@ if (newPatientsCanvas) {
         const buscadorPacientes = document.getElementById('buscador-pacientes');
         const tablaPacientesContainer = document.getElementById('tabla-pacientes-container');
         
-        function buscarMisPacientes(query) {
+        let queryActualMisPacientes = '';
+        function buscarMisPacientes(query, page = 1) {
             if (!tablaPacientesContainer) return;
+            queryActualMisPacientes = query;
             fetch('buscar_pacientes.php', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: 'query=' + encodeURIComponent(query)
+                body: 'query=' + encodeURIComponent(query) + '&page=' + page
             })
             .then(response => response.text())
             .then(data => { tablaPacientesContainer.innerHTML = data; })
@@ -3632,9 +3634,16 @@ if (newPatientsCanvas) {
         if (buscadorPacientes) {
             // Carga inicial de la tabla
             buscarMisPacientes('');
-            // Búsqueda en tiempo real al escribir
+            // Búsqueda en tiempo real al escribir (vuelve a la página 1)
             buscadorPacientes.addEventListener('keyup', function() {
-                buscarMisPacientes(this.value);
+                buscarMisPacientes(this.value, 1);
+            });
+            // Paginación: los botones del footer reenvían la búsqueda con el mismo término.
+            tablaPacientesContainer.addEventListener('click', function(event) {
+                const btn = event.target.closest('.eco-pager__btn');
+                if (!btn || btn.disabled) return;
+                const page = parseInt(btn.dataset.page, 10);
+                if (page >= 1) buscarMisPacientes(queryActualMisPacientes, page);
             });
         }
 

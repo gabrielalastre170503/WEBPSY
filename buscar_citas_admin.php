@@ -7,11 +7,28 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
     exit('Acceso denegado');
 }
 
+require_once __DIR__ . '/lib/paginacion.php';
+[$page, $perPage, $offset] = eco_paginacion_args(25);
+
 $termino_busqueda = isset($_POST['query']) ? $_POST['query'] : '';
 $busqueda = "%" . $termino_busqueda . "%";
 
+$where = "WHERE paciente.nombre_completo LIKE ? OR psicologo.nombre_completo LIKE ? OR paciente.cedula LIKE ?";
+
+// Total para la paginación (mismo WHERE).
+$total = 0;
+$cstmt = $conex->prepare("SELECT COUNT(*) AS n
+        FROM citas c
+        JOIN usuarios paciente ON c.paciente_id = paciente.id
+        LEFT JOIN usuarios psicologo ON c.ecografista_id = psicologo.id
+        $where");
+$cstmt->bind_param("sss", $busqueda, $busqueda, $busqueda);
+$cstmt->execute();
+$total = (int)($cstmt->get_result()->fetch_assoc()['n'] ?? 0);
+$cstmt->close();
+
 // Consulta actualizada para incluir la cédula del paciente
-$sql = "SELECT 
+$sql = "SELECT
             c.id, c.fecha_cita, c.estado,
             paciente.nombre_completo as paciente_nombre,
             paciente.cedula as paciente_cedula, -- <-- Campo añadido
@@ -19,11 +36,12 @@ $sql = "SELECT
         FROM citas c
         JOIN usuarios paciente ON c.paciente_id = paciente.id
         LEFT JOIN usuarios psicologo ON c.ecografista_id = psicologo.id
-        WHERE paciente.nombre_completo LIKE ? OR psicologo.nombre_completo LIKE ? OR paciente.cedula LIKE ?
-        ORDER BY c.fecha_solicitud DESC";
+        $where
+        ORDER BY c.fecha_solicitud DESC
+        LIMIT ? OFFSET ?";
 
 $stmt = $conex->prepare($sql);
-$stmt->bind_param("sss", $busqueda, $busqueda, $busqueda);
+$stmt->bind_param("sssii", $busqueda, $busqueda, $busqueda, $perPage, $offset);
 $stmt->execute();
 $resultado = $stmt->get_result();
 
@@ -44,6 +62,7 @@ if ($resultado->num_rows > 0) {
 } else {
     echo "<p>No se encontraron citas que coincidan con tu búsqueda.</p>";
 }
+echo eco_paginacion_html($page, $perPage, $total, 'citas');
 $stmt->close();
 $conex->close();
 ?>

@@ -5837,3 +5837,10 @@ body.fade-out {
 .btn-edit-historia i {
     margin-right: 5px;
 }
+
+/* --- PAGINACIÓN (lib/paginacion.php) --- */
+.eco-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+.eco-pager__btn { background: #02b1f4; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font: inherit; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background .2s; }
+.eco-pager__btn:hover:not(:disabled) { background: #0299d6; }
+.eco-pager__btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+.eco-pager__info { color: #555; font-size: 13px; }
