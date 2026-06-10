@@ -31,10 +31,14 @@ if (!function_exists('eco_reporte_resumen')) {
      *   pendientes:int,pacientes:int,facturado:float,cobrado:float,saldo:float,
      *   exonerados:int,tasa_cobro:float}
      */
-    function eco_reporte_resumen(mysqli $conex, string $desde, string $hasta): array
+    function eco_reporte_resumen(mysqli $conex, string $desde, string $hasta, ?int $ecografistaId = null): array
     {
         $ini = $desde . ' 00:00:00';
         $fin = $hasta . ' 23:59:59';
+        $cond = ''; $types = 'ss'; $args = [$ini, $fin];
+        if ($ecografistaId !== null && $ecografistaId > 0) {
+            $cond = ' AND ecografista_id = ?'; $types .= 'i'; $args[] = $ecografistaId;
+        }
         $sql = "SELECT
                     COUNT(*) AS citas,
                     SUM(estado = 'completada') AS completadas,
@@ -52,9 +56,9 @@ if (!function_exists('eco_reporte_resumen')) {
                     SUM(estado IN ('confirmada','reprogramada') AND fecha_cita < NOW()) AS ausentes_presuntas,
                     SUM(estado IN ('confirmada','reprogramada','completada','no_asistio') AND fecha_cita < NOW()) AS agendadas_vencidas
                 FROM citas
-                WHERE fecha_cita BETWEEN ? AND ?";
+                WHERE fecha_cita BETWEEN ? AND ?" . $cond;
         $st = $conex->prepare($sql);
-        $st->bind_param('ss', $ini, $fin);
+        $st->bind_param($types, ...$args);
         $st->execute();
         $r = $st->get_result()->fetch_assoc() ?: [];
         $st->close();
@@ -89,10 +93,14 @@ if (!function_exists('eco_reporte_resumen')) {
 
 if (!function_exists('eco_reporte_por_tipo')) {
     /** Desglose por tipo de ecografia. @return list<array> */
-    function eco_reporte_por_tipo(mysqli $conex, string $desde, string $hasta): array
+    function eco_reporte_por_tipo(mysqli $conex, string $desde, string $hasta, ?int $ecografistaId = null): array
     {
         $ini = $desde . ' 00:00:00';
         $fin = $hasta . ' 23:59:59';
+        $cond = ''; $types = 'ss'; $args = [$ini, $fin];
+        if ($ecografistaId !== null && $ecografistaId > 0) {
+            $cond = ' AND c.ecografista_id = ?'; $types .= 'i'; $args[] = $ecografistaId;
+        }
         $sql = "SELECT
                     COALESCE(t.nombre, 'Sin tipo') AS tipo,
                     COUNT(*) AS citas,
@@ -101,11 +109,11 @@ if (!function_exists('eco_reporte_por_tipo')) {
                     COALESCE(SUM(c.monto_pagado), 0) AS cobrado
                 FROM citas c
                 LEFT JOIN tipos_ecografias t ON t.id = c.tipo_ecografia_id
-                WHERE c.fecha_cita BETWEEN ? AND ?
+                WHERE c.fecha_cita BETWEEN ? AND ?" . $cond . "
                 GROUP BY tipo
                 ORDER BY citas DESC, tipo ASC";
         $st = $conex->prepare($sql);
-        $st->bind_param('ss', $ini, $fin);
+        $st->bind_param($types, ...$args);
         $st->execute();
         $res = $st->get_result();
         $rows = [];
@@ -161,20 +169,24 @@ if (!function_exists('eco_reporte_por_ecografista')) {
 
 if (!function_exists('eco_reporte_por_metodo_pago')) {
     /** Ingresos cobrados agrupados por metodo de pago. @return list<array> */
-    function eco_reporte_por_metodo_pago(mysqli $conex, string $desde, string $hasta): array
+    function eco_reporte_por_metodo_pago(mysqli $conex, string $desde, string $hasta, ?int $ecografistaId = null): array
     {
         $ini = $desde . ' 00:00:00';
         $fin = $hasta . ' 23:59:59';
+        $cond = ''; $types = 'ss'; $args = [$ini, $fin];
+        if ($ecografistaId !== null && $ecografistaId > 0) {
+            $cond = ' AND ecografista_id = ?'; $types .= 'i'; $args[] = $ecografistaId;
+        }
         $sql = "SELECT
                     COALESCE(NULLIF(metodo_pago, ''), 'Sin método') AS metodo,
                     COUNT(*) AS pagos,
                     COALESCE(SUM(monto_pagado), 0) AS cobrado
                 FROM citas
-                WHERE fecha_cita BETWEEN ? AND ? AND monto_pagado > 0
+                WHERE fecha_cita BETWEEN ? AND ? AND monto_pagado > 0" . $cond . "
                 GROUP BY metodo
                 ORDER BY cobrado DESC, metodo ASC";
         $st = $conex->prepare($sql);
-        $st->bind_param('ss', $ini, $fin);
+        $st->bind_param($types, ...$args);
         $st->execute();
         $res = $st->get_result();
         $rows = [];
@@ -192,23 +204,28 @@ if (!function_exists('eco_reporte_por_metodo_pago')) {
 
 if (!function_exists('eco_reporte_top_pacientes')) {
     /** Pacientes con mayor monto cobrado en el periodo. @return list<array> */
-    function eco_reporte_top_pacientes(mysqli $conex, string $desde, string $hasta, int $limit = 10): array
+    function eco_reporte_top_pacientes(mysqli $conex, string $desde, string $hasta, int $limit = 10, ?int $ecografistaId = null): array
     {
         $ini = $desde . ' 00:00:00';
         $fin = $hasta . ' 23:59:59';
         $limit = max(1, min($limit, 50));
+        $cond = ''; $types = 'ss'; $args = [$ini, $fin];
+        if ($ecografistaId !== null && $ecografistaId > 0) {
+            $cond = ' AND c.ecografista_id = ?'; $types .= 'i'; $args[] = $ecografistaId;
+        }
+        $types .= 'i'; $args[] = $limit; // LIMIT siempre al final
         $sql = "SELECT
                     u.nombre_completo AS paciente,
                     COUNT(*) AS citas,
                     COALESCE(SUM(c.monto_pagado), 0) AS cobrado
                 FROM citas c
                 JOIN usuarios u ON u.id = c.paciente_id
-                WHERE c.fecha_cita BETWEEN ? AND ?
+                WHERE c.fecha_cita BETWEEN ? AND ?" . $cond . "
                 GROUP BY c.paciente_id, paciente
                 ORDER BY cobrado DESC, citas DESC
                 LIMIT ?";
         $st = $conex->prepare($sql);
-        $st->bind_param('ssi', $ini, $fin, $limit);
+        $st->bind_param($types, ...$args);
         $st->execute();
         $res = $st->get_result();
         $rows = [];
@@ -230,7 +247,7 @@ if (!function_exists('eco_reporte_comparativa_meses')) {
      * rellenando con cero los meses sin actividad.
      * @return list<array{mes:string,citas:int,cobrado:float}>
      */
-    function eco_reporte_comparativa_meses(mysqli $conex, int $n = 6): array
+    function eco_reporte_comparativa_meses(mysqli $conex, int $n = 6, ?int $ecografistaId = null): array
     {
         $n = max(2, min($n, 24));
         $cursor = new DateTime(date('Y-m-01'));
@@ -245,14 +262,18 @@ if (!function_exists('eco_reporte_comparativa_meses')) {
             $c->modify('+1 month');
         }
 
+        $cond = ''; $types = 's'; $args = [$desde];
+        if ($ecografistaId !== null && $ecografistaId > 0) {
+            $cond = ' AND ecografista_id = ?'; $types .= 'i'; $args[] = $ecografistaId;
+        }
         $sql = "SELECT DATE_FORMAT(fecha_cita, '%Y-%m') AS mes,
                        COUNT(*) AS citas,
                        COALESCE(SUM(monto_pagado), 0) AS cobrado
                 FROM citas
-                WHERE fecha_cita >= ?
+                WHERE fecha_cita >= ?" . $cond . "
                 GROUP BY mes";
         $st = $conex->prepare($sql);
-        $st->bind_param('s', $desde);
+        $st->bind_param($types, ...$args);
         $st->execute();
         $res = $st->get_result();
         while ($r = $res->fetch_assoc()) {
@@ -272,16 +293,20 @@ if (!function_exists('eco_reporte_satisfaccion')) {
      * fecha_cita cae en el rango.
      * @return array{respuestas:int,promedio:float}
      */
-    function eco_reporte_satisfaccion(mysqli $conex, string $desde, string $hasta): array
+    function eco_reporte_satisfaccion(mysqli $conex, string $desde, string $hasta, ?int $ecografistaId = null): array
     {
         $ini = $desde . ' 00:00:00';
         $fin = $hasta . ' 23:59:59';
+        $cond = ''; $types = 'ss'; $args = [$ini, $fin];
+        if ($ecografistaId !== null && $ecografistaId > 0) {
+            $cond = ' AND c.ecografista_id = ?'; $types .= 'i'; $args[] = $ecografistaId;
+        }
         $sql = "SELECT COUNT(*) AS respuestas, COALESCE(AVG(e.puntuacion), 0) AS promedio
                 FROM encuestas e
                 JOIN citas c ON c.id = e.cita_id
-                WHERE c.fecha_cita BETWEEN ? AND ?";
+                WHERE c.fecha_cita BETWEEN ? AND ?" . $cond;
         $st = $conex->prepare($sql);
-        $st->bind_param('ss', $ini, $fin);
+        $st->bind_param($types, ...$args);
         $st->execute();
         $r = $st->get_result()->fetch_assoc() ?: [];
         $st->close();
@@ -294,20 +319,24 @@ if (!function_exists('eco_reporte_satisfaccion')) {
 
 if (!function_exists('eco_reporte_serie_diaria')) {
     /** Serie diaria (citas e ingresos cobrados) para grafico de tendencia. @return list<array> */
-    function eco_reporte_serie_diaria(mysqli $conex, string $desde, string $hasta): array
+    function eco_reporte_serie_diaria(mysqli $conex, string $desde, string $hasta, ?int $ecografistaId = null): array
     {
         $ini = $desde . ' 00:00:00';
         $fin = $hasta . ' 23:59:59';
+        $cond = ''; $types = 'ss'; $args = [$ini, $fin];
+        if ($ecografistaId !== null && $ecografistaId > 0) {
+            $cond = ' AND ecografista_id = ?'; $types .= 'i'; $args[] = $ecografistaId;
+        }
         $sql = "SELECT
                     DATE(fecha_cita) AS dia,
                     COUNT(*) AS citas,
                     COALESCE(SUM(monto_pagado), 0) AS cobrado
                 FROM citas
-                WHERE fecha_cita BETWEEN ? AND ?
+                WHERE fecha_cita BETWEEN ? AND ?" . $cond . "
                 GROUP BY dia
                 ORDER BY dia ASC";
         $st = $conex->prepare($sql);
-        $st->bind_param('ss', $ini, $fin);
+        $st->bind_param($types, ...$args);
         $st->execute();
         $res = $st->get_result();
         $rows = [];

@@ -116,10 +116,10 @@ $menu = [
             'roles' => ['ecografista'],
         ],
         [
-            'id' => 'estadisticas',
-            'label' => 'Estadísticas',
-            'icon' => 'fa-solid fa-chart-pie',
-            'href' => 'estadisticas_ecografista.php',
+            'id' => 'reportes',
+            'label' => 'Reportes',
+            'icon' => 'fa-solid fa-chart-line',
+            'href' => 'reportes.php',
             'roles' => ['ecografista'],
         ],
 

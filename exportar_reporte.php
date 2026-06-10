@@ -11,20 +11,25 @@ require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/reportes.php';
 
-api_require_roles(['administrador', 'recepcionista']);
+api_require_roles(['administrador', 'recepcionista', 'ecografista']);
+
+// Un ecografista solo exporta sus propios datos (null = sin filtro para admin/recep).
+$ecoId = (api_rol() === 'ecografista') ? api_uid() : null;
 
 [$desde, $hasta] = eco_reporte_rango($_GET['desde'] ?? null, $_GET['hasta'] ?? null);
 $r = in_array($_GET['r'] ?? '', ['tipos', 'ecografistas'], true) ? $_GET['r'] : 'resumen';
+// El desglose por ecografista no aplica cuando el reporte ya está scopeado a uno.
+if ($ecoId && $r === 'ecografistas') { $r = 'resumen'; }
 
 /* ── Formato PDF: reporte completo (resumen + desgloses) ── */
 if (($_GET['formato'] ?? '') === 'pdf') {
     require_once __DIR__ . '/lib/pdf_simple.php';
     require_once __DIR__ . '/lib/facturacion.php';
 
-    $k       = eco_reporte_resumen($conex, $desde, $hasta);
-    $tipos   = eco_reporte_por_tipo($conex, $desde, $hasta);
-    $ecos    = eco_reporte_por_ecografista($conex, $desde, $hasta);
-    $metodos = eco_reporte_por_metodo_pago($conex, $desde, $hasta);
+    $k       = eco_reporte_resumen($conex, $desde, $hasta, $ecoId);
+    $tipos   = eco_reporte_por_tipo($conex, $desde, $hasta, $ecoId);
+    $ecos    = $ecoId ? [] : eco_reporte_por_ecografista($conex, $desde, $hasta);
+    $metodos = eco_reporte_por_metodo_pago($conex, $desde, $hasta, $ecoId);
 
     $pdf = new EcoPdf();
     $pdf->setFont(17, true);
@@ -48,7 +53,7 @@ if (($_GET['formato'] ?? '') === 'pdf') {
     $pdf->keyValue('Saldo pendiente', eco_money($k['saldo']));
     $pdf->keyValue('Tasa de cobro', $k['tasa_cobro'] . '%');
     $pdf->keyValue('Ausencias (no-show)', $k['no_show'] . '  (' . $k['tasa_no_show'] . '%)');
-    $sat = eco_reporte_satisfaccion($conex, $desde, $hasta);
+    $sat = eco_reporte_satisfaccion($conex, $desde, $hasta, $ecoId);
     $pdf->keyValue('Satisfaccion', $sat['respuestas'] > 0 ? ($sat['promedio'] . '/5  (' . $sat['respuestas'] . ' resp.)') : 'Sin respuestas');
 
     $pdf->heading('Por tipo de estudio');
@@ -57,10 +62,12 @@ if (($_GET['formato'] ?? '') === 'pdf') {
         $pdf->keyValue($t['tipo'], $t['citas'] . ' citas  ·  ' . $t['completadas'] . ' compl.  ·  ' . eco_money($t['cobrado']));
     }
 
-    $pdf->heading('Por ecografista');
-    if (!$ecos) { $pdf->text('Sin datos.'); }
-    foreach ($ecos as $e) {
-        $pdf->keyValue($e['ecografista'], $e['citas'] . ' citas  ·  ' . $e['pacientes'] . ' pac.  ·  ' . eco_money($e['cobrado']));
+    if (!$ecoId) {
+        $pdf->heading('Por ecografista');
+        if (!$ecos) { $pdf->text('Sin datos.'); }
+        foreach ($ecos as $e) {
+            $pdf->keyValue($e['ecografista'], $e['citas'] . ' citas  ·  ' . $e['pacientes'] . ' pac.  ·  ' . eco_money($e['cobrado']));
+        }
     }
 
     $pdf->heading('Por metodo de pago');
@@ -87,7 +94,7 @@ fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8 para que Excel respete acentos
 
 if ($r === 'tipos') {
     fputcsv($out, ['Tipo de estudio', 'Citas', 'Completadas', 'Facturado', 'Cobrado']);
-    foreach (eco_reporte_por_tipo($conex, $desde, $hasta) as $fila) {
+    foreach (eco_reporte_por_tipo($conex, $desde, $hasta, $ecoId) as $fila) {
         fputcsv($out, [$fila['tipo'], $fila['citas'], $fila['completadas'],
             number_format($fila['facturado'], 2, '.', ''), number_format($fila['cobrado'], 2, '.', '')]);
     }
@@ -98,7 +105,7 @@ if ($r === 'tipos') {
             $fila['pacientes'], number_format($fila['cobrado'], 2, '.', '')]);
     }
 } else {
-    $k = eco_reporte_resumen($conex, $desde, $hasta);
+    $k = eco_reporte_resumen($conex, $desde, $hasta, $ecoId);
     fputcsv($out, ['Reporte de actividad y facturacion']);
     fputcsv($out, ['Periodo', $desde . ' a ' . $hasta]);
     fputcsv($out, []);
@@ -116,7 +123,7 @@ if ($r === 'tipos') {
     fputcsv($out, ['Tasa de cobro (%)', $k['tasa_cobro']]);
     fputcsv($out, ['Ausencias (no-show)', $k['no_show']]);
     fputcsv($out, ['Tasa no-show (%)', $k['tasa_no_show']]);
-    $sat = eco_reporte_satisfaccion($conex, $desde, $hasta);
+    $sat = eco_reporte_satisfaccion($conex, $desde, $hasta, $ecoId);
     fputcsv($out, ['Satisfacción (promedio 1-5)', $sat['respuestas'] > 0 ? $sat['promedio'] : '']);
     fputcsv($out, ['Respuestas de encuesta', $sat['respuestas']]);
 }

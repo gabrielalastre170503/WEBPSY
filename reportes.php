@@ -1,7 +1,10 @@
 <?php
 /**
- * reportes.php — Reportes de negocio / BI (Fase 6). Solo administrador.
- * Actividad y facturacion de citas por rango de fechas + export CSV.
+ * reportes.php — Reportes de negocio / BI (Fase 6).
+ * Actividad y facturacion de citas por rango de fechas + export CSV/PDF.
+ *
+ * Acceso: administrador y recepcionista (datos globales) y ecografista
+ * (scopeado a SUS propias citas — no ve ingresos globales ni otros ecografistas).
  */
 session_start();
 include 'conexion.php';
@@ -9,22 +12,26 @@ require_once __DIR__ . '/lib/reportes.php';
 require_once __DIR__ . '/lib/facturacion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: login.php'); exit; }
-if (!in_array($_SESSION['rol'] ?? '', ['administrador', 'recepcionista'], true)) { header('Location: dashboard_v2.php'); exit; }
+$rol = $_SESSION['rol'] ?? '';
+if (!in_array($rol, ['administrador', 'recepcionista', 'ecografista'], true)) { header('Location: dashboard_v2.php'); exit; }
+
+// Un ecografista solo ve sus propios datos; admin/recepcionista ven todo (null = sin filtro).
+$ecoId = ($rol === 'ecografista') ? (int)$_SESSION['usuario_id'] : null;
 
 [$desde, $hasta] = eco_reporte_rango($_GET['desde'] ?? null, $_GET['hasta'] ?? null);
-$resumen      = eco_reporte_resumen($conex, $desde, $hasta);
-$por_tipo     = eco_reporte_por_tipo($conex, $desde, $hasta);
-$por_eco      = eco_reporte_por_ecografista($conex, $desde, $hasta);
-$serie        = eco_reporte_serie_diaria($conex, $desde, $hasta);
-$por_metodo   = eco_reporte_por_metodo_pago($conex, $desde, $hasta);
-$top_pac      = eco_reporte_top_pacientes($conex, $desde, $hasta, 10);
-$comparativa  = eco_reporte_comparativa_meses($conex, 6);
-$satisf       = eco_reporte_satisfaccion($conex, $desde, $hasta);
+$resumen      = eco_reporte_resumen($conex, $desde, $hasta, $ecoId);
+$por_tipo     = eco_reporte_por_tipo($conex, $desde, $hasta, $ecoId);
+$por_eco      = $ecoId ? [] : eco_reporte_por_ecografista($conex, $desde, $hasta);
+$serie        = eco_reporte_serie_diaria($conex, $desde, $hasta, $ecoId);
+$por_metodo   = eco_reporte_por_metodo_pago($conex, $desde, $hasta, $ecoId);
+$top_pac      = eco_reporte_top_pacientes($conex, $desde, $hasta, 10, $ecoId);
+$comparativa  = eco_reporte_comparativa_meses($conex, 6, $ecoId);
+$satisf       = eco_reporte_satisfaccion($conex, $desde, $hasta, $ecoId);
 
 $qs = 'desde=' . urlencode($desde) . '&hasta=' . urlencode($hasta);
 
-$page_title     = 'Reportes';
-$page_subtitle  = 'Actividad y facturación por periodo';
+$page_title     = $ecoId ? 'Mis reportes' : 'Reportes';
+$page_subtitle  = $ecoId ? 'Tu actividad y facturación por periodo' : 'Actividad y facturación por periodo';
 $active_section = 'reportes';
 $page_head_extra = '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>';
 
@@ -61,7 +68,9 @@ ob_start();
             <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?formato=pdf&<?= $qs ?>"><i class="fa-solid fa-file-pdf" style="color:#b91c1c;"></i> PDF</a>
             <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?r=resumen&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Resumen</a>
             <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?r=tipos&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Por tipo</a>
+            <?php if (!$ecoId): ?>
             <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?r=ecografistas&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Por ecografista</a>
+            <?php endif; ?>
         </div>
     </form>
 </div>
@@ -121,6 +130,7 @@ ob_start();
         </table>
     </div>
 
+    <?php if (!$ecoId): ?>
     <div class="card" style="padding:18px;">
         <h3 style="margin:0 0 12px;font-size:15px;color:var(--text-primary);"><i class="fa-solid fa-user-doctor" style="color:var(--accent);"></i> Por ecografista</h3>
         <table class="eco-table" style="width:100%;border-collapse:collapse;font-size:13px;">
@@ -144,6 +154,7 @@ ob_start();
             </tbody>
         </table>
     </div>
+    <?php endif; ?>
 </div>
 
 <!-- Método de pago + Top pacientes -->
