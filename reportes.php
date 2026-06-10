@@ -37,6 +37,7 @@ $kpis = [
     ['Cobrado',      eco_money($resumen['cobrado']),          'fa-money-bill-wave','#15803d'],
     ['Saldo',        eco_money($resumen['saldo']),            'fa-hand-holding-dollar', '#b45309'],
     ['Tasa de cobro', $resumen['tasa_cobro'] . '%',          'fa-percent',        '#0284c7'],
+    ['No-show (' . $resumen['no_show'] . ')', $resumen['tasa_no_show'] . '%', 'fa-user-clock', '#b45309'],
 ];
 
 ob_start();

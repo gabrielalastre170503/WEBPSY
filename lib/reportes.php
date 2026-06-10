@@ -47,7 +47,10 @@ if (!function_exists('eco_reporte_resumen')) {
                     COALESCE(SUM(CASE WHEN estado_pago <> 'exonerado'
                         THEN GREATEST(COALESCE(monto_total,0) - COALESCE(monto_pagado,0), 0)
                         ELSE 0 END), 0) AS saldo,
-                    SUM(estado_pago = 'exonerado') AS exonerados
+                    SUM(estado_pago = 'exonerado') AS exonerados,
+                    SUM(estado = 'no_asistio') AS no_asistio,
+                    SUM(estado IN ('confirmada','reprogramada') AND fecha_cita < NOW()) AS ausentes_presuntas,
+                    SUM(estado IN ('confirmada','reprogramada','completada','no_asistio') AND fecha_cita < NOW()) AS agendadas_vencidas
                 FROM citas
                 WHERE fecha_cita BETWEEN ? AND ?";
         $st = $conex->prepare($sql);
@@ -70,6 +73,15 @@ if (!function_exists('eco_reporte_resumen')) {
         ];
         $out['tasa_cobro'] = $out['facturado'] > 0
             ? round($out['cobrado'] / $out['facturado'] * 100, 1)
+            : 0.0;
+
+        // No-show: ausencias = citas marcadas 'no_asistio' + confirmadas/reprogramadas
+        // cuya fecha ya paso sin completarse (ausencias presuntas). La tasa se mide
+        // sobre las citas agendadas que ya vencieron.
+        $vencidas = (int)($r['agendadas_vencidas'] ?? 0);
+        $out['no_show'] = (int)($r['no_asistio'] ?? 0) + (int)($r['ausentes_presuntas'] ?? 0);
+        $out['tasa_no_show'] = $vencidas > 0
+            ? round($out['no_show'] / $vencidas * 100, 1)
             : 0.0;
         return $out;
     }

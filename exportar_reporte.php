@@ -47,6 +47,7 @@ if (($_GET['formato'] ?? '') === 'pdf') {
     $pdf->keyValue('Cobrado', eco_money($k['cobrado']));
     $pdf->keyValue('Saldo pendiente', eco_money($k['saldo']));
     $pdf->keyValue('Tasa de cobro', $k['tasa_cobro'] . '%');
+    $pdf->keyValue('Ausencias (no-show)', $k['no_show'] . '  (' . $k['tasa_no_show'] . '%)');
 
     $pdf->heading('Por tipo de estudio');
     if (!$tipos) { $pdf->text('Sin datos.'); }
@@ -111,6 +112,8 @@ if ($r === 'tipos') {
     fputcsv($out, ['Saldo pendiente', number_format($k['saldo'], 2, '.', '')]);
     fputcsv($out, ['Exonerados', $k['exonerados']]);
     fputcsv($out, ['Tasa de cobro (%)', $k['tasa_cobro']]);
+    fputcsv($out, ['Ausencias (no-show)', $k['no_show']]);
+    fputcsv($out, ['Tasa no-show (%)', $k['tasa_no_show']]);
 }
 
 fclose($out);
