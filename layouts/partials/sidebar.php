@@ -57,6 +57,13 @@ $menu = [
             'href' => 'agenda_general.php',
             'roles' => ['administrador'],
         ],
+        [
+            'id' => 'reportes',
+            'label' => 'Reportes',
+            'icon' => 'fa-solid fa-chart-line',
+            'href' => 'reportes.php',
+            'roles' => ['administrador'],
+        ],
 
         /* === ECOGRAFISTA === */
         [
