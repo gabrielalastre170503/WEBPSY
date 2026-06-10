@@ -28,6 +28,18 @@ $top_pac      = eco_reporte_top_pacientes($conex, $desde, $hasta, 10, $ecoId);
 $comparativa  = eco_reporte_comparativa_meses($conex, 6, $ecoId);
 $satisf       = eco_reporte_satisfaccion($conex, $desde, $hasta, $ecoId);
 
+// Análisis clínico (solo ecografista): gráficos de su actividad y pacientes.
+$clin = null;
+if ($ecoId) {
+    $clin = [
+        'dia'    => eco_reporte_eco_dia_semana($conex, $ecoId, $desde, $hasta),
+        'hora'   => eco_reporte_eco_hora($conex, $ecoId, $desde, $hasta),
+        'edad'   => eco_reporte_eco_edad($conex, $ecoId, $desde, $hasta),
+        'dir'    => eco_reporte_eco_direccion($conex, $ecoId, $desde, $hasta, 10),
+        'nuevos' => eco_reporte_eco_pacientes_nuevos($conex, $ecoId, 6),
+    ];
+}
+
 $qs = 'desde=' . urlencode($desde) . '&hasta=' . urlencode($hasta);
 
 $page_title     = $ecoId ? 'Mis reportes' : 'Reportes';
@@ -199,6 +211,32 @@ ob_start();
         </table>
     </div>
 </div>
+<?php if ($clin): ?>
+<h2 style="margin:24px 0 4px;font-size:16px;color:var(--text-primary);"><i class="fa-solid fa-stethoscope" style="color:var(--accent);"></i> Análisis clínico</h2>
+<p style="margin:0 0 14px;font-size:12px;color:var(--text-secondary);">Tu actividad y tus pacientes en el periodo seleccionado.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;">
+    <div class="card" style="padding:18px;">
+        <h3 style="margin:0 0 12px;font-size:15px;color:var(--text-primary);"><i class="fa-solid fa-user-plus" style="color:var(--accent);"></i> Pacientes nuevos (6 meses)</h3>
+        <div style="position:relative;height:260px;"><canvas id="clin-nuevos"></canvas></div>
+    </div>
+    <div class="card" style="padding:18px;">
+        <h3 style="margin:0 0 12px;font-size:15px;color:var(--text-primary);"><i class="fa-solid fa-chart-simple" style="color:var(--accent);"></i> Actividad por día</h3>
+        <div style="position:relative;height:260px;"><canvas id="clin-dia"></canvas></div>
+    </div>
+    <div class="card" style="padding:18px;">
+        <h3 style="margin:0 0 12px;font-size:15px;color:var(--text-primary);"><i class="fa-solid fa-clock" style="color:var(--accent);"></i> Citas por hora</h3>
+        <div style="position:relative;height:260px;"><canvas id="clin-hora"></canvas></div>
+    </div>
+    <div class="card" style="padding:18px;">
+        <h3 style="margin:0 0 12px;font-size:15px;color:var(--text-primary);"><i class="fa-solid fa-cake-candles" style="color:var(--accent);"></i> Pacientes por edad</h3>
+        <div style="position:relative;height:260px;"><canvas id="clin-edad"></canvas></div>
+    </div>
+    <div class="card" style="padding:18px;">
+        <h3 style="margin:0 0 12px;font-size:15px;color:var(--text-primary);"><i class="fa-solid fa-location-dot" style="color:var(--accent);"></i> Pacientes por dirección</h3>
+        <div style="position:relative;height:260px;"><canvas id="clin-dir"></canvas></div>
+    </div>
+</div>
+<?php endif; ?>
 <?php
 $page_content = ob_get_clean();
 
@@ -254,5 +292,41 @@ $page_scripts_extra = <<<HTML
 })();
 </script>
 HTML;
+
+// Gráficos del análisis clínico (solo ecografista).
+if ($clin) {
+    $cl = json_encode($clin, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    $page_scripts_extra .= <<<HTML
+<script>
+(function () {
+    if (typeof Chart === 'undefined') return;
+    var D = {$cl};
+    var grid = 'rgba(148,163,184,.18)';
+    function mk(id, cfg){ var el = document.getElementById(id); if (el) new Chart(el, cfg); }
+    function hexA(h, a){ h = h.replace('#',''); return 'rgba(' + parseInt(h.substr(0,2),16) + ',' + parseInt(h.substr(2,2),16) + ',' + parseInt(h.substr(4,2),16) + ',' + a + ')'; }
+
+    mk('clin-nuevos', { type:'line',
+        data:{ labels:D.nuevos.labels, datasets:[{ label:'Pacientes', data:D.nuevos.data, borderColor:'#22c55e', backgroundColor:hexA('#22c55e',.12), fill:true, tension:.35, pointRadius:3, borderWidth:2 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true,ticks:{precision:0},grid:{color:grid}}, x:{grid:{display:false}} } } });
+
+    mk('clin-dia', { type:'bar',
+        data:{ labels:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'], datasets:[{ label:'Citas', data:D.dia, backgroundColor:'#8b5cf6', borderRadius:6, maxBarThickness:34 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true,ticks:{precision:0},grid:{color:grid}}, x:{grid:{display:false}} } } });
+
+    mk('clin-hora', { type:'bar',
+        data:{ labels:D.hora.labels, datasets:[{ label:'Citas', data:D.hora.data, backgroundColor:'#14b8a6', borderRadius:5, maxBarThickness:26 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true,ticks:{precision:0},grid:{color:grid}}, x:{grid:{display:false},ticks:{maxTicksLimit:13}} } } });
+
+    mk('clin-edad', { type:'bar',
+        data:{ labels:D.edad.labels, datasets:[{ label:'Pacientes', data:D.edad.data, backgroundColor:'#6366f1', borderRadius:6, maxBarThickness:40 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true,ticks:{precision:0},grid:{color:grid}}, x:{grid:{display:false}} } } });
+
+    mk('clin-dir', { type:'bar',
+        data:{ labels:D.dir.labels, datasets:[{ label:'Pacientes', data:D.dir.data, backgroundColor:'#0ea5e9', borderRadius:6 }] },
+        options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{beginAtZero:true,ticks:{precision:0},grid:{color:grid}}, y:{grid:{display:false}} } } });
+})();
+</script>
+HTML;
+}
 
 include __DIR__ . '/layouts/shell.php';

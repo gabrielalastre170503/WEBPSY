@@ -351,3 +351,142 @@ if (!function_exists('eco_reporte_serie_diaria')) {
         return $rows;
     }
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * ECOGRAFISTA — Análisis clínico (gráficos de la antigua estadisticas_ecografista).
+ * Todo scopeado a un ecografista. Día/hora/edad/dirección respetan el rango de
+ * fechas (pacientes/citas del periodo); pacientes nuevos usa su propia ventana.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+if (!function_exists('eco_reporte_eco_dia_semana')) {
+    /**
+     * Citas activas por día de la semana en el rango. @return int[] [Lun..Dom]
+     */
+    function eco_reporte_eco_dia_semana(mysqli $conex, int $ecografistaId, string $desde, string $hasta): array
+    {
+        $ini = $desde . ' 00:00:00';
+        $fin = $hasta . ' 23:59:59';
+        $raw = array_fill(1, 7, 0); // DAYOFWEEK: 1=Dom .. 7=Sáb
+        $st = $conex->prepare("SELECT DAYOFWEEK(fecha_cita) d, COUNT(*) t FROM citas
+                WHERE ecografista_id = ? AND fecha_cita BETWEEN ? AND ?
+                  AND estado IN ('confirmada','completada','reprogramada') GROUP BY d");
+        $st->bind_param('iss', $ecografistaId, $ini, $fin);
+        $st->execute();
+        $res = $st->get_result();
+        while ($f = $res->fetch_assoc()) { $raw[(int)$f['d']] = (int)$f['t']; }
+        $st->close();
+        return [$raw[2], $raw[3], $raw[4], $raw[5], $raw[6], $raw[7], $raw[1]];
+    }
+}
+
+if (!function_exists('eco_reporte_eco_hora')) {
+    /**
+     * Citas activas por hora (07:00–19:00) en el rango.
+     * @return array{labels:string[],data:int[]}
+     */
+    function eco_reporte_eco_hora(mysqli $conex, int $ecografistaId, string $desde, string $hasta): array
+    {
+        $ini = $desde . ' 00:00:00';
+        $fin = $hasta . ' 23:59:59';
+        $hmin = 7; $hmax = 19; $map = [];
+        for ($h = $hmin; $h <= $hmax; $h++) { $map[$h] = 0; }
+        $st = $conex->prepare("SELECT HOUR(fecha_cita) h, COUNT(*) t FROM citas
+                WHERE ecografista_id = ? AND fecha_cita BETWEEN ? AND ?
+                  AND estado IN ('confirmada','completada','reprogramada') GROUP BY h");
+        $st->bind_param('iss', $ecografistaId, $ini, $fin);
+        $st->execute();
+        $res = $st->get_result();
+        while ($f = $res->fetch_assoc()) { $h = (int)$f['h']; if (isset($map[$h])) { $map[$h] = (int)$f['t']; } }
+        $st->close();
+        return [
+            'labels' => array_map(fn($h) => sprintf('%02d:00', $h), array_keys($map)),
+            'data'   => array_values($map),
+        ];
+    }
+}
+
+if (!function_exists('eco_reporte_eco_edad')) {
+    /**
+     * Distribución por grupo de edad de los pacientes con citas en el rango.
+     * @return array{labels:string[],data:int[]}
+     */
+    function eco_reporte_eco_edad(mysqli $conex, int $ecografistaId, string $desde, string $hasta): array
+    {
+        $ini = $desde . ' 00:00:00';
+        $fin = $hasta . ' 23:59:59';
+        $b = ['0-17' => 0, '18-29' => 0, '30-44' => 0, '45-59' => 0, '60+' => 0, 'Sin dato' => 0];
+        $st = $conex->prepare("SELECT TIMESTAMPDIFF(YEAR, u.fecha_nacimiento, CURDATE()) age
+                FROM usuarios u
+                WHERE u.id IN (SELECT DISTINCT paciente_id FROM citas
+                               WHERE ecografista_id = ? AND fecha_cita BETWEEN ? AND ?)");
+        $st->bind_param('iss', $ecografistaId, $ini, $fin);
+        $st->execute();
+        $res = $st->get_result();
+        while ($f = $res->fetch_assoc()) {
+            $a = $f['age'];
+            if ($a === null || $a === '') { $b['Sin dato']++; continue; }
+            $a = (int)$a;
+            if ($a < 18)      $b['0-17']++;
+            elseif ($a < 30)  $b['18-29']++;
+            elseif ($a < 45)  $b['30-44']++;
+            elseif ($a < 60)  $b['45-59']++;
+            else              $b['60+']++;
+        }
+        $st->close();
+        return ['labels' => array_keys($b), 'data' => array_values($b)];
+    }
+}
+
+if (!function_exists('eco_reporte_eco_direccion')) {
+    /**
+     * Top direcciones de los pacientes con citas en el rango (texto libre;
+     * vacías agrupadas como 'Sin dirección'). @return array{labels:string[],data:int[]}
+     */
+    function eco_reporte_eco_direccion(mysqli $conex, int $ecografistaId, string $desde, string $hasta, int $limit = 10): array
+    {
+        $ini = $desde . ' 00:00:00';
+        $fin = $hasta . ' 23:59:59';
+        $limit = max(1, min($limit, 30));
+        $st = $conex->prepare("SELECT COALESCE(NULLIF(TRIM(u.direccion), ''), 'Sin dirección') AS dir, COUNT(*) AS n
+                FROM usuarios u
+                WHERE u.id IN (SELECT DISTINCT paciente_id FROM citas
+                               WHERE ecografista_id = ? AND fecha_cita BETWEEN ? AND ?)
+                GROUP BY dir
+                ORDER BY n DESC, dir ASC
+                LIMIT ?");
+        $st->bind_param('issi', $ecografistaId, $ini, $fin, $limit);
+        $st->execute();
+        $res = $st->get_result();
+        $labels = []; $data = [];
+        while ($f = $res->fetch_assoc()) { $labels[] = $f['dir']; $data[] = (int)$f['n']; }
+        $st->close();
+        return ['labels' => $labels, 'data' => $data];
+    }
+}
+
+if (!function_exists('eco_reporte_eco_pacientes_nuevos')) {
+    /**
+     * Pacientes registrados por el ecografista en los últimos $n meses.
+     * @return array{labels:string[],data:int[]}
+     */
+    function eco_reporte_eco_pacientes_nuevos(mysqli $conex, int $ecografistaId, int $n = 6): array
+    {
+        $n = max(2, min($n, 24));
+        $meses_es = [1=>'Ene',2=>'Feb',3=>'Mar',4=>'Abr',5=>'May',6=>'Jun',7=>'Jul',8=>'Ago',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dic'];
+        $labels = []; $map = [];
+        for ($i = $n - 1; $i >= 0; $i--) {
+            $d = new DateTime("first day of -$i month");
+            $labels[] = $meses_es[(int)$d->format('n')] . ' ' . $d->format('y');
+            $map[$d->format('Y-m')] = 0;
+        }
+        $desde = (new DateTime('first day of -' . ($n - 1) . ' month'))->format('Y-m-d') . ' 00:00:00';
+        $st = $conex->prepare("SELECT DATE_FORMAT(fecha_registro, '%Y-%m') m, COUNT(*) t FROM usuarios
+                WHERE creado_por_id = ? AND fecha_registro >= ? GROUP BY m");
+        $st->bind_param('is', $ecografistaId, $desde);
+        $st->execute();
+        $res = $st->get_result();
+        while ($f = $res->fetch_assoc()) { if (isset($map[$f['m']])) { $map[$f['m']] = (int)$f['t']; } }
+        $st->close();
+        return ['labels' => $labels, 'data' => array_values($map)];
+    }
+}
