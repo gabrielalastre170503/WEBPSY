@@ -279,6 +279,13 @@ $menu = [
             'roles' => ['administrador'],
         ],
         [
+            'id' => 'auditoria',
+            'label' => 'Bitácora',
+            'icon' => 'fa-solid fa-clipboard-list',
+            'href' => 'auditoria.php',
+            'roles' => ['administrador'],
+        ],
+        [
             'id' => 'notas-rapidas',
             'label' => 'Notas Rápidas',
             'icon' => 'fa-solid fa-note-sticky',

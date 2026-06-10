@@ -3,6 +3,7 @@ session_start();
 include 'conexion.php';
 require_once __DIR__ . '/lib/estudios_render.php';
 require_once __DIR__ . '/lib/archivos.php';
+require_once __DIR__ . '/lib/seguridad.php';
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista', 'paciente'])) {
     header('Location: login.php');
@@ -46,6 +47,13 @@ if (($_SESSION['rol'] ?? '') === 'paciente') {
         die('No tienes acceso a este informe.');
     }
 }
+
+// Bitácora de acceso a datos clínicos (cumplimiento): quién abrió este informe.
+eco_auditar($conex, 'acceso_informe', [
+    'entidad'    => 'informe',
+    'entidad_id' => $informe_id,
+    'detalle'    => ['paciente' => $informe['paciente_nombre'] ?? '', 'numero' => $informe['numero_informe'] ?? ''],
+]);
 
 $esquema = json_decode($informe['esquema_campos'], true) ?: ['secciones' => []];
 $datos   = json_decode($informe['datos_clinicos'], true) ?: [];

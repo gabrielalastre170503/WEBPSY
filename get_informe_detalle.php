@@ -4,6 +4,7 @@ require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/estudios_render.php';
 require_once __DIR__ . '/lib/informes.php';
+require_once __DIR__ . '/lib/seguridad.php';
 
 api_json();
 
@@ -64,6 +65,13 @@ if (!$informe) {
     echo json_encode(['error' => 'Informe no encontrado']);
     exit();
 }
+
+// Bitácora de acceso a datos clínicos (cumplimiento): quién consultó este informe.
+eco_auditar($conex, 'acceso_informe', [
+    'entidad'    => 'informe',
+    'entidad_id' => $informe_id,
+    'detalle'    => ['paciente' => $informe['paciente_nombre'] ?? '', 'numero' => $informe['numero_informe'] ?? ''],
+]);
 
 $esquema        = json_decode($informe['esquema_campos'],  true) ?: ['secciones' => []];
 $datos_clinicos = json_decode($informe['datos_clinicos'],  true) ?: [];

@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
+require_once __DIR__ . '/lib/seguridad.php';
 
 api_json();
 
@@ -32,6 +33,13 @@ if (!$paciente) {
     exit();
 }
 $response['paciente'] = $paciente;
+
+// Bitácora de acceso a datos clínicos (cumplimiento): quién abrió esta ficha.
+eco_auditar($conex, 'acceso_ficha_paciente', [
+    'entidad'    => 'paciente',
+    'entidad_id' => $paciente_id,
+    'detalle'    => ['paciente' => $paciente['nombre_completo'] ?? ''],
+]);
 
 $stmt = $conex->prepare("SELECT COUNT(id) AS total FROM informes_estudios WHERE paciente_id = ?");
 $stmt->bind_param("i", $paciente_id);

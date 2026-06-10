@@ -7,6 +7,7 @@ session_start();
 require_once __DIR__ . '/lib/api.php';
 include 'conexion.php';
 require_once __DIR__ . '/lib/facturacion.php';
+require_once __DIR__ . '/lib/seguridad.php';
 
 api_json();
 
@@ -35,6 +36,13 @@ if (!$paciente) {
     echo json_encode(['error' => 'Paciente no encontrado']);
     exit();
 }
+
+// Bitácora de acceso a datos clínicos (cumplimiento): quién consultó esta historia.
+eco_auditar($conex, 'acceso_historia_clinica', [
+    'entidad'    => 'paciente',
+    'entidad_id' => $paciente_id,
+    'detalle'    => ['paciente' => $paciente['nombre_completo'] ?? ''],
+]);
 
 // Extrae el ultimo importe "$X" de un texto libre (los costos viven en el texto
 // de motivo_principal, p. ej. "... Total $40"). Devuelve float o null.
