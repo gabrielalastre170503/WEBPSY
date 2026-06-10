@@ -10,14 +10,8 @@ if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'ecografista
 if (!isset($conex) || !($conex instanceof mysqli)) {
     return;
 }
-$eco_prog_tipos_rows = [];
-$qr = $conex->query("SELECT id, nombre, categoria FROM tipos_ecografias WHERE activo = 1 ORDER BY categoria, nombre");
-if ($qr) {
-    while ($rw = $qr->fetch_assoc()) {
-        $eco_prog_tipos_rows[] = $rw;
-    }
-    $qr->free();
-}
+require_once __DIR__ . '/../../lib/catalogo.php';
+$eco_prog_tipos_rows = eco_catalogo_tipos_activos($conex);
 ?>
 <div id="eco-modal-programar-cita-eco" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-prog-aside-title">
     <div class="eco-modal__dialog eco-modal__dialog--wide">

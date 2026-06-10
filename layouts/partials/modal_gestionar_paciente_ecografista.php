@@ -15,30 +15,13 @@ $eco_tipos_musculo = [];
 $eco_tipos_obstetrica = [];
 $eco_tipos_pblandas = [];
 if (isset($conex) && $conex instanceof mysqli) {
-    $res_eco_tipos_modal = $conex->query("SELECT id, codigo, nombre, categoria, descripcion, icono, precio FROM tipos_ecografias WHERE activo = 1 AND (categoria IS NULL OR categoria NOT IN ('Musculoesqueletica_Sub', 'Obstetrica_Sub', 'Partes_Blandas_Sub')) ORDER BY posicion, nombre");
-    if ($res_eco_tipos_modal) {
-        while ($row_eco_tipo = $res_eco_tipos_modal->fetch_assoc()) {
-            $eco_tipos_modal[] = $row_eco_tipo;
-        }
-    }
-    $res_eco_musc = $conex->query("SELECT id, codigo, nombre, descripcion, icono, precio FROM tipos_ecografias WHERE activo = 1 AND categoria = 'Musculoesqueletica_Sub' ORDER BY posicion, nombre");
-    if ($res_eco_musc) {
-        while ($row_m = $res_eco_musc->fetch_assoc()) {
-            $eco_tipos_musculo[] = $row_m;
-        }
-    }
-    $res_eco_obs = $conex->query("SELECT id, codigo, nombre, descripcion, icono, precio FROM tipos_ecografias WHERE activo = 1 AND categoria = 'Obstetrica_Sub' ORDER BY posicion, nombre");
-    if ($res_eco_obs) {
-        while ($row_o = $res_eco_obs->fetch_assoc()) {
-            $eco_tipos_obstetrica[] = $row_o;
-        }
-    }
-    $res_eco_pbl = $conex->query("SELECT id, codigo, nombre, descripcion, icono, precio FROM tipos_ecografias WHERE activo = 1 AND categoria = 'Partes_Blandas_Sub' ORDER BY posicion, nombre");
-    if ($res_eco_pbl) {
-        while ($row_p = $res_eco_pbl->fetch_assoc()) {
-            $eco_tipos_pblandas[] = $row_p;
-        }
-    }
+    // Catálogo memoizado (lib/catalogo.php): reusa la lectura ya hecha en el request.
+    require_once __DIR__ . '/../../lib/catalogo.php';
+    $eco_menu_tipos       = eco_catalogo_tipos_menu($conex);
+    $eco_tipos_modal      = $eco_menu_tipos['principales'];
+    $eco_tipos_musculo    = $eco_menu_tipos['musculo'];
+    $eco_tipos_obstetrica = $eco_menu_tipos['obstetrica'];
+    $eco_tipos_pblandas   = $eco_menu_tipos['partes_blandas'];
 }
 
 // Catalogo de servicios adicionales (consulta, citologia, procesamiento, combo)

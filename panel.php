@@ -289,41 +289,14 @@ if ($rol_usuario == 'administrador') {
 }
 
 // ── Tipos de ecografía para la modal de selección (disponibles para todos los roles) ──
-// Excluimos sub-tipos (Musculoesqueletica_Sub, Obstetrica_Sub, Partes_Blandas_Sub) — se muestran en sub-modales
-$tipos_panel = [];
-$res_tipos_panel = $conex->query("SELECT id, codigo, nombre, categoria, descripcion, icono FROM tipos_ecografias WHERE activo = 1 AND (categoria IS NULL OR categoria NOT IN ('Musculoesqueletica_Sub', 'Obstetrica_Sub', 'Partes_Blandas_Sub')) ORDER BY posicion, nombre");
-if ($res_tipos_panel) {
-    while ($row = $res_tipos_panel->fetch_assoc()) {
-        $tipos_panel[] = $row;
-    }
-}
-
-// Sub-tipos musculoesqueléticos (Hombro, Codo, Muñeca, Cadera, Rodilla, Tobillo)
-$tipos_musculo = [];
-$res_musc = $conex->query("SELECT id, codigo, nombre, descripcion, icono FROM tipos_ecografias WHERE activo = 1 AND categoria = 'Musculoesqueletica_Sub' ORDER BY posicion, nombre");
-if ($res_musc) {
-    while ($row = $res_musc->fetch_assoc()) {
-        $tipos_musculo[] = $row;
-    }
-}
-
-// Sub-tipos obstétricos (I Trimestre, II y III Trimestre)
-$tipos_obstetrica = [];
-$res_obs = $conex->query("SELECT id, codigo, nombre, descripcion, icono FROM tipos_ecografias WHERE activo = 1 AND categoria = 'Obstetrica_Sub' ORDER BY posicion, nombre");
-if ($res_obs) {
-    while ($row = $res_obs->fetch_assoc()) {
-        $tipos_obstetrica[] = $row;
-    }
-}
-
-// Sub-tipos partes blandas (General, Cuello, Inguinal)
-$tipos_partes_blandas = [];
-$res_pbl = $conex->query("SELECT id, codigo, nombre, descripcion, icono FROM tipos_ecografias WHERE activo = 1 AND categoria = 'Partes_Blandas_Sub' ORDER BY posicion, nombre");
-if ($res_pbl) {
-    while ($row = $res_pbl->fetch_assoc()) {
-        $tipos_partes_blandas[] = $row;
-    }
-}
+// Catálogo memoizado (lib/catalogo.php): 1 lectura por request en vez de 4 queries.
+// Excluimos sub-tipos (Musculoesqueletica_Sub, Obstetrica_Sub, Partes_Blandas_Sub) — se muestran en sub-modales.
+require_once __DIR__ . '/lib/catalogo.php';
+$menu_tipos_panel     = eco_catalogo_tipos_menu($conex);
+$tipos_panel          = $menu_tipos_panel['principales'];
+$tipos_musculo        = $menu_tipos_panel['musculo'];
+$tipos_obstetrica     = $menu_tipos_panel['obstetrica'];
+$tipos_partes_blandas = $menu_tipos_panel['partes_blandas'];
 
 // Mapa de colores por categoría
 $eco_colores = [
@@ -2642,10 +2615,6 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
         })();
     </script>
     <script src="assets/js/panel.js?v=<?= @filemtime(__DIR__ . '/assets/js/panel.js') ?>"></script>
-
-
-
-
 
 </body>
 </html>

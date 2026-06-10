@@ -18,13 +18,8 @@ if ($rq = $conex->query("SELECT id, nombre_completo FROM usuarios WHERE rol = 'e
     $rq->free();
 }
 
-$agenda_modal_tipos = [];
-if ($tq = $conex->query("SELECT id, nombre, categoria FROM tipos_ecografias WHERE activo = 1 ORDER BY categoria, nombre")) {
-    while ($row = $tq->fetch_assoc()) {
-        $agenda_modal_tipos[] = $row;
-    }
-    $tq->free();
-}
+require_once __DIR__ . '/../../lib/catalogo.php';
+$agenda_modal_tipos = eco_catalogo_tipos_activos($conex);
 
 $agenda_sin_eco = empty($agenda_modal_ecografistas);
 $agenda_sin_tipos = empty($agenda_modal_tipos);

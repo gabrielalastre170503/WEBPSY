@@ -101,13 +101,17 @@ if (!function_exists('eco_catalogo_especialidades')) {
      */
     function eco_catalogo_especialidades(mysqli $conex): array
     {
-        $out = [];
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        $cache = [];
         if ($res = $conex->query("SELECT nombre FROM especialidades WHERE activa = 1 ORDER BY nombre ASC")) {
             while ($row = $res->fetch_assoc()) {
-                $out[] = $row['nombre'];
+                $cache[] = $row['nombre'];
             }
             $res->free();
         }
-        return $out;
+        return $cache;
     }
 }

@@ -18,13 +18,8 @@ if ($rq = $conex->query("SELECT id, nombre_completo FROM usuarios WHERE rol = 'e
     $rq->free();
 }
 
-$rx_modal_tipos = [];
-if ($tq = $conex->query("SELECT id, nombre, categoria FROM tipos_ecografias WHERE activo = 1 ORDER BY categoria, nombre")) {
-    while ($row = $tq->fetch_assoc()) {
-        $rx_modal_tipos[] = $row;
-    }
-    $tq->free();
-}
+require_once __DIR__ . '/../../lib/catalogo.php';
+$rx_modal_tipos = eco_catalogo_tipos_activos($conex);
 ?>
 
 <div id="eco-modal-rx-programar-cita" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="rx-prog-aside-title">
