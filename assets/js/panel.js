@@ -1758,9 +1758,12 @@
 
                         if (fechaCita < ahora && (cita.estado === 'confirmada' || cita.estado === 'reprogramada')) {
                             contenidoHTML += `
-                                <div class="modal-actions" style="justify-content: center;">
+                                <div class="modal-actions" style="justify-content: center; gap: 10px; flex-wrap: wrap;">
                                     <button class="btn-submit" onclick="marcarCitaComoCompletada(${cita.id})">
                                         <i class="fa-solid fa-check"></i> Marcar como Completada
+                                    </button>
+                                    <button class="btn-secondary" onclick="marcarCitaComoNoAsistio(${cita.id})">
+                                        <i class="fa-solid fa-user-clock"></i> No asistió
                                     </button>
                                 </div>
                             `;
@@ -1802,7 +1805,29 @@
         }
     }
 
-    
+    function marcarCitaComoNoAsistio(citaId) {
+        if (confirm('¿Marcar esta cita como inasistencia (no-show)? El paciente no se presentó.')) {
+            fetch('marcar_no_asistio.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': window.ECO_PANEL.csrf },
+                    body: 'cita_id=' + encodeURIComponent(citaId)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        cerrarModalHistorialDetalle();
+                        const buscador = document.getElementById('buscador-historial-citas');
+                        if (buscador) {
+                            buscarHistorialPsicologo(buscador.value); // Recargar la tabla
+                        }
+                    } else {
+                        alert('Error: ' + (result.message || 'No se pudo marcar la inasistencia.'));
+                    }
+                });
+        }
+    }
+
+
 
     // --- CÓDIGO QUE SE EJECUTA UNA SOLA VEZ CUANDO LA PÁGINA CARGA ---
     document.addEventListener('DOMContentLoaded', function() {

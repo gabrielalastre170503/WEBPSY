@@ -95,6 +95,7 @@ if (!function_exists('eco_cita_evento')) {
             'aceptada'        => ['Propuesta aceptada', 'fa-solid fa-check',           '#15803d'],
             'rechazada'       => ['Propuesta rechazada','fa-solid fa-xmark',           '#b91c1c'],
             'completada'      => ['Estudio completado', 'fa-solid fa-clipboard-check', '#6d28d9'],
+            'no_asistio'      => ['Paciente no asistió','fa-solid fa-user-clock',      '#b45309'],
             'cancelada'       => ['Cita cancelada',     'fa-solid fa-calendar-xmark',  '#b91c1c'],
             'pago_registrado' => ['Pago registrado',    'fa-solid fa-money-bill-wave', '#15803d'],
         ];
