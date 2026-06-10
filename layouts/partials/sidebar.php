@@ -117,8 +117,8 @@ $menu = [
         ],
         [
             'id' => 'reportes',
-            'label' => 'Reportes',
-            'icon' => 'fa-solid fa-chart-line',
+            'label' => 'Estadísticas',
+            'icon' => 'fa-solid fa-chart-pie',
             'href' => 'reportes.php',
             'roles' => ['ecografista'],
         ],

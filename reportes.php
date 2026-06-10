@@ -48,7 +48,7 @@ if ($ecoId) {
 
 $qs = 'desde=' . urlencode($desde) . '&hasta=' . urlencode($hasta);
 
-$page_title     = $ecoId ? 'Mis reportes' : 'Reportes';
+$page_title     = $ecoId ? 'Estadísticas' : 'Reportes';
 $page_subtitle  = $ecoId ? 'Tu actividad y facturación por periodo' : 'Actividad y facturación por periodo';
 $active_section = 'reportes';
 $page_head_extra = '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>';
