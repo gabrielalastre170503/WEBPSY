@@ -19,6 +19,7 @@ $serie        = eco_reporte_serie_diaria($conex, $desde, $hasta);
 $por_metodo   = eco_reporte_por_metodo_pago($conex, $desde, $hasta);
 $top_pac      = eco_reporte_top_pacientes($conex, $desde, $hasta, 10);
 $comparativa  = eco_reporte_comparativa_meses($conex, 6);
+$satisf       = eco_reporte_satisfaccion($conex, $desde, $hasta);
 
 $qs = 'desde=' . urlencode($desde) . '&hasta=' . urlencode($hasta);
 
@@ -38,6 +39,7 @@ $kpis = [
     ['Saldo',        eco_money($resumen['saldo']),            'fa-hand-holding-dollar', '#b45309'],
     ['Tasa de cobro', $resumen['tasa_cobro'] . '%',          'fa-percent',        '#0284c7'],
     ['No-show (' . $resumen['no_show'] . ')', $resumen['tasa_no_show'] . '%', 'fa-user-clock', '#b45309'],
+    ['Satisfacción (' . $satisf['respuestas'] . ')', ($satisf['respuestas'] > 0 ? $satisf['promedio'] . '/5' : '—'), 'fa-star', '#d97706'],
 ];
 
 ob_start();

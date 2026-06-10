@@ -35,10 +35,12 @@ $citas = [];
 $q = "
     SELECT c.id, c.fecha_cita, c.fecha_propuesta, c.estado, c.fecha_solicitud,
            p.nombre_completo AS ecografista_nombre,
-           t.nombre AS tipo_estudio, t.icono AS tipo_icono, t.categoria AS tipo_categoria
+           t.nombre AS tipo_estudio, t.icono AS tipo_icono, t.categoria AS tipo_categoria,
+           e.puntuacion AS encuesta_punt
     FROM citas c
     LEFT JOIN usuarios p ON c.ecografista_id = p.id
     LEFT JOIN tipos_ecografias t ON c.tipo_ecografia_id = t.id
+    LEFT JOIN encuestas e ON e.cita_id = c.id
     WHERE c.paciente_id = ?
     ORDER BY c.fecha_solicitud DESC
 ";
@@ -329,6 +331,17 @@ ob_start();
                             <i class="fa-solid fa-calendar-xmark"></i> Cancelar
                         </button>
                     <?php endif; ?>
+                    <?php if ($cita['estado'] === 'completada'): ?>
+                        <?php if (!empty($cita['encuesta_punt'])): ?>
+                            <span class="cita-enc-rated" title="Tu valoración">
+                                <?php for ($i = 1; $i <= 5; $i++): ?><i class="fa-<?= $i <= (int)$cita['encuesta_punt'] ? 'solid' : 'regular' ?> fa-star"></i><?php endfor; ?>
+                            </span>
+                        <?php else: ?>
+                            <button type="button" class="cita-btn cita-btn--rate" onclick="abrirEncuesta(<?= (int)$cita['id'] ?>)">
+                                <i class="fa-solid fa-star"></i> Calificar
+                            </button>
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -385,6 +398,37 @@ ob_start();
     </div>
 </div>
 <?php endif; ?>
+
+<style>
+.cita-btn--rate { color:#b45309; }
+.cita-btn--rate:hover { background:#fef3c7; border-color:#fcd34d; }
+.cita-enc-rated { display:inline-flex; gap:2px; color:#fbbf24; font-size:13px; align-items:center; }
+#eco-modal-encuesta .enc-stars i { cursor:pointer; transition:transform .1s; }
+#eco-modal-encuesta .enc-stars i:hover { transform:scale(1.15); }
+</style>
+<div id="eco-modal-encuesta" class="eco-modal" aria-hidden="true" role="dialog">
+    <div class="eco-modal__dialog" style="max-width:430px;">
+        <div class="eco-modal__main" style="padding:30px 26px;text-align:center;">
+            <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+            <div class="cc-icon" style="background:rgba(251,191,36,.15);color:#d97706;"><i class="fa-solid fa-star"></i></div>
+            <h2 class="cc-title">¿Cómo fue tu experiencia?</h2>
+            <p class="cc-text">Tu opinión nos ayuda a mejorar la atención.</p>
+            <div class="enc-stars" style="font-size:30px;color:#fbbf24;margin:6px 0 14px;">
+                <i class="fa-regular fa-star" data-v="1"></i>
+                <i class="fa-regular fa-star" data-v="2"></i>
+                <i class="fa-regular fa-star" data-v="3"></i>
+                <i class="fa-regular fa-star" data-v="4"></i>
+                <i class="fa-regular fa-star" data-v="5"></i>
+            </div>
+            <textarea id="enc-comentario" rows="3" maxlength="1000" placeholder="Comentario (opcional)" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-primary);font-family:inherit;resize:vertical;"></textarea>
+            <p id="enc-error" style="color:#dc2626;font-size:12.5px;min-height:16px;margin:8px 0 0;"></p>
+            <div class="cc-foot" style="margin-top:10px;">
+                <button type="button" class="btn-secondary" data-eco-modal-close><i class="fa-solid fa-arrow-left"></i> Cancelar</button>
+                <button type="button" id="enc-submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Enviar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php
 $page_content = ob_get_clean();
@@ -529,6 +573,43 @@ $page_scripts_extra = <<<'HTML'
             history.replaceState(null, '', window.location.pathname);
         }
     }
+
+    /* Encuesta de satisfacción post-estudio */
+    var encCitaId = 0, encPunt = 0;
+    var encStars = document.querySelectorAll('#eco-modal-encuesta .enc-stars i');
+    function encRender(n) {
+        encStars.forEach(function (s) {
+            var v = +s.getAttribute('data-v');
+            s.className = (v <= n ? 'fa-solid' : 'fa-regular') + ' fa-star';
+        });
+    }
+    encStars.forEach(function (s) {
+        s.addEventListener('click', function () { encPunt = +s.getAttribute('data-v'); encRender(encPunt); });
+    });
+    window.abrirEncuesta = function (id) {
+        encCitaId = id; encPunt = 0; encRender(0);
+        var c = document.getElementById('enc-comentario'); if (c) c.value = '';
+        var e = document.getElementById('enc-error'); if (e) e.textContent = '';
+        if (typeof EcoModal !== 'undefined') EcoModal.open('eco-modal-encuesta');
+    };
+    var encBtn = document.getElementById('enc-submit');
+    if (encBtn) encBtn.addEventListener('click', function () {
+        var err = document.getElementById('enc-error');
+        if (encPunt < 1) { if (err) err.textContent = 'Selecciona una puntuación.'; return; }
+        encBtn.disabled = true;
+        var fd = new FormData();
+        fd.append('cita_id', encCitaId);
+        fd.append('puntuacion', encPunt);
+        fd.append('comentario', document.getElementById('enc-comentario').value);
+        fetch('guardar_encuesta.php', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                encBtn.disabled = false;
+                if (d.success) { location.reload(); }
+                else if (err) { err.textContent = d.message || 'No se pudo enviar.'; }
+            })
+            .catch(function () { encBtn.disabled = false; if (err) err.textContent = 'Error de red.'; });
+    });
 })();
 </script>
 HTML;

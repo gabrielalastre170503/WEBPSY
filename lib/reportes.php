@@ -266,6 +266,32 @@ if (!function_exists('eco_reporte_comparativa_meses')) {
     }
 }
 
+if (!function_exists('eco_reporte_satisfaccion')) {
+    /**
+     * Satisfaccion del periodo a partir de las encuestas (1-5) de citas cuya
+     * fecha_cita cae en el rango.
+     * @return array{respuestas:int,promedio:float}
+     */
+    function eco_reporte_satisfaccion(mysqli $conex, string $desde, string $hasta): array
+    {
+        $ini = $desde . ' 00:00:00';
+        $fin = $hasta . ' 23:59:59';
+        $sql = "SELECT COUNT(*) AS respuestas, COALESCE(AVG(e.puntuacion), 0) AS promedio
+                FROM encuestas e
+                JOIN citas c ON c.id = e.cita_id
+                WHERE c.fecha_cita BETWEEN ? AND ?";
+        $st = $conex->prepare($sql);
+        $st->bind_param('ss', $ini, $fin);
+        $st->execute();
+        $r = $st->get_result()->fetch_assoc() ?: [];
+        $st->close();
+        return [
+            'respuestas' => (int)($r['respuestas'] ?? 0),
+            'promedio'   => round((float)($r['promedio'] ?? 0), 2),
+        ];
+    }
+}
+
 if (!function_exists('eco_reporte_serie_diaria')) {
     /** Serie diaria (citas e ingresos cobrados) para grafico de tendencia. @return list<array> */
     function eco_reporte_serie_diaria(mysqli $conex, string $desde, string $hasta): array

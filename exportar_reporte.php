@@ -48,6 +48,8 @@ if (($_GET['formato'] ?? '') === 'pdf') {
     $pdf->keyValue('Saldo pendiente', eco_money($k['saldo']));
     $pdf->keyValue('Tasa de cobro', $k['tasa_cobro'] . '%');
     $pdf->keyValue('Ausencias (no-show)', $k['no_show'] . '  (' . $k['tasa_no_show'] . '%)');
+    $sat = eco_reporte_satisfaccion($conex, $desde, $hasta);
+    $pdf->keyValue('Satisfaccion', $sat['respuestas'] > 0 ? ($sat['promedio'] . '/5  (' . $sat['respuestas'] . ' resp.)') : 'Sin respuestas');
 
     $pdf->heading('Por tipo de estudio');
     if (!$tipos) { $pdf->text('Sin datos.'); }
@@ -114,6 +116,9 @@ if ($r === 'tipos') {
     fputcsv($out, ['Tasa de cobro (%)', $k['tasa_cobro']]);
     fputcsv($out, ['Ausencias (no-show)', $k['no_show']]);
     fputcsv($out, ['Tasa no-show (%)', $k['tasa_no_show']]);
+    $sat = eco_reporte_satisfaccion($conex, $desde, $hasta);
+    fputcsv($out, ['Satisfacción (promedio 1-5)', $sat['respuestas'] > 0 ? $sat['promedio'] : '']);
+    fputcsv($out, ['Respuestas de encuesta', $sat['respuestas']]);
 }
 
 fclose($out);
