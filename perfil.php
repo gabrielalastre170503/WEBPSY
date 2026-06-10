@@ -67,15 +67,11 @@ if (!empty($fechaRegistro)) {
     }
 }
 
-$ultimaActividad = $_SESSION['ultima_actividad'] ?? null;
-$ultimaActividadTexto = 'Registro reciente verificado';
+$ultimaActividad = $_SESSION['ultimo_acceso'] ?? null;
+$ultimaActividadTexto = 'Esta es tu primera sesión';
 if (!empty($ultimaActividad)) {
     $tsAct = strtotime($ultimaActividad);
-    if ($tsAct > 0) {
-        $ultimaActividadTexto = date('d/m/Y H:i', $tsAct);
-    } else {
-        $ultimaActividadTexto = (string)$ultimaActividad;
-    }
+    $ultimaActividadTexto = $tsAct > 0 ? date('d/m/Y H:i', $tsAct) : (string)$ultimaActividad;
 }
 
 $nombreUsuarioPlano = (string)$nombre_usuario;

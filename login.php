@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error = 'Demasiados intentos fallidos. Espera ' . $min . ' minuto(s) antes de volver a intentarlo.';
             eco_auditar($conex, 'login_bloqueado', ['detalle' => ['correo' => $correo]]);
         } else {
-        $stmt = $conex->prepare("SELECT id, nombre_completo, correo, contrasena, rol, estado, email_verificado, two_factor_enabled FROM usuarios WHERE correo = ?");
+        $stmt = $conex->prepare("SELECT id, nombre_completo, correo, contrasena, rol, estado, email_verificado, two_factor_enabled, ultimo_acceso FROM usuarios WHERE correo = ?");
         $stmt->bind_param("s", $correo);
         $stmt->execute();
         $resultado = $stmt->get_result();
@@ -48,14 +48,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     if ((int)$usuario['two_factor_enabled'] === 1) {
                         $otp = eco_otp_codigo();
                         $_SESSION['2fa_pending'] = [
-                            'user_id'    => (int)$usuario['id'],
-                            'nombre'     => $usuario['nombre_completo'],
-                            'correo'     => $usuario['correo'],
-                            'rol'        => $usuario['rol'],
-                            'verificado' => (int)$usuario['email_verificado'],
-                            'otp_hash'   => password_hash($otp, PASSWORD_DEFAULT),
-                            'expira'     => time() + 600,
-                            'intentos'   => 0,
+                            'user_id'       => (int)$usuario['id'],
+                            'nombre'        => $usuario['nombre_completo'],
+                            'correo'        => $usuario['correo'],
+                            'rol'           => $usuario['rol'],
+                            'verificado'    => (int)$usuario['email_verificado'],
+                            'ultimo_acceso' => $usuario['ultimo_acceso'],
+                            'otp_hash'      => password_hash($otp, PASSWORD_DEFAULT),
+                            'expira'        => time() + 600,
+                            'intentos'      => 0,
                         ];
                         $cuerpo = "Hola {$usuario['nombre_completo']},\n\n"
                             . "Tu código de verificación en dos pasos es:\n\n    {$otp}\n\n"
@@ -75,6 +76,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $_SESSION['rol'] = $usuario['rol'];
                     if ((int)$usuario['email_verificado'] === 0) {
                         $_SESSION['email_sin_verificar'] = true;
+                    }
+                    // Acceso anterior (para el perfil) + registrar este acceso.
+                    $_SESSION['ultimo_acceso'] = $usuario['ultimo_acceso'];
+                    if ($up = $conex->prepare("UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = ?")) {
+                        $up->bind_param('i', $usuario['id']);
+                        $up->execute();
+                        $up->close();
                     }
                     eco_auditar($conex, 'login_exito', ['usuario_id' => (int)$usuario['id']]);
                     header('Location: dashboard_v2.php');

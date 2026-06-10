@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $correo = $pend['correo'];
         $rol    = $pend['rol'];
         $verif  = (int)$pend['verificado'];
+        $ultacc = $pend['ultimo_acceso'] ?? null;
         unset($_SESSION['2fa_pending']);
 
         session_regenerate_id(true);
@@ -57,6 +58,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['rol']             = $rol;
         if ($verif === 0) {
             $_SESSION['email_sin_verificar'] = true;
+        }
+        // Acceso anterior (para el perfil) + registrar este acceso.
+        $_SESSION['ultimo_acceso'] = $ultacc;
+        if ($up = $conex->prepare("UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = ?")) {
+            $up->bind_param('i', $uid);
+            $up->execute();
+            $up->close();
         }
         header('Location: dashboard_v2.php');
         exit;
