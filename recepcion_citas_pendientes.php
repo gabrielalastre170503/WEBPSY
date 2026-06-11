@@ -214,7 +214,7 @@ $page_scripts_extra = <<<'HTML'
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (data.success) {
-                        window.location.href = 'recepcion_citas_pendientes.php?status=cita_programada';
+                        window.location.href = '<?= eco_url('citas-pendientes') ?>?status=cita_programada';
                     } else {
                         alert(data.message || 'No se pudo programar.');
                     }

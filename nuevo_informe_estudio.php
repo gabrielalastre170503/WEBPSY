@@ -489,7 +489,7 @@ document.querySelectorAll('.form-estudio').forEach(formulario => {
                 feedback.innerHTML = '<div class="msg-ok"><i class="fa-solid fa-circle-check"></i> ' + json.message + '</div>';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 setTimeout(() => {
-                    window.location.href = 'ver_informe_estudio.php?informe_id=' + json.informe_id;
+                    window.location.href = '<?= eco_url('informe') ?>/' + json.informe_id;
                 }, 900);
             } else {
                 feedback.innerHTML = '<div class="msg-error"><i class="fa-solid fa-triangle-exclamation"></i> ' + (json.message || 'Error al guardar.') + '</div>';

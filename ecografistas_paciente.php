@@ -338,7 +338,7 @@ $page_scripts_extra = <<<'HTML'
                 html += row('fa-calendar-check', 'Miembro desde', val(data.fecha_registro_formateada));
                 html += row('fa-circle-check', 'Estado', val(data.estado_formateado));
                 html += '</div>';
-                html += '<div class="pd-foot"><a class="btn-primary" href="solicitar_cita_paciente.php?ecografista_id=' + encodeURIComponent(id) + '"><i class="fa-solid fa-calendar-plus"></i> Solicitar cita con este ecografista</a></div>';
+                html += '<div class="pd-foot"><a class="btn-primary" href="<?= eco_url('solicitar-cita') ?>?ecografista_id=' + encodeURIComponent(id) + '"><i class="fa-solid fa-calendar-plus"></i> Solicitar cita con este ecografista</a></div>';
                 bodyEl.innerHTML = html;
             })
             .catch(function () {
