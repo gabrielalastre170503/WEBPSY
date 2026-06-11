@@ -2,39 +2,61 @@
 /**
  * routes.php — Tabla de rutas limpias → handlers existentes (alias aditivo).
  *
- * Cada ruta limpia incluye el .php existente; ese handler corre sus propios
- * chequeos de sesión/rol y su lógica, sin cambios. Las URLs `.php?query` viejas
- * siguen funcionando en paralelo. Migración de referencias = gradual, después.
+ * Cada ruta incluye el .php existente; ese handler corre sus propios chequeos
+ * de sesión/rol y su lógica, sin cambios. Las URLs `.php?query` viejas siguen
+ * funcionando en paralelo (fallback). Migración de referencias = gradual.
  *
  * @var EcoRouter $r  (definido en router.php)
  */
 
-/* ── Públicas ── */
-$r->get('/login',       'login.php');
-$r->any('/registro',    'registro.php');
-$r->any('/recuperar',   'recuperar.php');
-$r->get('/privacidad',  'privacidad.php');
-$r->get('/logout',      'logout.php');
+/* ── Públicas / identidad ── */
+$r->get('/login',         'login.php');
+$r->any('/registro',      'registro.php');
+$r->any('/recuperar',     'recuperar.php');
 $r->any('/verificar-2fa', 'verificar_2fa.php');
+$r->get('/privacidad',    'privacidad.php');
+$r->get('/logout',        'logout.php');
 
-/* ── Panel / dashboard ── */
-$r->get('/dashboard',   'dashboard_v2.php');
-$r->get('/perfil',      'perfil.php');
+/* ── Comunes ── */
+$r->get('/dashboard', 'dashboard_v2.php');
+$r->get('/perfil',    'perfil.php');
+$r->get('/reportes',  'reportes.php');
+$r->get('/agenda',    'agenda_general.php');
+$r->get('/facturacion', 'facturacion.php');
 
 /* ── Informes ── */
 $r->get('/informe/{informe_id}', 'ver_informe_estudio.php');
 $r->get('/mis-informes',         'mis_informes_paciente.php');
 
-/* ── Citas / agenda ── */
-$r->get('/mi-agenda',        'mi_agenda.php');
-$r->get('/mis-citas',        'mis_proximas_citas.php');
-$r->get('/historial-citas',  'mi_historial_citas.php');
-$r->get('/agenda',           'agenda_general.php');
+/* ── Administrador ── */
+$r->get('/personal',      'admin_personal.php');
+$r->get('/usuarios',      'ver_usuarios.php');
+$r->get('/especialidades', 'admin_especialidades.php');
+$r->get('/documentos',    'admin_documentos.php');
+$r->get('/contenido',     'admin_contenido.php');
+$r->get('/auditoria',     'auditoria.php');
+$r->get('/notas-rapidas', 'notas_rapidas.php');
 
-/* ── Pacientes ── */
-$r->get('/mis-pacientes',    'mis_pacientes.php');
-$r->get('/notas-sesion',     'mis_notas_sesion.php');
+/* ── Ecografista ── */
+$r->get('/mis-pacientes',  'mis_pacientes.php');
+$r->get('/proximas-citas', 'mis_proximas_citas.php');
+$r->get('/solicitudes',    'mis_solicitudes.php');
+$r->get('/mi-agenda',      'mi_agenda.php');
+$r->get('/disponibilidad', 'gestionar_disponibilidad.php');
+$r->get('/historial-citas', 'mi_historial_citas.php');
+$r->get('/notas-sesion',   'mis_notas_sesion.php');
 
-/* ── Reportes / cumplimiento ── */
-$r->get('/reportes',   'reportes.php');
-$r->get('/auditoria',  'auditoria.php');
+/* ── Recepcionista ── */
+$r->get('/citas-pendientes',    'recepcion_citas_pendientes.php');
+$r->get('/gestion-pacientes',   'recepcion_gestion_pacientes.php');
+$r->get('/historial-recepcion', 'recepcion_historial_citas.php');
+$r->get('/directorio',          'recepcion_directorio.php');
+
+/* ── Paciente ── */
+$r->get('/mis-citas',       'mis_citas_paciente.php');
+$r->get('/solicitar-cita',  'solicitar_cita_paciente.php');
+$r->get('/ecografistas',    'ecografistas_paciente.php');
+$r->get('/preparacion',     'preparacion_estudios_paciente.php');
+$r->get('/precios',         'precios_ecografias_paciente.php');
+$r->get('/faq',             'paciente_faq.php');
+$r->get('/ayuda',           'paciente_ayuda.php');

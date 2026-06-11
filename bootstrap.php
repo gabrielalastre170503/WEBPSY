@@ -165,3 +165,21 @@ if (!function_exists('csrf_token')) {
         exit;
     }
 }
+
+/* ── 3. Helper de URL (rutas limpias del router) ──────────────────────
+ * Devuelve una URL absoluta con el prefijo de la subcarpeta del proyecto,
+ * para enlazar a rutas limpias sin romperse según la profundidad de la URL
+ * actual. eco_url('mi-agenda') -> /Sistema_EcoMadelleineV1/mi-agenda */
+if (!function_exists('eco_url')) {
+    function eco_url(string $path = ''): string
+    {
+        static $base = null;
+        if ($base === null) {
+            $base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+        }
+        if ($path === '') {
+            return $base !== '' ? $base . '/' : '/';
+        }
+        return $base . '/' . ltrim($path, '/');
+    }
+}
