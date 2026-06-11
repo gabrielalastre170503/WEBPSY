@@ -5,8 +5,8 @@
  * No revela si el correo está o no registrado (evita enumeración de usuarios).
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/comunicaciones/correo_app.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/comunicaciones/correo_app.php';
 
 $enviado = false;
 $error   = '';
@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php if ($error): ?>
                 <div class="msg msg-err"><i class="fa-solid fa-triangle-exclamation"></i><span><?= htmlspecialchars($error) ?></span></div>
             <?php endif; ?>
-            <form method="POST" action="recuperar.php" autocomplete="off">
+            <form method="POST" action="<?= eco_url('recuperar') ?>" autocomplete="off">
                 <?= csrf_field() ?>
                 <div class="field">
                     <i class="fa-regular fa-envelope"></i>

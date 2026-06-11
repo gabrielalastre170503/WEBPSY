@@ -10,12 +10,12 @@
  */
 
 /* ── Públicas / identidad ── */
-$r->get('/login',         'login.php');
-$r->any('/registro',      'registro.php');
-$r->any('/recuperar',     'recuperar.php');
-$r->any('/verificar-2fa', 'verificar_2fa.php');
-$r->get('/privacidad',    'privacidad.php');
-$r->get('/logout',        'logout.php');
+$r->any('/login',         'auth/login.php');
+$r->any('/registro',      'auth/registro.php');
+$r->any('/recuperar',     'auth/recuperar.php');
+$r->any('/verificar-2fa', 'auth/verificar_2fa.php');
+$r->get('/privacidad',    'auth/privacidad.php');
+$r->get('/logout',        'auth/logout.php');
 
 /* ── Comunes ── */
 $r->get('/dashboard', 'dashboard_v2.php');

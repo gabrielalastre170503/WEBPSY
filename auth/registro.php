@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start(); // necesaria para el token CSRF antes de imprimir HTML
-include 'conexion.php';
-require_once __DIR__ . '/lib/comunicaciones/correo_app.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/comunicaciones/correo_app.php';
 $mensaje = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -736,7 +736,7 @@ $total_tipos = (int)($r->fetch_assoc()['c'] ?? 0);
             </div>
         <?php endif; ?>
 
-        <form method="POST" action="registro.php" class="input-group" autocomplete="off">
+        <form method="POST" action="<?= eco_url('registro') ?>" class="input-group" autocomplete="off">
             <?= csrf_field() ?>
             <div class="input-field">
                 <i class="fa-solid fa-user"></i>

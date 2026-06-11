@@ -4,8 +4,8 @@
  * Requiere $_SESSION['2fa_pending'] (creado en login.php tras validar la contraseña).
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/comunicaciones/correo_app.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/comunicaciones/correo_app.php';
 
 if (empty($_SESSION['2fa_pending']) || !is_array($_SESSION['2fa_pending'])) {
     header('Location: ' . eco_url('login'));
@@ -121,7 +121,7 @@ $correo_masked = preg_replace_callback('/^(.).*(.@.*)$/u', fn($m) => $m[1] . '�
             <div class="msg msg-ok"><i class="fa-solid fa-circle-check"></i><span><?= htmlspecialchars($info) ?></span></div>
         <?php endif; ?>
 
-        <form method="POST" action="verificar_2fa.php" autocomplete="off">
+        <form method="POST" action="<?= eco_url('verificar-2fa') ?>" autocomplete="off">
             <?= csrf_field() ?>
             <input type="text" name="codigo" class="otp-input" inputmode="numeric" maxlength="6" pattern="\d{6}"
                    placeholder="••••••" required autofocus>

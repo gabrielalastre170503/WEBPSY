@@ -1,8 +1,8 @@
 <?php
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/comunicaciones/correo_app.php';
-require_once __DIR__ . '/lib/seguridad/seguridad.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/comunicaciones/correo_app.php';
+require_once __DIR__ . '/../lib/seguridad/seguridad.php';
 
 $error = '';
 $mensaje_exito = '';
@@ -689,7 +689,7 @@ $total_pacientes = (int)($r->fetch_assoc()['c'] ?? 0);
             </div>
         <?php endif; ?>
 
-        <form method="POST" action="login.php" class="input-group" autocomplete="off">
+        <form method="POST" action="<?= eco_url('login') ?>" class="input-group" autocomplete="off">
             <?= csrf_field() ?>
             <div class="input-field">
                 <i class="fa-regular fa-envelope"></i>
