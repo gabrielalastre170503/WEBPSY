@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: ' . eco_url('login')); exit; }
 if ($_SESSION['rol'] !== 'ecografista') { header('Location: ' . eco_url('dashboard')); exit; }
@@ -94,7 +94,7 @@ ob_start();
 
 <?php endif; ?>
 
-<?php include __DIR__ . '/layouts/partials/modal_gestionar_paciente_ecografista.php'; ?>
+<?php include __DIR__ . '/../layouts/partials/modal_gestionar_paciente_ecografista.php'; ?>
 
 <script>
 /* Buscador */
@@ -128,4 +128,4 @@ $page_scripts_extra = <<<'HTML'
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <script src="assets/js/panel/ecografista-modals.js?v=25"></script>
 HTML;
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

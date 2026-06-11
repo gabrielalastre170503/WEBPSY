@@ -1,7 +1,7 @@
 <?php
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/core/table_sort_helpers.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/core/table_sort_helpers.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: ' . eco_url('login')); exit; }
 if ($_SESSION['rol'] !== 'ecografista') { header('Location: ' . eco_url('dashboard')); exit; }
@@ -172,8 +172,8 @@ ob_start();
 </script>
 
 <?php
-include __DIR__ . '/layouts/partials/modal_gestionar_paciente_ecografista.php';
-include __DIR__ . '/layouts/partials/modal_crear_paciente.php';
+include __DIR__ . '/../layouts/partials/modal_gestionar_paciente_ecografista.php';
+include __DIR__ . '/../layouts/partials/modal_crear_paciente.php';
 
 $page_content = ob_get_clean();
 
@@ -264,4 +264,4 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 HTML;
 
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

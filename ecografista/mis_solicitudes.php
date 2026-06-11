@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: ' . eco_url('login')); exit; }
 if ($_SESSION['rol'] !== 'ecografista') { header('Location: ' . eco_url('dashboard')); exit; }
@@ -194,7 +194,7 @@ function confirmarSolicitud(id) {
 </div>
 
 <?php
-include __DIR__ . '/layouts/partials/modal_proponer_fecha_ecografista.php';
+include __DIR__ . '/../layouts/partials/modal_proponer_fecha_ecografista.php';
 
 $page_content = ob_get_clean();
 
@@ -366,4 +366,4 @@ $page_scripts_extra = <<<'HTML'
 </script>
 HTML;
 
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

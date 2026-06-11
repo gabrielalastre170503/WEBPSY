@@ -39,13 +39,13 @@ $r->get('/auditoria',     'auditoria.php');
 $r->get('/notas-rapidas', 'notas_rapidas.php');
 
 /* ── Ecografista ── */
-$r->get('/mis-pacientes',  'mis_pacientes.php');
-$r->get('/proximas-citas', 'mis_proximas_citas.php');
-$r->get('/solicitudes',    'mis_solicitudes.php');
-$r->get('/mi-agenda',      'mi_agenda.php');
-$r->get('/disponibilidad', 'gestionar_disponibilidad.php');
-$r->get('/historial-citas', 'mi_historial_citas.php');
-$r->get('/notas-sesion',   'mis_notas_sesion.php');
+$r->get('/mis-pacientes',  'ecografista/mis_pacientes.php');
+$r->get('/proximas-citas', 'ecografista/mis_proximas_citas.php');
+$r->get('/solicitudes',    'ecografista/mis_solicitudes.php');
+$r->get('/mi-agenda',      'ecografista/mi_agenda.php');
+$r->get('/disponibilidad', 'ecografista/gestionar_disponibilidad.php');
+$r->get('/historial-citas', 'ecografista/mi_historial_citas.php');
+$r->get('/notas-sesion',   'ecografista/mis_notas_sesion.php');
 
 /* ── Recepcionista ── */
 $r->get('/citas-pendientes',    'recepcion/recepcion_citas_pendientes.php');

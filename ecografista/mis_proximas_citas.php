@@ -1,7 +1,7 @@
 <?php
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/facturacion/facturacion.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/facturacion/facturacion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: ' . eco_url('login')); exit; }
 if ($_SESSION['rol'] !== 'ecografista') { header('Location: ' . eco_url('dashboard')); exit; }
@@ -160,12 +160,12 @@ function cancelarCitaEco(id, paciente) {
 </script>
 
 <?php
-include __DIR__ . '/layouts/partials/modal_gestionar_paciente_ecografista.php';
-include __DIR__ . '/layouts/partials/modal_cita_ecografista.php';
+include __DIR__ . '/../layouts/partials/modal_gestionar_paciente_ecografista.php';
+include __DIR__ . '/../layouts/partials/modal_cita_ecografista.php';
 $page_content = ob_get_clean();
 $page_scripts_extra = <<<'HTML'
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <script src="assets/js/panel/ecografista-modals.js?v=25"></script>
 HTML;
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

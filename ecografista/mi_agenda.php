@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: ' . eco_url('login')); exit; }
 if ($_SESSION['rol'] !== 'ecografista') { header('Location: ' . eco_url('dashboard')); exit; }
@@ -100,9 +100,9 @@ document.addEventListener('DOMContentLoaded', function () {
 </style>
 
 <?php
-include __DIR__ . '/layouts/partials/modal_gestionar_paciente_ecografista.php';
-include __DIR__ . '/layouts/partials/modal_cita_ecografista.php';
-include __DIR__ . '/layouts/partials/modal_recordatorios.php';
+include __DIR__ . '/../layouts/partials/modal_gestionar_paciente_ecografista.php';
+include __DIR__ . '/../layouts/partials/modal_cita_ecografista.php';
+include __DIR__ . '/../layouts/partials/modal_recordatorios.php';
 $page_content = ob_get_clean();
 $page_scripts_extra = <<<'HTML'
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -110,4 +110,4 @@ $page_scripts_extra = <<<'HTML'
 <script src="assets/js/panel/ecografista-modals.js?v=25"></script>
 <script src="assets/js/agenda/recordatorios-ui.js"></script>
 HTML;
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';
