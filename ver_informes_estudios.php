@@ -123,7 +123,7 @@ $stmt->close();
                         <td><?php echo htmlspecialchars($inf['medico_solicitante'] ?? '--'); ?></td>
                         <td><?php echo htmlspecialchars($inf['ecografista_nombre']); ?></td>
                         <td><span class="badge badge-<?php echo htmlspecialchars($inf['estado']); ?>"><?php echo htmlspecialchars($inf['estado']); ?></span></td>
-                        <td><a href="ver_informe_estudio.php?informe_id=<?php echo (int)$inf['id']; ?>" class="accion-link">Ver <i class="fa-solid fa-arrow-right"></i></a></td>
+                        <td><a href="<?= eco_url('informe/' . (int)$inf['id']) ?>" class="accion-link">Ver <i class="fa-solid fa-arrow-right"></i></a></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

@@ -30,7 +30,7 @@ $page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-gestion-
     . '<link rel="stylesheet" href="assets/css/core/estilos.css">';
 
 $page_header_actions = '
-    <a href="admin_contenido.php" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Contenido web</a>
+    <a href="' . eco_url('contenido') . '" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Contenido web</a>
     <a href="index.php#nosotros" target="_blank" rel="noopener" class="btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir sitio</a>';
 
 ob_start();

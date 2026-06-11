@@ -25,7 +25,7 @@ $body_class    = 'cw-gestion-page';
 $page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-gestion-contenido.css">';
 
 $page_header_actions = '
-    <a href="admin_contenido.php" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Contenido web</a>
+    <a href="' . eco_url('contenido') . '" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Contenido web</a>
     <a href="index.php#faq" target="_blank" rel="noopener" class="btn-secondary"><i class="fa-solid fa-eye"></i> Ver en sitio</a>';
 
 ob_start();

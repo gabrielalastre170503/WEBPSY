@@ -96,7 +96,7 @@ ob_start();
             <input type="text" name="q" value="<?= htmlspecialchars($qs_q) ?>" placeholder="Nombre del usuario…" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-surface);color:var(--text-primary);box-sizing:border-box;">
         </div>
         <button type="submit" class="btn-primary" style="padding:9px 16px;"><i class="fa-solid fa-filter"></i> Filtrar</button>
-        <a class="btn-secondary" style="padding:9px 14px;" href="auditoria.php"><i class="fa-solid fa-rotate-left"></i> Limpiar</a>
+        <a class="btn-secondary" style="padding:9px 14px;" href="<?= eco_url('auditoria') ?>"><i class="fa-solid fa-rotate-left"></i> Limpiar</a>
     </form>
 </div>
 
