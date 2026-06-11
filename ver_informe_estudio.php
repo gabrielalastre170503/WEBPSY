@@ -1,9 +1,9 @@
 <?php
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/estudios_render.php';
-require_once __DIR__ . '/lib/archivos.php';
-require_once __DIR__ . '/lib/seguridad.php';
+require_once __DIR__ . '/lib/informes/estudios_render.php';
+require_once __DIR__ . '/lib/informes/archivos.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista', 'paciente'])) {
     header('Location: login.php');
@@ -20,13 +20,16 @@ $sql = "SELECT
             inf.id, inf.numero_informe, inf.estado, inf.datos_clinicos, inf.esquema_version,
             inf.creado_en, inf.fecha_estudio, inf.medico_solicitante,
             inf.paciente_id, inf.ecografista_id, inf.tipo_ecografia_id,
+            inf.fecha_firma, inf.firmado_por, inf.documento_sha256, inf.sello_firma,
             pac.nombre_completo AS paciente_nombre, pac.cedula AS paciente_cedula,
             TIMESTAMPDIFF(YEAR, pac.fecha_nacimiento, CURDATE()) AS paciente_edad,
             eco.nombre_completo AS ecografista_nombre, eco.cedula AS ecografista_cedula,
+            fb.nombre_completo AS firmante_nombre,
             t.nombre AS tipo_nombre, t.categoria AS tipo_categoria, t.icono AS tipo_icono, t.esquema_campos
         FROM informes_estudios inf
         JOIN usuarios pac           ON pac.id = inf.paciente_id
         JOIN usuarios eco           ON eco.id = inf.ecografista_id
+        LEFT JOIN usuarios fb       ON fb.id  = inf.firmado_por
         JOIN tipos_ecografias t     ON t.id   = inf.tipo_ecografia_id
         WHERE inf.id = ?";
 $stmt = $conex->prepare($sql);
@@ -58,6 +61,20 @@ eco_auditar($conex, 'acceso_informe', [
 $esquema = json_decode($informe['esquema_campos'], true) ?: ['secciones' => []];
 $datos   = json_decode($informe['datos_clinicos'], true) ?: [];
 
+/* Motivo de consulta: se captura en el formulario y vive en datos_clinicos
+   (sección "encabezado"). No es medico_solicitante. */
+$motivo_consulta = '';
+if (!empty($datos['encabezado']['motivo_consulta'])) {
+    $motivo_consulta = (string)$datos['encabezado']['motivo_consulta'];
+} else {
+    foreach ($datos as $sec) {
+        if (is_array($sec) && !empty($sec['motivo_consulta'])) {
+            $motivo_consulta = (string)$sec['motivo_consulta'];
+            break;
+        }
+    }
+}
+
 // Imagenes ecograficas y adjuntos del estudio (Fase 3). Solo pantalla.
 $archivos = eco_archivos_de_informe($conex, $informe_id);
 $archivos_img = array_filter($archivos, static fn($a) => strpos((string)$a['mime'], 'image/') === 0);
@@ -67,6 +84,15 @@ $fecha_creado     = date('d/m/Y H:i', strtotime($informe['creado_en']));
 $fecha_estudio_fmt = !empty($informe['fecha_estudio'])
     ? date('d/m/Y', strtotime($informe['fecha_estudio']))
     : date('d/m/Y', strtotime($informe['creado_en']));
+
+/* Firma electrónica: el bloque sale en todo informe firmado. La huella/sello
+   criptográfico (Fase 3c) solo existe en los firmados después de esa fase. */
+$esta_firmado    = ($informe['estado'] === 'firmado');
+$tiene_sello     = !empty($informe['documento_sha256']);
+$firmante_nombre = $informe['firmante_nombre'] ?: $informe['ecografista_nombre'];
+$fecha_firma_fmt = !empty($informe['fecha_firma'])
+    ? date('d/m/Y H:i', strtotime($informe['fecha_firma']))
+    : '';
 
 /* Título centrado tipo "REPORTE ECOGRÁFICO RENAL" */
 $titulo_print = mb_strtoupper('Reporte Ecográfico ' . preg_replace('/^Ecograf[ií]a\s+/i', '', $informe['tipo_nombre']), 'UTF-8');
@@ -598,7 +624,7 @@ $titulo_print = mb_strtoupper('Reporte Ecográfico ' . preg_replace('/^Ecograf[i
                 <div class="linea">
                     <strong>Motivo de consulta:</strong>
                     <span class="valor">
-                        <?php echo !empty($informe['medico_solicitante']) ? htmlspecialchars($informe['medico_solicitante']) : ''; ?>
+                        <?php echo $motivo_consulta !== '' ? htmlspecialchars($motivo_consulta) : ''; ?>
                     </span>
                 </div>
             </div>
@@ -721,6 +747,38 @@ $titulo_print = mb_strtoupper('Reporte Ecográfico ' . preg_replace('/^Ecograf[i
             </div>
             <?php endif; ?>
         </section>
+        <?php endif; ?>
+
+        <?php if ($esta_firmado): ?>
+        <style>
+            .firma-sello { margin:22px 0 6px; border:1px solid #000; border-radius:6px; padding:14px 16px; background:#fff;
+                color:#000; break-inside:avoid; page-break-inside:avoid; }
+            .firma-sello__titulo { font-weight:700; color:#000; font-size:12.5px; letter-spacing:.03em; margin-bottom:10px;
+                display:flex; align-items:center; gap:8px; }
+            .firma-sello__grid { display:grid; grid-template-columns:1fr 1fr; gap:7px 24px; margin:0; }
+            .firma-sello__grid > div { display:flex; flex-direction:column; }
+            .firma-sello__grid .firma-sello__full { grid-column:1 / -1; }
+            .firma-sello__grid dt { font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:#000; font-weight:600; }
+            .firma-sello__grid dd { margin:0; font-size:12px; color:#000; }
+            .firma-sello__grid dd.mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:11px;
+                word-break:break-all; color:#000; }
+            .firma-sello__nota { margin:10px 0 0; font-size:10px; color:#000; line-height:1.4; }
+        </style>
+        <div class="firma-sello">
+            <div class="firma-sello__titulo"><i class="fa-solid fa-shield-halved"></i> DOCUMENTO FIRMADO ELECTRÓNICAMENTE</div>
+            <dl class="firma-sello__grid">
+                <div><dt>Firmado por</dt><dd><?php echo htmlspecialchars($firmante_nombre); ?></dd></div>
+                <div><dt>Fecha y hora de firma</dt><dd><?php echo htmlspecialchars($fecha_firma_fmt); ?></dd></div>
+                <?php if ($tiene_sello): ?>
+                <div class="firma-sello__full"><dt>Algoritmo</dt><dd>SHA-256 + HMAC (sello del servidor)</dd></div>
+                <div class="firma-sello__full"><dt>Huella SHA-256</dt><dd class="mono"><?php echo htmlspecialchars($informe['documento_sha256']); ?></dd></div>
+                <div class="firma-sello__full"><dt>Sello</dt><dd class="mono"><?php echo htmlspecialchars(substr((string)$informe['sello_firma'], 0, 48)); ?>…</dd></div>
+                <?php endif; ?>
+            </dl>
+            <?php if ($tiene_sello): ?>
+            <p class="firma-sello__nota">La huella SHA-256 identifica de forma única el contenido del informe. Cualquier alteración posterior modifica la huella y delata el cambio.</p>
+            <?php endif; ?>
+        </div>
         <?php endif; ?>
 
         <!-- Pie solo-impresión -->

@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/catalogo.php — Fase 5: cache de catalogos de referencia (tipos_ecografias).
+ * lib/informes/catalogo.php — Fase 5: cache de catalogos de referencia (tipos_ecografias).
  *
  * El catalogo de tipos de ecografia cambia muy poco pero se lee en muchas vistas
  * (panel, modales, dropdowns). Antes cada vista lanzaba 1-4 queries identicas.

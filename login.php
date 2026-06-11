@@ -1,8 +1,8 @@
 <?php
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/correo_app.php';
-require_once __DIR__ . '/lib/seguridad.php';
+require_once __DIR__ . '/lib/comunicaciones/correo_app.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 $error = '';
 $mensaje_exito = '';

@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/pdf_simple.php — Generador PDF minimo SIN dependencias externas.
+ * lib/core/pdf_simple.php — Generador PDF minimo SIN dependencias externas.
  *
  * Suficiente para informes clinicos: texto, encabezados, pares etiqueta/valor,
  * lineas y saltos de pagina automaticos. Usa las fuentes "core" Helvetica /

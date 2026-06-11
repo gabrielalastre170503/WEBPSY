@@ -8,8 +8,8 @@
  */
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/reportes.php';
-require_once __DIR__ . '/lib/facturacion.php';
+require_once __DIR__ . '/lib/reportes/reportes.php';
+require_once __DIR__ . '/lib/facturacion/facturacion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: login.php'); exit; }
 $rol = $_SESSION['rol'] ?? '';

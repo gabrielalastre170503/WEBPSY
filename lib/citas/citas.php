@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/citas.php — Fase 2: bitacora de eventos del ciclo de vida de una cita.
+ * lib/citas/citas.php — Fase 2: bitacora de eventos del ciclo de vida de una cita.
  *
  * Tabla: cita_eventos (migracion database/migrations/2026_fase2_03_cita_eventos.sql).
  * Append-only. Cada transicion de la cita (solicitada, confirmada, reprogramada,

@@ -104,9 +104,9 @@ $page_title    = 'Añadir personal';
 $page_subtitle = 'Crear cuentas y consultar el equipo de la clínica';
 $active_section = 'admin-personal';
 $body_class    = 'staff-personal-page';
-$page_head_extra = '<link rel="stylesheet" href="assets/css/admin-personal.css">'
-    . '<link rel="stylesheet" href="assets/css/admin-personal-modals.css">'
-    . '<link rel="stylesheet" href="assets/css/estilos.css">'
+$page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-personal.css">'
+    . '<link rel="stylesheet" href="assets/css/admin/admin-personal-modals.css">'
+    . '<link rel="stylesheet" href="assets/css/core/estilos.css">'
     . '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">';
 
 $page_header_actions = '<a href="ver_usuarios.php" class="btn-secondary"><i class="fa-solid fa-users"></i> Ver todos los usuarios</a>';
@@ -195,6 +195,6 @@ $staff_modals_html .= ob_get_clean();
 $page_scripts_extra = $staff_modals_html
     . '<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>'
     . '<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>'
-    . '<script src="assets/js/admin-personal-modals.js"></script>';
+    . '<script src="assets/js/admin/admin-personal-modals.js"></script>';
 
 include __DIR__ . '/layouts/shell.php';

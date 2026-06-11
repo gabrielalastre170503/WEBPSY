@@ -8,7 +8,7 @@
  */
 
 require __DIR__ . '/../../conexion.php';
-require __DIR__ . '/../../lib/especialidades.php';
+require __DIR__ . '/../../lib/personal/especialidades.php';
 
 // Comprueba que la columna aun exista (si ya se dropeo, no hay nada que migrar).
 $colExiste = $conex->query("SHOW COLUMNS FROM usuarios LIKE 'especialidades'");

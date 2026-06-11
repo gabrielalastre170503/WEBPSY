@@ -5,6 +5,8 @@
     var citaState = { id: null, paciente: '', fecha: '' };
     var studyState = { expediente: '', tipoId: null, tipoNombre: '', tipoIcono: '', tipoPrecio: 0, servicios: [] };
     var _currentInformeDetalleEcoId = null;
+    var _currentInformeDetalleEcoEstado = '';
+    var _firmarAntesCtx = null; // { informeId } pendiente de firmar antes de imprimir
 
     /** Toast premium global. Crea stack si no existe y muestra notificación flotante. */
     function ecoToast(opts) {
@@ -120,6 +122,7 @@
             '  ·  ' + (edadTxt || '—');
 
         var estado = inf.estado || '';
+        _currentInformeDetalleEcoEstado = estado;
         var estadoColors = {
             borrador:   ['#92400e', '#fef3c7'],
             finalizado: ['#166534', '#dcfce7'],
@@ -472,6 +475,7 @@
         var body = byId('eco-gestion-pac-body');
         var nombreEl = byId('eco-gestion-pac-nombre');
         var metaEl = byId('eco-gestion-pac-meta');
+        var telEl = byId('eco-gestion-pac-tel');
         if (!body || !nombreEl || !window.EcoModal) return;
 
         patientState.id = pacienteId;
@@ -479,6 +483,7 @@
         body.innerHTML = '<p class="eco-modal__body-text">Cargando datos del paciente...</p>';
         nombreEl.textContent = '...';
         if (metaEl) metaEl.textContent = '';
+        if (telEl) { telEl.textContent = ''; telEl.style.display = 'none'; }
         EcoModal.open('eco-modal-gestionar-paciente-eco');
 
         fetch('get_patient_details.php?id=' + encodeURIComponent(pacienteId))
@@ -503,6 +508,16 @@
                 if (p.edad) meta.push(p.edad + ' anos');
                 if (p.cedula) meta.push('Cedula: ' + p.cedula);
                 if (metaEl) metaEl.textContent = meta.join(' · ');
+
+                if (telEl) {
+                    if (p.telefono) {
+                        telEl.innerHTML = '<i class="fa-solid fa-phone" style="margin-right:5px;color:var(--text-muted);"></i>' + esc(p.telefono);
+                        telEl.style.display = '';
+                    } else {
+                        telEl.textContent = '';
+                        telEl.style.display = 'none';
+                    }
+                }
 
                 var nInf = typeof data.total_estudios === 'number' ? data.total_estudios : 0;
                 var nCit = typeof data.total_citas === 'number' ? data.total_citas : 0;
@@ -1366,8 +1381,22 @@
         setTimeout(function () { try { iframe.remove(); } catch (e) {} }, 60000);
     }
 
+    /** Abre el modal que obliga a firmar antes de imprimir un informe no firmado. */
+    function _pedirFirmaAntesImprimir(informeId) {
+        if (!informeId || !window.EcoModal) return;
+        _firmarAntesCtx = { informeId: informeId };
+        EcoModal.open('eco-modal-firmar-antes-eco');
+    }
+
     function imprimirInformeEco() {
-        _imprimirInformeEnIframeEco(studyState.ultimoInformeId);
+        var id = studyState.ultimoInformeId;
+        if (!id) return;
+        // En el formulario el informe queda 'finalizado' (sin firmar) al guardar.
+        if (studyState.ultimoInformeFirmado) {
+            _imprimirInformeEnIframeEco(id);
+        } else {
+            _pedirFirmaAntesImprimir(id);
+        }
     }
 
     function seleccionarTipoEcografia(btn) {
@@ -1501,9 +1530,11 @@
                     '<input type="hidden" name="tipo_expediente" value="' + esc(studyState.expediente || '') + '">' +
                     '<input type="hidden" name="informe_id" value="' + esc((data.informe && data.informe.id) || editInformeId || '') + '">' +
                     (!editInformeId
-                        ? ('<input type="hidden" name="servicios" value="' + esc((studyState.servicios || []).join(',')) + '">' + _ecoFacturaBannerHTML())
+                        ? '<input type="hidden" name="servicios" value="' + esc((studyState.servicios || []).join(',')) + '">'
                         : '') +
                     (data.html || '') +
+                    // Facturación al final, debajo de la Conclusión.
+                    (!editInformeId ? _ecoFacturaBannerHTML() : '') +
                     '<div class="modal-form-eco-actions">' +
                     '<button type="button" class="eco-btn-cancel" id="eco-cancelar-estudio">' +
                     '<i class="fa-solid fa-xmark"></i> Cancelar</button>' +
@@ -1579,6 +1610,7 @@
                 if (feedbackEl) feedbackEl.style.display = 'block';
                 if (data.success) {
                     studyState.ultimoInformeId = data.informe_id;
+                    studyState.ultimoInformeFirmado = false; // guardado/finalizado => aún sin firmar
                     // Persistir el id para que el siguiente guardado actualice el mismo informe.
                     var hid = form.querySelector('input[name="informe_id"]');
                     if (hid) hid.value = data.informe_id || '';
@@ -2134,13 +2166,59 @@
 
         var printInf = byId('eco-inf-det-print');
         if (printInf) printInf.addEventListener('click', function () {
-            _imprimirInformeEnIframeEco(_currentInformeDetalleEcoId);
+            // Si está finalizado pero sin firmar, exigir la firma antes de imprimir.
+            if (_currentInformeDetalleEcoEstado === 'finalizado') {
+                _pedirFirmaAntesImprimir(_currentInformeDetalleEcoId);
+            } else {
+                _imprimirInformeEnIframeEco(_currentInformeDetalleEcoId);
+            }
         });
 
         var firmarInf = byId('eco-inf-det-firmar');
         if (firmarInf) firmarInf.addEventListener('click', function () { _accionInformeEco('firmar'); });
         var anularInf = byId('eco-inf-det-anular');
         if (anularInf) anularInf.addEventListener('click', function () { _accionInformeEco('anular'); });
+
+        // Confirmación "firmar antes de imprimir": firma y, al terminar, imprime.
+        var firmarAntesBtn = byId('eco-firmar-antes-confirm');
+        if (firmarAntesBtn) firmarAntesBtn.addEventListener('click', function () {
+            var ctx = _firmarAntesCtx;
+            if (!ctx || !ctx.informeId) { if (window.EcoModal) EcoModal.close('eco-modal-firmar-antes-eco'); return; }
+            var btn = this;
+            var prev = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Firmando…';
+            var payload = new URLSearchParams();
+            payload.set('informe_id', ctx.informeId);
+            fetch('firmar_informe.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: payload.toString()
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d && d.success) {
+                        ecoToast({ type: 'success', message: d.message || 'Informe firmado.' });
+                        informeEcoCacheInvalidate(ctx.informeId);
+                        _currentInformeDetalleEcoEstado = 'firmado';
+                        if (studyState && String(studyState.ultimoInformeId) === String(ctx.informeId)) {
+                            studyState.ultimoInformeFirmado = true;
+                        }
+                        document.dispatchEvent(new CustomEvent('eco:informes-changed', { detail: { informeId: ctx.informeId } }));
+                        if (window.EcoModal) EcoModal.close('eco-modal-firmar-antes-eco');
+                        // Si el detalle está abierto, refrescarlo para reflejar el estado firmado.
+                        var det = document.getElementById('eco-modal-informe-detalle-eco');
+                        if (det && det.classList.contains('eco-modal--open') && typeof window.abrirDetalleInformeEco === 'function') {
+                            window.abrirDetalleInformeEco(ctx.informeId);
+                        }
+                        _imprimirInformeEnIframeEco(ctx.informeId);
+                    } else {
+                        ecoToast({ type: 'error', message: (d && d.message) || 'No se pudo firmar.' });
+                    }
+                })
+                .catch(function () { ecoToast({ type: 'error', message: 'Error de red.' }); })
+                .then(function () { btn.disabled = false; btn.innerHTML = prev; _firmarAntesCtx = null; });
+        });
 
         var modalTipoEco = document.getElementById('eco-modal-seleccionar-ecografia-eco');
         if (modalTipoEco) {

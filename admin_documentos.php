@@ -198,7 +198,7 @@ $totalCategoriasDoc = count($documentCategories);
 $page_title    = 'Repositorio de Documentos';
 $page_subtitle = 'Contratos, manuales y archivos internos';
 $active_section = 'admin-documentos';
-$page_head_extra = '<link rel="stylesheet" href="assets/css/admin-documentos.css">';
+$page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-documentos.css">';
 
 ob_start();
 ?>

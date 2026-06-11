@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start(); // necesaria para el token CSRF antes de imprimir HTML
 include 'conexion.php';
-require_once __DIR__ . '/lib/correo_app.php';
+require_once __DIR__ . '/lib/comunicaciones/correo_app.php';
 $mensaje = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {

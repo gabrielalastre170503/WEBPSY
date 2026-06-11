@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/consentimiento.php — Consentimiento informado del paciente (cumplimiento médico).
+ * lib/seguridad/consentimiento.php — Consentimiento informado del paciente (cumplimiento médico).
  *
  * El paciente debe aceptar la versión vigente del texto antes de usar el sistema.
  * La aceptación queda registrada (versión, fecha, IP, user-agent) en `consentimientos`.

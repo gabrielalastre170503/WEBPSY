@@ -6,8 +6,8 @@
  */
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/informes.php';
-require_once __DIR__ . '/lib/archivos.php';
+require_once __DIR__ . '/lib/informes/informes.php';
+require_once __DIR__ . '/lib/informes/archivos.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     http_response_code(403);

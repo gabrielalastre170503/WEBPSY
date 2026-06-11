@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/seguridad.php — Cierre de Fase 0.
+ * lib/seguridad/seguridad.php — Cierre de Fase 0.
  *
  *   - Auditoria de acciones sensibles            -> tabla `auditoria`
  *   - Throttling persistente de login (anti fuerza bruta) -> tabla `intentos_login`

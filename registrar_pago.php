@@ -4,10 +4,10 @@
  * Acciones: cobrar (fija monto_total y suma un abono), exonerar.
  */
 session_start();
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/facturacion.php';
-require_once __DIR__ . '/lib/citas.php';
+require_once __DIR__ . '/lib/facturacion/facturacion.php';
+require_once __DIR__ . '/lib/citas/citas.php';
 
 api_json();
 $response = ['success' => false, 'message' => 'Ocurrio un error.'];

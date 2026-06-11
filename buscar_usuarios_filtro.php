@@ -1,7 +1,7 @@
-﻿<?php
+<?php
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/table_sort_helpers.php';
+require_once __DIR__ . '/lib/core/table_sort_helpers.php';
 
 if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'administrador') {
     http_response_code(403);

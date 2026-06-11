@@ -1,9 +1,9 @@
 <?php
 session_start();
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/estudios_render.php';
-require_once __DIR__ . '/lib/informes.php';
+require_once __DIR__ . '/lib/informes/estudios_render.php';
+require_once __DIR__ . '/lib/informes/informes.php';
 
 api_json();
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');

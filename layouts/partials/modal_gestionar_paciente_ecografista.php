@@ -15,8 +15,8 @@ $eco_tipos_musculo = [];
 $eco_tipos_obstetrica = [];
 $eco_tipos_pblandas = [];
 if (isset($conex) && $conex instanceof mysqli) {
-    // Catálogo memoizado (lib/catalogo.php): reusa la lectura ya hecha en el request.
-    require_once __DIR__ . '/../../lib/catalogo.php';
+    // Catálogo memoizado (lib/informes/catalogo.php): reusa la lectura ya hecha en el request.
+    require_once __DIR__ . '/../../lib/informes/catalogo.php';
     $eco_menu_tipos       = eco_catalogo_tipos_menu($conex);
     $eco_tipos_modal      = $eco_menu_tipos['principales'];
     $eco_tipos_musculo    = $eco_menu_tipos['musculo'];
@@ -26,7 +26,7 @@ if (isset($conex) && $conex instanceof mysqli) {
 
 // Catalogo de servicios adicionales (consulta, citologia, procesamiento, combo)
 // para el selector de facturacion del flujo de informe del ecografista.
-require_once __DIR__ . '/../../lib/facturacion.php';
+require_once __DIR__ . '/../../lib/facturacion/facturacion.php';
 $eco_servicios_facturacion = eco_servicios_adicionales();
 
 // Mismo mapa que panel.php para colores por categoría
@@ -135,6 +135,7 @@ if (!function_exists('eco_estilo_tipo_shell')) {
                 <p>Acciones rápidas para:</p>
                 <strong id="eco-gestion-pac-nombre">—</strong>
                 <p id="eco-gestion-pac-meta" class="eco-modal__body-text" style="margin:0;font-size:12px;"></p>
+                <p id="eco-gestion-pac-tel" class="eco-modal__body-text" style="margin:6px 0 0;font-size:12px;display:none;"></p>
                 <p class="eco-modal__hint"><i class="fa-solid fa-circle-info" style="margin-right:4px;"></i> Los informes usan el esquema de ecografías del sistema.</p>
             </div>
             <div class="eco-modal__main">
@@ -486,7 +487,7 @@ if (!function_exists('eco_estilo_tipo_shell')) {
 [data-theme="dark"] .eco-serv-chip__price { color:#86efac; }
 
 /* Banner de facturación dentro del formulario de estudio */
-.eco-fact-banner { margin:0 0 18px; border:1.5px solid #bae6fd; border-radius:14px; background:linear-gradient(135deg,#f0f9ff,#fff); padding:14px 16px; }
+.eco-fact-banner { margin:18px 0; border:1.5px solid #bae6fd; border-radius:14px; background:linear-gradient(135deg,#f0f9ff,#fff); padding:14px 16px; }
 .eco-fact-banner__head { font-size:12.5px; font-weight:800; color:#0369a1; display:flex; align-items:center; gap:8px; margin-bottom:10px; }
 .eco-fact-banner__lines { list-style:none; margin:0; padding:0; }
 .eco-fact-banner__lines li { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13px; color:#334155; padding:5px 0; border-bottom:1px dashed #e2e8f0; }
@@ -505,6 +506,26 @@ if (!function_exists('eco_estilo_tipo_shell')) {
 [data-theme="dark"] .eco-fact-banner__total { border-top-color:rgba(2,132,199,.45); }
 [data-theme="dark"] .eco-fact-banner__total span { color:var(--text-secondary); }
 [data-theme="dark"] .eco-fact-banner__total strong { color:#7dd3fc; }
+
+/* Botones del modal "firmar antes de imprimir" */
+#eco-modal-firmar-antes-eco .eco-modal__footer { margin-top:20px; padding-top:16px; border-top:1px solid var(--border,#eef1f5); gap:10px; justify-content:flex-end; }
+#eco-modal-firmar-antes-eco .eco-btn-cancel,
+#eco-modal-firmar-antes-eco .eco-btn-submit {
+    display:inline-flex; align-items:center; justify-content:center; gap:8px; line-height:1;
+    padding:12px 22px; font-size:13.5px; font-weight:600; font-family:"Poppins",sans-serif;
+    border-radius:12px; cursor:pointer;
+    transition:transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, color .18s ease;
+}
+#eco-modal-firmar-antes-eco .eco-btn-cancel {
+    background:var(--bg-surface,#fff); color:var(--text-secondary,#64748b); border:1.5px solid var(--border,#dfe5ec);
+}
+#eco-modal-firmar-antes-eco .eco-btn-cancel:hover { background:var(--bg-muted,#f1f5f9); color:var(--text-primary,#0c1a2e); border-color:#c3cdd9; }
+#eco-modal-firmar-antes-eco .eco-btn-submit {
+    background:linear-gradient(135deg,#02b1f4,#014a82); color:#fff; border:none; box-shadow:0 8px 22px rgba(2,177,244,.34);
+}
+#eco-modal-firmar-antes-eco .eco-btn-submit:hover { transform:translateY(-1px); box-shadow:0 12px 28px rgba(2,177,244,.45); }
+#eco-modal-firmar-antes-eco .eco-btn-submit:active { transform:translateY(0); }
+#eco-modal-firmar-antes-eco .eco-btn-submit:disabled { opacity:.65; cursor:not-allowed; transform:none; box-shadow:none; }
 </style>
 <div id="eco-modal-expediente-informe-eco" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-expediente-title" data-eco-modal-static>
     <div class="eco-modal__dialog eco-modal__dialog--wide eco-exp-dialog" style="max-width:820px;">
@@ -833,4 +854,26 @@ if (!function_exists('eco_estilo_tipo_shell')) {
 </div>
 
 <?php include __DIR__ . '/modal_programar_cita_ecografista.php'; ?>
+
+<!-- Confirmación: firmar antes de imprimir un informe no firmado (rol ecografista) -->
+<div id="eco-modal-firmar-antes-eco" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-firmar-antes-title">
+    <div class="eco-modal__dialog" style="max-width:460px;width:100%;">
+        <div class="eco-modal__main">
+            <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+            <h4 class="eco-modal__title" id="eco-firmar-antes-title">
+                <i class="fa-solid fa-file-signature" style="margin-right:8px;color:#0369a1;"></i> Informe sin firmar
+            </h4>
+            <p class="eco-modal__body-text">
+                Este informe aún no está firmado. Debes firmarlo antes de imprimirlo.<br><br>
+                Al firmar se sella criptográficamente y <strong>ya no podrá editarse</strong>.
+            </p>
+            <div class="eco-modal__footer" style="justify-content:flex-end;gap:10px;">
+                <button type="button" class="eco-btn-cancel" data-eco-modal-close>Cancelar</button>
+                <button type="button" class="eco-btn-submit" id="eco-firmar-antes-confirm">
+                    <i class="fa-solid fa-signature"></i> Firmar e imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 

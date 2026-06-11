@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/notificaciones.php — Fase 4 (A): notificaciones in-app.
+ * lib/comunicaciones/notificaciones.php — Fase 4 (A): notificaciones in-app.
  *
  * Bandeja por usuario (tabla notificaciones). `eco_notificar()` la usan los
  * endpoints del ciclo de vida de la cita / informe; la campana del topbar

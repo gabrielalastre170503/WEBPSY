@@ -6,7 +6,7 @@
  * El texto es una BASE: el centro debe revisarlo/ajustarlo legalmente y fijar los
  * plazos de retención reales según la normativa sanitaria aplicable.
  */
-require_once __DIR__ . '/lib/consentimiento.php'; // versión vigente (referencia)
+require_once __DIR__ . '/lib/seguridad/consentimiento.php'; // versión vigente (referencia)
 $ver = defined('ECO_CONSENT_VERSION') ? ECO_CONSENT_VERSION : '1.0';
 ?>
 <!DOCTYPE html>

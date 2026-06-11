@@ -1,8 +1,8 @@
 <?php
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/admin_data.php';
-require_once __DIR__ . '/lib/especialidades.php';
+require_once __DIR__ . '/lib/personal/admin_data.php';
+require_once __DIR__ . '/lib/personal/especialidades.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: login.php');

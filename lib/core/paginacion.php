@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/paginacion.php — Fase 5: paginacion server-side simple para listados que crecen.
+ * lib/core/paginacion.php — Fase 5: paginacion server-side simple para listados que crecen.
  *
  * Pensado para los fragmentos de busqueda AJAX (citas, pacientes) que devuelven una
  * tabla HTML completa. El endpoint:

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 include 'conexion.php';
 
@@ -7,7 +7,7 @@ if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista
     exit('Acceso denegado');
 }
 
-require_once __DIR__ . '/lib/paginacion.php';
+require_once __DIR__ . '/lib/core/paginacion.php';
 [$page, $perPage, $offset] = eco_paginacion_args(25);
 
 $ecografista_id = $_SESSION['usuario_id'];

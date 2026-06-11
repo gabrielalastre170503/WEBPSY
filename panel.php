@@ -1,8 +1,8 @@
-﻿<?php
+<?php
 date_default_timezone_set('America/Caracas'); // <-- AÑADE ESTA LÍNEA
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/admin_data.php';
+require_once __DIR__ . '/lib/personal/admin_data.php';
 
 if (!function_exists('formatearBytes')) {
     function formatearBytes($bytes)
@@ -289,9 +289,9 @@ if ($rol_usuario == 'administrador') {
 }
 
 // ── Tipos de ecografía para la modal de selección (disponibles para todos los roles) ──
-// Catálogo memoizado (lib/catalogo.php): 1 lectura por request en vez de 4 queries.
+// Catálogo memoizado (lib/informes/catalogo.php): 1 lectura por request en vez de 4 queries.
 // Excluimos sub-tipos (Musculoesqueletica_Sub, Obstetrica_Sub, Partes_Blandas_Sub) — se muestran en sub-modales.
-require_once __DIR__ . '/lib/catalogo.php';
+require_once __DIR__ . '/lib/informes/catalogo.php';
 $menu_tipos_panel     = eco_catalogo_tipos_menu($conex);
 $tipos_panel          = $menu_tipos_panel['principales'];
 $tipos_musculo        = $menu_tipos_panel['musculo'];
@@ -325,11 +325,11 @@ $eco_color_default = ['bg' => 'linear-gradient(135deg,#64748b,#94a3b8)', 'badge'
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="assets/css/shell.css">
-    <link rel="stylesheet" href="assets/css/shell-modals.css">
+    <link rel="stylesheet" href="assets/css/core/shell.css">
+    <link rel="stylesheet" href="assets/css/core/shell-modals.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
-<link rel="stylesheet" href="assets/css/panel.css?v=<?= @filemtime(__DIR__ . '/assets/css/panel.css') ?>">
+<link rel="stylesheet" href="assets/css/panel/panel.css?v=<?= @filemtime(__DIR__ . '/assets/css/panel/panel.css') ?>">
 </head>
 <body>
     <div class="dashboard-container">
@@ -2591,7 +2591,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
     <!-- PASO 1: Cargar la librería principal de Flatpickr -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
-    <script src="assets/js/shell-modals.js"></script>
+    <script src="assets/js/core/shell-modals.js"></script>
 
     <script>window.ECO_PANEL = { csrf: '<?= csrf_token() ?>', usuarioId: <?= (int)$usuario_id ?> };</script>
     <!-- CSRF: inyecta automáticamente el token en todas las peticiones fetch() same-origin -->
@@ -2614,7 +2614,7 @@ if (isset($_SESSION['nuevo_paciente_nombre']) && isset($_SESSION['contrasena_tem
             };
         })();
     </script>
-    <script src="assets/js/panel.js?v=<?= @filemtime(__DIR__ . '/assets/js/panel.js') ?>"></script>
+    <script src="assets/js/panel/panel.js?v=<?= @filemtime(__DIR__ . '/assets/js/panel/panel.js') ?>"></script>
 
 </body>
 </html>

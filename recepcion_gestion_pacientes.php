@@ -23,7 +23,7 @@ $active_section = 'gestion-pacientes';
 $body_class    = 'rx-gestion-pacientes-page';
 
 $page_head_extra = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">'
-    . '<link rel="stylesheet" href="assets/css/recepcion-gestion-pacientes.css">';
+    . '<link rel="stylesheet" href="assets/css/recepcion/recepcion-gestion-pacientes.css">';
 
 $page_header_actions = '
     <button type="button" class="btn-primary" id="btn-open-crear-paciente-eco">
@@ -72,8 +72,8 @@ $page_content = ob_get_clean();
 $page_scripts_extra = <<<'HTML'
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
-<script src="assets/js/eco-table-sort.js"></script>
-<script src="assets/js/recepcion_rx_pacientes.js"></script>
+<script src="assets/js/panel/eco-table-sort.js"></script>
+<script src="assets/js/recepcion/recepcion_rx_pacientes.js"></script>
 <script>
 window.abrirModalGestionarPaciente = function (id) {
     window.location.href = 'recepcion_ficha_paciente.php?id=' + encodeURIComponent(id);

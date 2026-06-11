@@ -1,7 +1,7 @@
 <?php
 /**
  * Modal shell: programar cita directa (ecografista).
- * IDs: eco-modal-programar-cita-eco — JS: assets/js/ecografista-modals.js
+ * IDs: eco-modal-programar-cita-eco — JS: assets/js/panel/ecografista-modals.js
  * Backend: guardar_cita_directa.php (requiere tipo_ecografia_id + fecha_cita).
  */
 if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'ecografista') {
@@ -10,7 +10,7 @@ if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'ecografista
 if (!isset($conex) || !($conex instanceof mysqli)) {
     return;
 }
-require_once __DIR__ . '/../../lib/catalogo.php';
+require_once __DIR__ . '/../../lib/informes/catalogo.php';
 $eco_prog_tipos_rows = eco_catalogo_tipos_activos($conex);
 ?>
 <div id="eco-modal-programar-cita-eco" class="eco-modal" aria-hidden="true" role="dialog" aria-labelledby="eco-prog-aside-title">

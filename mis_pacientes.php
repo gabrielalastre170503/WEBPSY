@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/table_sort_helpers.php';
+require_once __DIR__ . '/lib/core/table_sort_helpers.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: login.php'); exit; }
 if ($_SESSION['rol'] !== 'ecografista') { header('Location: dashboard_v2.php'); exit; }
@@ -31,7 +31,7 @@ $page_subtitle = 'Pacientes clínicos asignados o que has atendido';
 $active_section = 'pacientes';
 
 $page_head_extra = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">'
-    . '<link rel="stylesheet" href="assets/css/recepcion-gestion-pacientes.css">';
+    . '<link rel="stylesheet" href="assets/css/recepcion/recepcion-gestion-pacientes.css">';
 
 $page_header_actions = '
     <button type="button" class="btn-primary" data-eco-abrir-crear-paciente-mis><i class="fa-solid fa-user-plus"></i> Añadir Paciente</button>';
@@ -180,8 +180,8 @@ $page_content = ob_get_clean();
 $page_scripts_extra = <<<'HTML'
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
-<script src="assets/js/eco-table-sort.js"></script>
-<script src="assets/js/ecografista-modals.js?v=22"></script>
+<script src="assets/js/panel/eco-table-sort.js"></script>
+<script src="assets/js/panel/ecografista-modals.js?v=25"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var card = document.getElementById('pac-list-card');

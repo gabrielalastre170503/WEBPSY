@@ -70,9 +70,9 @@ $page_subtitle   = '';
 $active_section  = 'disponibilidad';
 $body_class      = 'disp-page';
 // Cache-busting con filemtime: el navegador refresca el CSS al cambiar el archivo.
-$disp_css_ver = @filemtime(__DIR__ . '/assets/css/gestionar-disponibilidad.css') ?: time();
+$disp_css_ver = @filemtime(__DIR__ . '/assets/css/agenda/gestionar-disponibilidad.css') ?: time();
 $page_head_extra = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">'
-    . '<link rel="stylesheet" href="assets/css/gestionar-disponibilidad.css?v=' . $disp_css_ver . '">';
+    . '<link rel="stylesheet" href="assets/css/agenda/gestionar-disponibilidad.css?v=' . $disp_css_ver . '">';
 $page_header_actions = '';
 
 ob_start();
@@ -269,7 +269,7 @@ ob_start();
 
 <?php
 $page_content = ob_get_clean();
-$disp_js_ver = @filemtime(__DIR__ . '/assets/js/gestionar-disponibilidad.js') ?: time();
+$disp_js_ver = @filemtime(__DIR__ . '/assets/js/agenda/gestionar-disponibilidad.js') ?: time();
 $page_scripts_extra = '<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>'
-    . '<script src="assets/js/gestionar-disponibilidad.js?v=' . $disp_js_ver . '"></script>';
+    . '<script src="assets/js/agenda/gestionar-disponibilidad.js?v=' . $disp_js_ver . '"></script>';
 include __DIR__ . '/layouts/shell.php';

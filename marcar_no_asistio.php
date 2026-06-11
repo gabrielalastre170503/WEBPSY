@@ -4,10 +4,10 @@
  * Solo aplica a citas confirmadas/reprogramadas cuya fecha ya paso.
  * Acceso: ecografista (solo sus citas), recepcionista y administrador (cualquiera).
  */
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/seguridad.php';
-require_once __DIR__ . '/lib/citas.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
+require_once __DIR__ . '/lib/citas/citas.php';
 
 api_json();
 $rol = api_rol();

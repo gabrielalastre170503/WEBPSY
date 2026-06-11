@@ -3,7 +3,7 @@
  * Alta paciente desde recepción con contraseña elegida por el usuario (AJAX JSON).
  */
 session_start();
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
 
 api_json();

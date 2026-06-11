@@ -1,8 +1,8 @@
-﻿<?php
+<?php
 session_start();
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/seguridad.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 api_json();
 
@@ -21,7 +21,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $paciente_id = (int)$_GET['id'];
 $response = [];
 
-$stmt = $conex->prepare("SELECT nombre_completo, cedula, direccion, correo, TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad, fecha_nacimiento, fecha_registro FROM usuarios WHERE id = ? AND rol = 'paciente'");
+$stmt = $conex->prepare("SELECT nombre_completo, cedula, direccion, correo, telefono, TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad, fecha_nacimiento, fecha_registro FROM usuarios WHERE id = ? AND rol = 'paciente'");
 $stmt->bind_param("i", $paciente_id);
 $stmt->execute();
 $paciente = $stmt->get_result()->fetch_assoc();
@@ -69,7 +69,7 @@ $stmt->close();
 // Servicios que el paciente marco al solicitar su cita abierta (misma cita que se
 // reusara para facturar). Se devuelven como claves para pre-marcarlos en la modal
 // de "Seleccionar tipo de expediente".
-require_once __DIR__ . '/lib/facturacion.php';
+require_once __DIR__ . '/lib/facturacion/facturacion.php';
 $response['servicios_cita'] = [];
 $response['estudios_cita']  = [];
 $response['servicios_hoy']  = [];

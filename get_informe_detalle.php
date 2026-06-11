@@ -1,14 +1,14 @@
 <?php
 session_start();
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/estudios_render.php';
-require_once __DIR__ . '/lib/informes.php';
-require_once __DIR__ . '/lib/seguridad.php';
+require_once __DIR__ . '/lib/informes/estudios_render.php';
+require_once __DIR__ . '/lib/informes/informes.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 api_json();
 
-if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
+if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista', 'paciente'])) {
     http_response_code(403);
     echo json_encode(['error' => 'Acceso no autorizado']);
     exit();
@@ -35,7 +35,7 @@ $stmt = $conex->prepare("
     SELECT
         ie.id, ie.numero_informe, ie.fecha_estudio, ie.estado,
         ie.datos_clinicos, ie.creado_en,
-        ie.ecografista_id,
+        ie.ecografista_id, ie.paciente_id,
         ie.fecha_firma, ie.fecha_anulacion, ie.motivo_anulacion,
         t.nombre      AS tipo_nombre,
         t.icono       AS tipo_icono,
@@ -64,6 +64,16 @@ if (!$informe) {
     http_response_code(404);
     echo json_encode(['error' => 'Informe no encontrado']);
     exit();
+}
+
+// El paciente sólo puede ver SUS propios informes y únicamente finalizados/firmados.
+if ($sesion_rol === 'paciente') {
+    if ((int)$informe['paciente_id'] !== $sesion_uid
+        || !in_array($informe['estado'], ['finalizado', 'firmado'], true)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Acceso no autorizado']);
+        exit();
+    }
 }
 
 // Bitácora de acceso a datos clínicos (cumplimiento): quién consultó este informe.

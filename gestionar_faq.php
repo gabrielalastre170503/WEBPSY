@@ -22,7 +22,7 @@ $page_title    = 'Preguntas frecuentes';
 $page_subtitle = 'Administra las FAQ visibles en el sitio público';
 $active_section = 'admin-contenido';
 $body_class    = 'cw-gestion-page';
-$page_head_extra = '<link rel="stylesheet" href="assets/css/admin-gestion-contenido.css">';
+$page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-gestion-contenido.css">';
 
 $page_header_actions = '
     <a href="admin_contenido.php" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Contenido web</a>

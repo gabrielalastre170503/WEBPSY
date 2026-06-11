@@ -5,7 +5,7 @@
  */
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/paginacion.php';
+require_once __DIR__ . '/lib/core/paginacion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: login.php'); exit; }
 if (($_SESSION['rol'] ?? '') !== 'administrador') { header('Location: dashboard_v2.php'); exit; }

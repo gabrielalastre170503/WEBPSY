@@ -3,9 +3,9 @@
  * Lista las notificaciones del usuario en sesion + contador sin leer (Fase 4A).
  * La campana del topbar lo consulta periodicamente.
  */
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/notificaciones.php';
+require_once __DIR__ . '/lib/comunicaciones/notificaciones.php';
 
 api_json();
 api_require_login();

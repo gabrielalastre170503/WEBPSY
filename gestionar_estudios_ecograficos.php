@@ -23,7 +23,7 @@ if ($r) {
 $page_title    = 'Estudios ecográficos';
 $page_subtitle = 'Catálogo público y clínico de tipos de ecografía';
 $active_section = 'admin-contenido';
-$page_head_extra = '<link rel="stylesheet" href="assets/css/admin-contenido.css">';
+$page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-contenido.css">';
 
 $page_header_actions = '<a href="admin_contenido.php" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Volver a contenido</a>';
 

@@ -82,7 +82,7 @@ $page_title     = '';
 $page_subtitle  = '';
 $active_section = 'perfil';
 $body_class     = 'perfil-usuario-page';
-$page_head_extra = '<link rel="stylesheet" href="assets/css/perfil-usuario.css">';
+$page_head_extra = '<link rel="stylesheet" href="assets/css/perfil/perfil-usuario.css">';
 
 ob_start();
 include __DIR__ . '/layouts/partials/perfil_usuario_vista.php';

@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/firma.php — Fase 3 (c): firma digital trazable de informes.
+ * lib/informes/firma.php — Fase 3 (c): firma digital trazable de informes.
  *
  * Modelo (honesto sobre su alcance): NO es una firma cualificada con PKI/TSA
  * externa. Es un SELLO DEL SERVIDOR, criptograficamente verificable, que da:
@@ -11,11 +11,11 @@
  *     falsificar el sello.
  *   - SELLO DE TIEMPO: la fecha/hora de firma queda atada dentro del HMAC.
  *
- * El artefacto firmado es un PDF autocontenido (lib/pdf_simple.php) que incrusta
+ * El artefacto firmado es un PDF autocontenido (lib/core/pdf_simple.php) que incrusta
  * la huella, el sello y la fecha, mas una URL de verificacion.
  */
 
-require_once __DIR__ . '/pdf_simple.php';
+require_once __DIR__ . '/../core/pdf_simple.php';
 
 if (!function_exists('eco_firma_key')) {
 

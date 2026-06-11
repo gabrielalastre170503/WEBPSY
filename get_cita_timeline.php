@@ -6,9 +6,9 @@
  * inyectar en cualquier modal de detalle de cita (ecografista/admin/recep/paciente).
  * Acceso segun rol: admin/recep cualquiera; ecografista y paciente solo las suyas.
  */
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/citas.php';
+require_once __DIR__ . '/lib/citas/citas.php';
 
 api_json();
 if (api_uid() <= 0) {

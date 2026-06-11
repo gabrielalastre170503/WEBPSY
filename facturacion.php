@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/facturacion.php';
+require_once __DIR__ . '/lib/facturacion/facturacion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: login.php');
@@ -229,7 +229,7 @@ ob_start();
 .fact-table th.rx-sort-th--asc::after { content:'▲'; opacity:.85; font-size:9px; }
 .fact-table th.rx-sort-th--desc::after { content:'▼'; opacity:.85; font-size:9px; }
 </style>
-<script src="assets/js/eco-table-sort.js"></script>
+<script src="assets/js/panel/eco-table-sort.js"></script>
 <script>
 (function () {
     var modal = document.getElementById('fact-modal');

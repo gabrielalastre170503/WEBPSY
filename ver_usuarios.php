@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 include 'conexion.php';
 
@@ -24,7 +24,7 @@ $filtrosMeta = [
 
 $active_section = 'ver-usuarios';
 $body_class = 'ver-usuarios-page';
-$page_head_extra = '<link rel="stylesheet" href="assets/css/ver-usuarios.css">';
+$page_head_extra = '<link rel="stylesheet" href="assets/css/usuarios/ver-usuarios.css">';
 
 $page_header_actions = '
     <a href="admin_personal.php" class="btn-secondary"><i class="fa-solid fa-user-plus"></i> Añadir personal</a>
@@ -98,8 +98,8 @@ ob_start();
 $modal_temp_pass = ob_get_clean();
 
 $page_scripts_extra = $modal_temp_pass
-    . '<script src="assets/js/eco-table-sort.js"></script>'
-    . '<script src="assets/js/ver-usuarios.js"></script>'
+    . '<script src="assets/js/panel/eco-table-sort.js"></script>'
+    . '<script src="assets/js/usuarios/ver-usuarios.js"></script>'
     . '<script>window.VU_FILTRO = ' . json_encode($filtro, JSON_UNESCAPED_UNICODE) . ';</script>';
 
 include __DIR__ . '/layouts/shell.php';

@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/seguridad.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 // 1. Seguridad: Solo los administradores pueden acceder.
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {

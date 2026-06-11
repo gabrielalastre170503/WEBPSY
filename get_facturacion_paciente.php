@@ -5,9 +5,9 @@
  * El ecografista solo ve/abona sus propias citas.
  */
 session_start();
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/facturacion.php';
+require_once __DIR__ . '/lib/facturacion/facturacion.php';
 
 api_json();
 

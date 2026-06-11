@@ -4,10 +4,10 @@
  * informes de estudio, notas de sesion y citas. Solo lectura (JSON).
  */
 session_start();
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/facturacion.php';
-require_once __DIR__ . '/lib/seguridad.php';
+require_once __DIR__ . '/lib/facturacion/facturacion.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 api_json();
 

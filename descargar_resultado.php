@@ -7,8 +7,8 @@
  * token siga vigente y que el archivo pertenezca al informe de ese token.
  */
 include 'conexion.php';
-require_once __DIR__ . '/lib/archivos.php';
-require_once __DIR__ . '/lib/tokens.php';
+require_once __DIR__ . '/lib/informes/archivos.php';
+require_once __DIR__ . '/lib/core/tokens.php';
 
 $raw        = isset($_GET['t']) ? (string)$_GET['t'] : '';
 $archivo_id = isset($_GET['a']) ? (int)$_GET['a'] : 0;

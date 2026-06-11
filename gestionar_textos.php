@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 include 'conexion.php';
 
@@ -25,9 +25,9 @@ $page_title    = 'Textos «Nosotros»';
 $page_subtitle = 'Edita misión, visión y valores con vista previa en tiempo real';
 $active_section = 'admin-contenido';
 $body_class    = 'cw-gestion-page cw-textos-page';
-$page_head_extra = '<link rel="stylesheet" href="assets/css/admin-gestion-contenido.css">'
-    . '<link rel="stylesheet" href="assets/css/gestionar-textos.css">'
-    . '<link rel="stylesheet" href="assets/css/estilos.css">';
+$page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-gestion-contenido.css">'
+    . '<link rel="stylesheet" href="assets/css/contenido/gestionar-textos.css">'
+    . '<link rel="stylesheet" href="assets/css/core/estilos.css">';
 
 $page_header_actions = '
     <a href="admin_contenido.php" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Contenido web</a>
@@ -161,5 +161,5 @@ ob_start();
 
 <?php
 $page_content = ob_get_clean();
-$page_scripts_extra = '<script src="assets/js/gestionar-textos.js"></script>';
+$page_scripts_extra = '<script src="assets/js/contenido/gestionar-textos.js"></script>';
 include __DIR__ . '/layouts/shell.php';

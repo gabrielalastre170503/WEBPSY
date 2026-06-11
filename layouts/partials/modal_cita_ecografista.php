@@ -3,7 +3,7 @@
  * Modales shell: detalle y reprogramacion de cita (ecografista).
  *
  * IDs: eco-modal-detalle-cita-eco, eco-modal-reprogramar-cita-eco
- * JS: assets/js/ecografista-modals.js
+ * JS: assets/js/panel/ecografista-modals.js
  */
 if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'ecografista') {
     return;

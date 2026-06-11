@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/estudios_render.php';
+require_once __DIR__ . '/lib/informes/estudios_render.php';
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
     header('Location: login.php');

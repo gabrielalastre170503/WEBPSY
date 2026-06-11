@@ -119,25 +119,6 @@ ob_start();
 }
 .inf-btn:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
 
-/* Modal "Ver informe" */
-.inf-modal { position:fixed; inset:0; z-index:1000; display:none; }
-.inf-modal.is-open { display:block; }
-.inf-modal__backdrop { position:absolute; inset:0; background:rgba(12,26,46,.55); }
-.inf-modal__dialog {
-    position:relative; margin:3vh auto; width:min(980px,95vw); height:94vh;
-    background:var(--bg-surface,#fff); border-radius:16px; box-shadow:0 30px 80px rgba(0,0,0,.32);
-    display:flex; flex-direction:column; overflow:hidden;
-}
-.inf-modal__head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 18px; border-bottom:1px solid var(--border,#e5e7eb); flex-shrink:0; }
-.inf-modal__head h3 { margin:0; font-size:15px; display:flex; align-items:center; gap:8px; color:var(--text-primary,#0c1a2e); min-width:0; }
-.inf-modal__head h3 span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.inf-modal__actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
-.inf-modal__close { background:transparent; border:none; font-size:18px; cursor:pointer; color:var(--text-secondary,#64748b); width:34px; height:34px; border-radius:8px; }
-.inf-modal__close:hover { background:var(--bg-muted,#f1f5f9); color:var(--text-primary,#0c1a2e); }
-.inf-modal__body { flex:1; min-height:0; background:#f0f2f5; }
-#inf-modal-frame { width:100%; height:100%; border:0; display:block; }
-body.inf-modal-lock { overflow:hidden; }
-
 .inf-empty { text-align:center; padding:48px 24px; color:var(--text-muted); }
 .inf-empty > i { font-size:42px; color:var(--accent); opacity:.5; margin-bottom:14px; display:block; }
 
@@ -252,18 +233,31 @@ body.inf-modal-lock { overflow:hidden; }
     <?php endif; ?>
 </div>
 
-<div id="inf-modal" class="inf-modal" aria-hidden="true">
-    <div class="inf-modal__backdrop" data-inf-close></div>
-    <div class="inf-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="inf-modal-title">
-        <div class="inf-modal__head">
-            <h3 id="inf-modal-title"><i class="fa-solid fa-file-medical" style="color:var(--accent);"></i> <span id="inf-modal-titulo">Informe</span></h3>
-            <div class="inf-modal__actions">
-                <a id="inf-modal-open" class="inf-btn" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> Abrir / Imprimir</a>
-                <button type="button" class="inf-modal__close" data-inf-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+<!-- Misma modal "Ver informe" del rol ecografista (lectura): reutiliza id/clases → mismo CSS de shell-modals.css -->
+<div id="eco-modal-informe-detalle-eco" class="eco-modal eco-modal-panel-ecografista" aria-hidden="true" role="dialog" aria-labelledby="eco-inf-det-titulo">
+    <div class="modal-content-form-eco">
+        <div class="modal-form-eco-header">
+            <div class="eco-modal-tipo-icon" id="eco-inf-det-icon">
+                <i class="fa-solid fa-file-waveform"></i>
+            </div>
+            <div class="eco-header-tipo-info">
+                <h2 id="eco-inf-det-titulo">Informe de Estudio</h2>
+                <p id="eco-inf-det-paciente">—</p>
+            </div>
+            <div class="eco-modal-informe-detalle-actions">
+                <button type="button" class="eco-btn-cancel" id="eco-inf-det-print" title="Imprimir informe">
+                    <i class="fa-solid fa-print"></i> Imprimir
+                </button>
+                <button type="button" class="modal-close-btn" data-eco-modal-close aria-label="Cerrar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
         </div>
-        <div class="inf-modal__body">
-            <iframe id="inf-modal-frame" title="Informe del estudio" src="about:blank"></iframe>
+        <div class="modal-form-eco-body" id="eco-informe-detalle-body">
+            <div class="modal-form-eco-loader">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <p>Cargando informe…</p>
+            </div>
         </div>
     </div>
 </div>
@@ -309,39 +303,87 @@ $page_scripts_extra = <<<'HTML'
 </script>
 <script>
 (function () {
-    var modal   = document.getElementById('inf-modal');
-    if (!modal) return;
-    var frame   = document.getElementById('inf-modal-frame');
-    var titulo  = document.getElementById('inf-modal-titulo');
-    var openLnk = document.getElementById('inf-modal-open');
+    var modal = document.getElementById('eco-modal-informe-detalle-eco');
+    if (!modal || !window.EcoModal) return;
+    var iconEl   = document.getElementById('eco-inf-det-icon');
+    var tituloEl = document.getElementById('eco-inf-det-titulo');
+    var pacEl    = document.getElementById('eco-inf-det-paciente');
+    var bodyEl   = document.getElementById('eco-informe-detalle-body');
+    var printBtn = document.getElementById('eco-inf-det-print');
+    var currentId = null;
 
-    function abrir(id, t) {
-        var url = 'ver_informe_estudio.php?informe_id=' + encodeURIComponent(id);
-        frame.src = url;
-        openLnk.href = url;
-        titulo.textContent = t || 'Informe';
-        modal.classList.add('is-open');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('inf-modal-lock');
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
     }
-    function cerrar() {
-        modal.classList.remove('is-open');
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('inf-modal-lock');
-        frame.src = 'about:blank';
+
+    function render(data) {
+        if (data.error) {
+            bodyEl.innerHTML = '<p style="color:#c0392b;padding:20px;">' + esc(data.error) + '</p>';
+            iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            return;
+        }
+        var inf = data.informe || {}, tipo = data.tipo || {}, pac = data.paciente || {};
+        iconEl.innerHTML = '<i class="' + esc(tipo.icono || 'fa-solid fa-wave-square') + '"></i>';
+        tituloEl.textContent = tipo.nombre || 'Informe de estudio';
+        var edad = pac.edad ? (String(pac.edad).trim() + ' años') : '';
+        pacEl.textContent = 'Paciente: ' + (pac.nombre || '—') + '  ·  CI: ' + (pac.cedula || '—') + '  ·  ' + (edad || '—');
+
+        var estado = inf.estado || '';
+        var colors = { finalizado: ['#166534', '#dcfce7'], firmado: ['#075985', '#e0f2fe'] };
+        var ec = colors[estado] || ['#374151', '#f3f4f6'];
+        var badge = '<span style="background:' + ec[1] + ';color:' + ec[0] + ';padding:2px 10px;border-radius:12px;font-weight:600;font-size:11px;">' +
+            esc(inf.estado_label || estado) + '</span>';
+
+        var meta = '<div class="inf-det-meta">' +
+            '<span><i class="fa-solid fa-hashtag"></i> <strong>' + esc(inf.numero_informe || '-') + '</strong></span>' +
+            '<span><i class="fa-regular fa-calendar"></i> <strong>' + esc(inf.fecha_formateada || '-') + '</strong></span>' +
+            '<span><i class="fa-solid fa-user-doctor"></i> <strong>' + esc(data.ecografista || '-') + '</strong></span>' +
+            '<span>' + badge + '</span></div>';
+
+        var firma = '';
+        if (inf.firma) {
+            firma = '<div style="margin:8px 0 4px;padding:8px 12px;border-radius:8px;background:#e0f2fe;color:#075985;font-size:12.5px;">' +
+                '<i class="fa-solid fa-signature"></i> Firmado por <strong>' + esc(inf.firma.por) + '</strong>' +
+                (inf.firma.fecha ? ' · ' + esc(inf.firma.fecha) : '') + '</div>';
+        }
+        bodyEl.innerHTML = meta + firma + (data.html || '');
     }
+
+    // Imprimir sin salir del modal: carga la versión imprimible en un iframe oculto que auto-llama window.print().
+    if (printBtn) printBtn.addEventListener('click', function () {
+        if (!currentId) return;
+        var prev = document.getElementById('inf-print-frame');
+        if (prev) prev.remove();
+        var iframe = document.createElement('iframe');
+        iframe.id = 'inf-print-frame';
+        iframe.setAttribute('aria-hidden', 'true');
+        iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:8.5in;height:11in;border:0;visibility:hidden;';
+        iframe.src = 'ver_informe_estudio.php?informe_id=' + encodeURIComponent(currentId) + '&print=1';
+        document.body.appendChild(iframe);
+        setTimeout(function () { try { iframe.remove(); } catch (e) {} }, 60000);
+    });
 
     document.addEventListener('click', function (e) {
         var btn = e.target.closest('.inf-btn[data-informe-id]');
-        if (btn) {
-            e.preventDefault();
-            abrir(btn.getAttribute('data-informe-id'), btn.getAttribute('data-informe-titulo'));
-            return;
-        }
-        if (e.target.closest('[data-inf-close]')) cerrar();
-    });
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && modal.classList.contains('is-open')) cerrar();
+        if (!btn) return;
+        e.preventDefault();
+        var id = btn.getAttribute('data-informe-id');
+        currentId = id;
+        iconEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        tituloEl.textContent = 'Cargando…';
+        pacEl.textContent = '';
+        bodyEl.innerHTML = '<div class="modal-form-eco-loader"><i class="fa-solid fa-spinner fa-spin"></i><p>Cargando informe…</p></div>';
+        EcoModal.open('eco-modal-informe-detalle-eco');
+        fetch('get_informe_detalle.php?informe_id=' + encodeURIComponent(id))
+            .then(function (r) { return r.json(); })
+            .then(render)
+            .catch(function (err) {
+                bodyEl.innerHTML = '<p style="color:#c0392b;padding:20px;">Error al cargar: ' +
+                    esc(err && err.message ? err.message : 'Error de red.') + '</p>';
+                iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            });
     });
 })();
 </script>

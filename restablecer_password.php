@@ -4,7 +4,7 @@
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/seguridad.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 $error = '';
 $token = '';

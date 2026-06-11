@@ -18,7 +18,7 @@ if ($rq = $conex->query("SELECT id, nombre_completo FROM usuarios WHERE rol = 'e
     $rq->free();
 }
 
-require_once __DIR__ . '/../../lib/catalogo.php';
+require_once __DIR__ . '/../../lib/informes/catalogo.php';
 $rx_modal_tipos = eco_catalogo_tipos_activos($conex);
 ?>
 

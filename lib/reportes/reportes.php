@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/reportes.php — Inteligencia de negocio / reportes (Fase 6).
+ * lib/reportes/reportes.php — Inteligencia de negocio / reportes (Fase 6).
  *
  * Agregaciones de actividad y facturacion de citas por rango de fechas.
  * Todo se calcula sobre citas.fecha_cita dentro del rango [desde 00:00, hasta 23:59].

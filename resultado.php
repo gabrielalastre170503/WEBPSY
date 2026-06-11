@@ -7,9 +7,9 @@
  * con caducidad y tope de aperturas; cada carga consume una apertura.
  */
 include 'conexion.php';
-require_once __DIR__ . '/lib/archivos.php';
-require_once __DIR__ . '/lib/tokens.php';
-require_once __DIR__ . '/lib/seguridad.php';
+require_once __DIR__ . '/lib/informes/archivos.php';
+require_once __DIR__ . '/lib/core/tokens.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 $raw = isset($_GET['t']) ? (string)$_GET['t'] : '';
 $est = eco_token_abrir($conex, $raw, eco_client_ip());

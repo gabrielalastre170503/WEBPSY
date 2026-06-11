@@ -14,7 +14,7 @@ if (($_SESSION['rol'] ?? '') !== 'administrador') {
 $page_title    = 'Contenido web';
 $page_subtitle = 'Editar textos públicos y preguntas frecuentes';
 $active_section = 'admin-contenido';
-$page_head_extra = '<link rel="stylesheet" href="assets/css/admin-contenido.css">';
+$page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-contenido.css">';
 
 ob_start();
 ?>

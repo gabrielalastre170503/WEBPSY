@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/recordatorios.php — Fase 4 (B): recordatorios de cita.
+ * lib/comunicaciones/recordatorios.php — Fase 4 (B): recordatorios de cita.
  *
  * Dispatcher que el cron (cron_recordatorios.php) ejecuta: busca citas
  * confirmadas/reprogramadas dentro de una ventana (24 h por defecto) que aun no

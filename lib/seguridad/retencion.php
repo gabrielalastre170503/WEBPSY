@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/retencion.php — Política de retención: purga de datos EFÍMEROS de seguridad.
+ * lib/seguridad/retencion.php — Política de retención: purga de datos EFÍMEROS de seguridad.
  *
  * Minimización de datos (cumplimiento): elimina periódicamente datos técnicos que
  * ya no son necesarios. NO toca datos clínicos, informes, citas, pacientes ni la

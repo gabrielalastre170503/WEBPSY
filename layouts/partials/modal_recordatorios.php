@@ -2,7 +2,7 @@
 /**
  * Partial reutilizable: modal "Recordatorios de cita" (Fase 4B).
  * Lo usan agenda_general.php (admin/recep) y mi_agenda.php (ecografista).
- * Requiere un boton con id="agenda-btn-recordatorios" y assets/js/recordatorios-ui.js.
+ * Requiere un boton con id="agenda-btn-recordatorios" y assets/js/agenda/recordatorios-ui.js.
  */
 ?>
 <div id="eco-recd-modal" class="eco-recd-modal" hidden>

@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/facturacion.php';
+require_once __DIR__ . '/lib/facturacion/facturacion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: login.php'); exit; }
 if ($_SESSION['rol'] !== 'ecografista') { header('Location: dashboard_v2.php'); exit; }
@@ -166,6 +166,6 @@ $page_content = ob_get_clean();
 $page_scripts_extra = <<<'HTML'
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
-<script src="assets/js/ecografista-modals.js?v=22"></script>
+<script src="assets/js/panel/ecografista-modals.js?v=25"></script>
 HTML;
 include __DIR__ . '/layouts/shell.php';

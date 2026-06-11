@@ -2,10 +2,10 @@
 /**
  * Lista (JSON) los archivos de un informe. Acceso: autor/admin o paciente dueno.
  */
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/informes.php';
-require_once __DIR__ . '/lib/archivos.php';
+require_once __DIR__ . '/lib/informes/informes.php';
+require_once __DIR__ . '/lib/informes/archivos.php';
 
 api_json();
 if (api_uid() <= 0) {

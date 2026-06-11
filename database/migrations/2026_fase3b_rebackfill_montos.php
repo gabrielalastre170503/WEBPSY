@@ -10,7 +10,7 @@
  */
 
 require __DIR__ . '/../../conexion.php';
-require __DIR__ . '/../../lib/facturacion.php';
+require __DIR__ . '/../../lib/facturacion/facturacion.php';
 
 $res = $conex->query("
     SELECT c.id, c.motivo_principal, c.monto_total, c.monto_pagado, t.precio AS precio_estudio

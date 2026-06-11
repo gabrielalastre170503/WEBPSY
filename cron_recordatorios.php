@@ -22,7 +22,7 @@ if (!$cli) {
 }
 
 include __DIR__ . '/conexion.php';
-require_once __DIR__ . '/lib/recordatorios.php';
+require_once __DIR__ . '/lib/comunicaciones/recordatorios.php';
 
 /* ── Autorizacion ────────────────────────────────────────────────────── */
 $cronKey    = (string) eco_env('ECO_CRON_KEY', '');

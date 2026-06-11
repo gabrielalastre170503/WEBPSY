@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/seguridad.php';
-require_once __DIR__ . '/lib/citas.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
+require_once __DIR__ . '/lib/citas/citas.php';
 
 api_json();
 if (!in_array(api_rol(), ['ecografista'], true)) {

@@ -35,7 +35,7 @@ $page_header_actions = '
     <button type="button" class="btn-primary" id="agenda-btn-nueva"><i class="fa-solid fa-plus"></i> Nueva Cita</button>';
 
 $page_head_extra = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">'
-    . '<link rel="stylesheet" href="assets/css/agenda-general-modals.css">';
+    . '<link rel="stylesheet" href="assets/css/agenda/agenda-general-modals.css">';
 
 ob_start();
 ?>
@@ -146,7 +146,7 @@ $agenda_modals_html = ob_get_clean();
 $page_scripts_extra = $agenda_modals_html
     . '<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>'
     . '<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>'
-    . '<script src="assets/js/agenda-general-modals.js"></script>'
-    . '<script src="assets/js/recordatorios-ui.js?v=' . (@filemtime(__DIR__ . '/assets/js/recordatorios-ui.js') ?: '1') . '"></script>';
+    . '<script src="assets/js/agenda/agenda-general-modals.js"></script>'
+    . '<script src="assets/js/agenda/recordatorios-ui.js?v=' . (@filemtime(__DIR__ . '/assets/js/agenda/recordatorios-ui.js') ?: '1') . '"></script>';
 
 include __DIR__ . '/layouts/shell.php';

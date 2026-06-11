@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/archivos.php — Fase 3: archivos medicos del informe (imagenes / adjuntos).
+ * lib/informes/archivos.php — Fase 3: archivos medicos del informe (imagenes / adjuntos).
  *
  * Los binarios viven en disco bajo /uploads/informes/<informe_id>/ (carpeta
  * protegida con .htaccess deny-all). La tabla informe_archivos es el indice +

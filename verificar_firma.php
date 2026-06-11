@@ -15,7 +15,7 @@
  */
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/firma.php';
+require_once __DIR__ . '/lib/informes/firma.php';
 
 $informe_id = isset($_GET['informe_id']) ? (int)$_GET['informe_id'] : 0;
 $codigo     = isset($_GET['c']) ? (string)$_GET['c'] : '';

@@ -8,13 +8,13 @@
  *   - el informe queda bloqueado para edicion.
  */
 session_start();
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/informes.php';
-require_once __DIR__ . '/lib/archivos.php';
-require_once __DIR__ . '/lib/firma.php';
-require_once __DIR__ . '/lib/seguridad.php';
-require_once __DIR__ . '/lib/notificaciones.php';
+require_once __DIR__ . '/lib/informes/informes.php';
+require_once __DIR__ . '/lib/informes/archivos.php';
+require_once __DIR__ . '/lib/informes/firma.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
+require_once __DIR__ . '/lib/comunicaciones/notificaciones.php';
 
 api_json();
 $response = ['success' => false, 'message' => 'Ocurrio un error inesperado.'];

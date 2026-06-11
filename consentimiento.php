@@ -5,8 +5,8 @@
  */
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/consentimiento.php';
-require_once __DIR__ . '/lib/seguridad.php';
+require_once __DIR__ . '/lib/seguridad/consentimiento.php';
+require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: login.php');

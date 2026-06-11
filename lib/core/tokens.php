@@ -1,6 +1,6 @@
 <?php
 /**
- * lib/tokens.php — Fase 3 (b): enlaces de resultado por token (sin login).
+ * lib/core/tokens.php — Fase 3 (b): enlaces de resultado por token (sin login).
  *
  * Un token da acceso de SOLO LECTURA a los resultados de un informe (imagenes +
  * adjuntos) durante una ventana de tiempo y un numero limitado de aperturas.

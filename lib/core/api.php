@@ -7,7 +7,7 @@
  * `{ "success": bool, ... }` — compatible con los endpoints existentes.
  *
  * Uso tipico:
- *   require_once __DIR__ . '/lib/api.php';
+ *   require_once __DIR__ . '/lib/core/api.php';
  *   include 'conexion.php';
  *   api_json();
  *   api_require_roles(['administrador', 'recepcionista']);

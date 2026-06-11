@@ -458,6 +458,7 @@ button { font-family: inherit; cursor: pointer; }
     background: var(--bg-surface);
     color: var(--text-primary);
     border: 1px solid var(--border);
+    margin-left: 10px;
     border-radius: 10px;
     font-size: 13px; font-weight: 600;
     transition: var(--transition);

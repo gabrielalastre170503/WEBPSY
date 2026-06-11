@@ -30,7 +30,7 @@ if (!isset($_SESSION['usuario_id'])) {
 // aceptar la versión vigente antes de usar el sistema. Defensivo: solo si hay
 // conexión disponible (las vistas de paciente incluyen conexion.php).
 if (($_SESSION['rol'] ?? '') === 'paciente' && isset($conex) && $conex instanceof mysqli) {
-    require_once __DIR__ . '/../lib/consentimiento.php';
+    require_once __DIR__ . '/../lib/seguridad/consentimiento.php';
     if (!eco_consentimiento_vigente($conex, (int)$_SESSION['usuario_id'])) {
         header('Location: consentimiento.php');
         exit;
@@ -60,8 +60,8 @@ $page_scripts_extra  = $page_scripts_extra  ?? '';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/shell.css?v=<?= @filemtime(__DIR__ . '/../assets/css/shell.css') ?: '1' ?>">
-    <link rel="stylesheet" href="assets/css/shell-modals.css?v=<?= @filemtime(__DIR__ . '/../assets/css/shell-modals.css') ?: '1' ?>">
+    <link rel="stylesheet" href="assets/css/core/shell.css?v=<?= @filemtime(__DIR__ . '/../assets/css/core/shell.css') ?: '1' ?>">
+    <link rel="stylesheet" href="assets/css/core/shell-modals.css?v=<?= @filemtime(__DIR__ . '/../assets/css/core/shell-modals.css') ?: '1' ?>">
     <?= $page_head_extra ?>
 
     <script>
@@ -157,9 +157,9 @@ $page_scripts_extra  = $page_scripts_extra  ?? '';
 
     </div>
 
-    <script src="assets/js/shell.js"></script>
-    <script src="assets/js/shell-modals.js"></script>
-    <script src="assets/js/notificaciones.js?v=<?= @filemtime(__DIR__ . '/../assets/js/notificaciones.js') ?: '1' ?>"></script>
+    <script src="assets/js/core/shell.js"></script>
+    <script src="assets/js/core/shell-modals.js"></script>
+    <script src="assets/js/core/notificaciones.js?v=<?= @filemtime(__DIR__ . '/../assets/js/core/notificaciones.js') ?: '1' ?>"></script>
     <?= $page_scripts_extra ?>
 </body>
 </html>

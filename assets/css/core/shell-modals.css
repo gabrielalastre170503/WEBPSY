@@ -233,6 +233,7 @@ body.eco-modal-open {
 .eco-modal .eco-field input[type="password"],
 .eco-modal .eco-field input[type="number"],
 .eco-modal .eco-field input[type="datetime-local"],
+.eco-modal .eco-field input[type="tel"],
 .eco-modal .eco-field textarea,
 .eco-modal .eco-field select {
     display: block;
@@ -256,7 +257,8 @@ body.eco-modal-open {
 .eco-modal .eco-field input[type="text"]::placeholder,
 .eco-modal .eco-field input[type="email"]::placeholder,
 .eco-modal .eco-field input[type="password"]::placeholder,
-.eco-modal .eco-field input[type="number"]::placeholder {
+.eco-modal .eco-field input[type="number"]::placeholder,
+.eco-modal .eco-field input[type="tel"]::placeholder {
     color: var(--text-muted);
     opacity: 1;
 }
@@ -267,6 +269,7 @@ body.eco-modal-open {
 .eco-modal .eco-field input[type="password"]:focus,
 .eco-modal .eco-field input[type="number"]:focus,
 .eco-modal .eco-field input[type="datetime-local"]:focus,
+.eco-modal .eco-field input[type="tel"]:focus,
 .eco-modal .eco-field textarea:focus,
 .eco-modal .eco-field select:focus {
     outline: none;
@@ -278,7 +281,8 @@ body.eco-modal-open {
 [data-theme="dark"] .eco-modal .eco-field input[type="text"],
 [data-theme="dark"] .eco-modal .eco-field input[type="email"],
 [data-theme="dark"] .eco-modal .eco-field input[type="password"],
-[data-theme="dark"] .eco-modal .eco-field input[type="number"] {
+[data-theme="dark"] .eco-modal .eco-field input[type="number"],
+[data-theme="dark"] .eco-modal .eco-field input[type="tel"] {
     border-color: var(--border);
     background: var(--bg-surface);
 }

@@ -1,7 +1,7 @@
 <?php
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/facturacion.php';
+require_once __DIR__ . '/lib/facturacion/facturacion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: login.php');
@@ -311,7 +311,7 @@ elseif ($rol === 'paciente'):
 <!-- Indicadores -->
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-card-icon"><i class="fa-solid fa-calendar-star"></i></div>
+        <div class="stat-card-icon"><i class="fa-solid fa-calendar-day"></i></div>
         <p class="stat-card-label">Próxima cita</p>
         <?php if ($nextTs): ?>
             <p class="stat-card-value accent" style="font-size:19px;"><?= date('d', $nextTs) . ' ' . ($meses_es[(int)date('n', $nextTs)] ?? '') ?></p>
@@ -598,15 +598,15 @@ else:
 $page_content = ob_get_clean();
 
 if ($rol === 'administrador') {
-    $page_head_extra = '<link rel="stylesheet" href="assets/css/admin-dashboard.css">'
-        . '<link rel="stylesheet" href="assets/css/admin-dashboard-modals.css">';
+    $page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-dashboard.css">'
+        . '<link rel="stylesheet" href="assets/css/admin/admin-dashboard-modals.css">';
 
     ob_start();
     include __DIR__ . '/layouts/partials/modal_dashboard_admin_kpi.php';
     $admin_kpi_modals_html = ob_get_clean();
 
     $page_scripts_extra = ($admin_kpi_modals_html ?? '')
-        . '<script src="assets/js/admin-dashboard-modals.js"></script>';
+        . '<script src="assets/js/admin/admin-dashboard-modals.js"></script>';
 }
 
 include __DIR__ . '/layouts/shell.php';

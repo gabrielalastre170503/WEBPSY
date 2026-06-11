@@ -1,13 +1,13 @@
 <?php
 /*
- * lib/correo_app.php — Utilidades de correo e identidad (Fase 1).
+ * lib/comunicaciones/correo_app.php — Utilidades de correo e identidad (Fase 1).
  *
  * Reutiliza el motor SMTP existente (enviar_correo.php / config_correo.php)
  * para enviar correos transaccionales: verificación de cuenta, recuperación
  * de contraseña y códigos OTP de 2FA.
  */
 
-require_once __DIR__ . '/../enviar_correo.php';
+require_once __DIR__ . '/../../enviar_correo.php';
 
 if (!function_exists('eco_base_url')) {
 
@@ -50,7 +50,7 @@ if (!function_exists('eco_base_url')) {
      */
     function eco_enviar_correo(string $to, string $subject, string $body, ?string &$err = null): bool
     {
-        $cfg = @include __DIR__ . '/../config_correo.php';
+        $cfg = @include __DIR__ . '/../../config_correo.php';
         if (!is_array($cfg) || empty($cfg['smtp_pass'])) {
             $err = 'config_correo.php sin contraseña SMTP configurada (.env: SMTP_PASS).';
             error_log('[correo_app] ' . $err);

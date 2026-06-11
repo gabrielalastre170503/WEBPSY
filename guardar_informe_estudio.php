@@ -1,10 +1,10 @@
 <?php
 session_start();
-require_once __DIR__ . '/lib/api.php';
+require_once __DIR__ . '/lib/core/api.php';
 include 'conexion.php';
-require_once __DIR__ . '/lib/estudios_render.php';
-require_once __DIR__ . '/lib/informes.php';
-require_once __DIR__ . '/lib/facturacion.php';
+require_once __DIR__ . '/lib/informes/estudios_render.php';
+require_once __DIR__ . '/lib/informes/informes.php';
+require_once __DIR__ . '/lib/facturacion/facturacion.php';
 
 /**
  * Asienta la facturacion (estudio + servicios adicionales) en una cita, reusando

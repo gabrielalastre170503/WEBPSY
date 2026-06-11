@@ -1,7 +1,7 @@
-﻿<?php
+<?php
 session_start();
 include 'conexion.php';
-require_once __DIR__ . '/lib/citas.php';
+require_once __DIR__ . '/lib/citas/citas.php';
 
 // Seguridad: Solo pacientes pueden solicitar
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
