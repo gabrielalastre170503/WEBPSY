@@ -51,7 +51,7 @@ $active_section = 'gestion-pacientes';
 $page_head_extra = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">';
 
 $page_header_actions = '
-    <a href="recepcion_gestion_pacientes.php" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Volver al listado</a>';
+    <a href="' . eco_url('gestion-pacientes') . '" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Volver al listado</a>';
 
 ob_start();
 ?>

@@ -28,7 +28,7 @@ if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'administrad
             </div>
 
             <div class="staff-lista-modal-footer">
-                <a href="ver_usuarios.php?filtro=personal" id="staff-lista-ver-todo" class="btn-secondary">
+                <a href="<?= eco_url('usuarios') ?>?filtro=personal" id="staff-lista-ver-todo" class="btn-secondary">
                     <i class="fa-solid fa-users"></i> Gestión completa de usuarios
                 </a>
             </div>

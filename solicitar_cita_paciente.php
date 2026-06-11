@@ -431,7 +431,7 @@ ob_start();
                     <button type="submit" class="btn-primary" id="btn-enviar-solicitud" disabled>
                         <i class="fa-solid fa-paper-plane"></i> Completa los pasos
                     </button>
-                    <p class="sol-summary__note">Precios referenciales en USD · <a href="precios_ecografias_paciente.php">ver tarifas</a></p>
+                    <p class="sol-summary__note">Precios referenciales en USD · <a href="<?= eco_url('precios') ?>">ver tarifas</a></p>
                 </div>
             </div>
         </aside>

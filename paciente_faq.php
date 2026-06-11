@@ -157,8 +157,8 @@ ob_start();
         <p>Nuestro equipo está listo para ayudarte con cualquier duda sobre tus citas o estudios.</p>
     </div>
     <div class="faq-help__actions">
-        <a href="paciente_ayuda.php" class="btn-primary"><i class="fa-solid fa-life-ring"></i> Centro de Ayuda</a>
-        <a href="solicitar_cita_paciente.php" class="btn-soft"><i class="fa-solid fa-file-circle-plus"></i> Solicitar cita</a>
+        <a href="<?= eco_url('ayuda') ?>" class="btn-primary"><i class="fa-solid fa-life-ring"></i> Centro de Ayuda</a>
+        <a href="<?= eco_url('solicitar-cita') ?>" class="btn-soft"><i class="fa-solid fa-file-circle-plus"></i> Solicitar cita</a>
     </div>
 </div>
 

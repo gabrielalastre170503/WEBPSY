@@ -137,7 +137,7 @@ ob_start();
         <p class="stat-card-value" style="color:#7c3aed;"><?= count($todas_esp) ?></p>
         <p class="stat-card-sub">áreas que cubre el equipo</p>
     </div>
-    <a href="solicitar_cita_paciente.php" class="stat-card" style="text-decoration:none;">
+    <a href="<?= eco_url('solicitar-cita') ?>" class="stat-card" style="text-decoration:none;">
         <div class="stat-card-icon"><i class="fa-solid fa-file-circle-plus"></i></div>
         <p class="stat-card-label">Acción rápida</p>
         <p class="stat-card-value accent" style="font-size:18px;">Solicitar cita</p>
@@ -212,7 +212,7 @@ ob_start();
                         <button type="button" class="eco-doc-btn eco-doc-btn--ghost" onclick="abrirModalProfesionalShell(<?= (int)$p['id'] ?>)">
                             <i class="fa-solid fa-id-card"></i> Ver perfil
                         </button>
-                        <a class="eco-doc-btn eco-doc-btn--solid" href="solicitar_cita_paciente.php?ecografista_id=<?= (int)$p['id'] ?>">
+                        <a class="eco-doc-btn eco-doc-btn--solid" href="<?= eco_url('solicitar-cita') ?>?ecografista_id=<?= (int)$p['id'] ?>">
                             <i class="fa-solid fa-calendar-plus"></i> Solicitar
                         </a>
                     </div>

@@ -26,7 +26,7 @@ $page_subtitle = 'Calendario personal con todas tus citas';
 $active_section = 'agenda';
 
 $page_header_actions = '<button type="button" class="btn-secondary" id="agenda-btn-recordatorios"><i class="fa-solid fa-bell"></i> Recordatorios</button> '
-    . '<a href="gestionar_disponibilidad.php" class="btn-secondary"><i class="fa-solid fa-clock"></i> Mi Disponibilidad</a>';
+    . '<a href="' . eco_url('disponibilidad') . '" class="btn-secondary"><i class="fa-solid fa-clock"></i> Mi Disponibilidad</a>';
 $page_head_extra = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">';
 
 ob_start();

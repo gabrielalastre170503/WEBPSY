@@ -109,7 +109,7 @@ $page_head_extra = '<link rel="stylesheet" href="assets/css/admin/admin-personal
     . '<link rel="stylesheet" href="assets/css/core/estilos.css">'
     . '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">';
 
-$page_header_actions = '<a href="ver_usuarios.php" class="btn-secondary"><i class="fa-solid fa-users"></i> Ver todos los usuarios</a>';
+$page_header_actions = '<a href="' . eco_url('usuarios') . '" class="btn-secondary"><i class="fa-solid fa-users"></i> Ver todos los usuarios</a>';
 
 ob_start();
 

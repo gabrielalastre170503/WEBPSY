@@ -27,15 +27,15 @@ $body_class = 'ver-usuarios-page';
 $page_head_extra = '<link rel="stylesheet" href="assets/css/usuarios/ver-usuarios.css">';
 
 $page_header_actions = '
-    <a href="admin_personal.php" class="btn-secondary"><i class="fa-solid fa-user-plus"></i> Añadir personal</a>
-    <a href="dashboard_v2.php" class="btn-secondary"><i class="fa-solid fa-gauge-high"></i> Panel</a>';
+    <a href="' . eco_url('personal') . '" class="btn-secondary"><i class="fa-solid fa-user-plus"></i> Añadir personal</a>
+    <a href="' . eco_url('dashboard') . '" class="btn-secondary"><i class="fa-solid fa-gauge-high"></i> Panel</a>';
 
 ob_start();
 ?>
 
 <nav class="vu-filter-nav" aria-label="Filtrar listado de usuarios">
     <?php foreach ($filtrosMeta as $key => $meta): ?>
-        <a href="ver_usuarios.php?filtro=<?= urlencode($key) ?>"
+        <a href="<?= eco_url('usuarios') ?>?filtro=<?= urlencode($key) ?>"
            class="vu-filter-chip<?= $filtro === $key ? ' is-active' : '' ?>">
             <i class="<?= htmlspecialchars($meta[2]) ?>" aria-hidden="true"></i>
             <?= htmlspecialchars($meta[3]) ?>

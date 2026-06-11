@@ -204,7 +204,7 @@ ob_start();
 
 <div class="card" style="margin-top:18px;text-align:center;">
     <p style="margin:0 0 12px;font-size:13.5px;color:var(--text-secondary);">¿Listo para agendar tu estudio?</p>
-    <a href="solicitar_cita_paciente.php" class="btn-primary"><i class="fa-solid fa-file-circle-plus"></i> Solicitar nueva cita</a>
+    <a href="<?= eco_url('solicitar-cita') ?>" class="btn-primary"><i class="fa-solid fa-file-circle-plus"></i> Solicitar nueva cita</a>
 </div>
 
 <?php

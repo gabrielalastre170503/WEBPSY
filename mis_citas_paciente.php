@@ -243,7 +243,7 @@ ob_start();
         <p class="stat-card-value warning"><?= $num_pend ?></p>
         <p class="stat-card-sub">en espera de confirmación</p>
     </div>
-    <a href="solicitar_cita_paciente.php" class="stat-card" style="text-decoration:none;">
+    <a href="<?= eco_url('solicitar-cita') ?>" class="stat-card" style="text-decoration:none;">
         <div class="stat-card-icon"><i class="fa-solid fa-file-circle-plus"></i></div>
         <p class="stat-card-label">Acción rápida</p>
         <p class="stat-card-value accent" style="font-size:18px;">Solicitar cita</p>
@@ -257,7 +257,7 @@ ob_start();
             <i class="fa-solid fa-calendar-xmark"></i>
             <p style="margin:0 0 4px;font-weight:600;color:var(--text-secondary);">No tienes ninguna cita solicitada o programada</p>
             <p style="margin:0 0 16px;font-size:13px;">Cuando solicites un estudio, aparecerá aquí con su estado en tiempo real.</p>
-            <a href="solicitar_cita_paciente.php" class="btn-primary"><i class="fa-solid fa-file-circle-plus"></i> Solicitar nueva cita</a>
+            <a href="<?= eco_url('solicitar-cita') ?>" class="btn-primary"><i class="fa-solid fa-file-circle-plus"></i> Solicitar nueva cita</a>
         </div>
     </div>
 <?php else: ?>

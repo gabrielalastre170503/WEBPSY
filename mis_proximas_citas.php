@@ -29,7 +29,7 @@ if ($s = $conex->prepare("
 $page_title    = 'Mis Próximas Citas';
 $page_subtitle = 'Citas confirmadas y reprogramadas que tienes pendientes';
 $active_section = 'proximas-citas';
-$page_header_actions = '<a href="mi_agenda.php" class="btn-secondary"><i class="fa-solid fa-calendar-week"></i> Ver en Calendario</a>';
+$page_header_actions = '<a href="' . eco_url('mi-agenda') . '" class="btn-secondary"><i class="fa-solid fa-calendar-week"></i> Ver en Calendario</a>';
 $page_head_extra = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">';
 
 ob_start();

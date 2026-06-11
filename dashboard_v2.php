@@ -93,13 +93,13 @@ if ($rol === 'ecografista'):
             <h2 style="margin:0 0 4px;font-size:20px;font-weight:700;color:var(--text-primary);">Hola, <?= htmlspecialchars($primer_nombre) ?> 👋</h2>
             <p style="margin:0;font-size:13.5px;color:var(--text-secondary);">Hoy es <?= htmlspecialchars($hoy_txt) ?>. Tienes <strong style="color:var(--accent-text);"><?= $mis_citas_hoy ?></strong> cita<?= $mis_citas_hoy === 1 ? '' : 's' ?> en tu agenda<?= $mis_pendientes > 0 ? ' y ' . $mis_pendientes . ' solicitud' . ($mis_pendientes === 1 ? '' : 'es') . ' por revisar' : '' ?>.</p>
         </div>
-        <a href="mi_agenda.php" class="btn-primary" style="white-space:nowrap;"><i class="fa-solid fa-calendar-days"></i> Ver mi agenda</a>
+        <a href="<?= eco_url('mi-agenda') ?>" class="btn-primary" style="white-space:nowrap;"><i class="fa-solid fa-calendar-days"></i> Ver mi agenda</a>
     </div>
 </div>
 
 <!-- Indicadores -->
 <div class="stats-grid">
-    <a href="mi_agenda.php" class="stat-card" style="text-decoration:none;color:inherit;">
+    <a href="<?= eco_url('mi-agenda') ?>" class="stat-card" style="text-decoration:none;color:inherit;">
         <div class="stat-card-icon" style="background:var(--accent-soft);color:var(--accent-text);">
             <i class="fa-solid fa-calendar-day"></i>
         </div>
@@ -107,7 +107,7 @@ if ($rol === 'ecografista'):
         <p class="stat-card-value accent"><?= $mis_citas_hoy ?></p>
         <p class="stat-card-sub">En tu agenda</p>
     </a>
-    <a href="mis_solicitudes.php" class="stat-card" style="text-decoration:none;color:inherit;">
+    <a href="<?= eco_url('solicitudes') ?>" class="stat-card" style="text-decoration:none;color:inherit;">
         <div class="stat-card-icon" style="background:rgba(245,158,11,.12);color:#b45309;">
             <i class="fa-solid fa-inbox"></i>
         </div>
@@ -115,7 +115,7 @@ if ($rol === 'ecografista'):
         <p class="stat-card-value warning"><?= $mis_pendientes ?></p>
         <p class="stat-card-sub">Esperan tu respuesta</p>
     </a>
-    <a href="mi_agenda.php" class="stat-card" style="text-decoration:none;color:inherit;">
+    <a href="<?= eco_url('mi-agenda') ?>" class="stat-card" style="text-decoration:none;color:inherit;">
         <div class="stat-card-icon" style="background:rgba(139,92,246,.12);color:#7c3aed;">
             <i class="fa-solid fa-calendar-week"></i>
         </div>
@@ -123,7 +123,7 @@ if ($rol === 'ecografista'):
         <p class="stat-card-value" style="color:#7c3aed;"><?= $mis_semana ?></p>
         <p class="stat-card-sub">Citas programadas</p>
     </a>
-    <a href="mis_pacientes.php" class="stat-card" style="text-decoration:none;color:inherit;">
+    <a href="<?= eco_url('mis-pacientes') ?>" class="stat-card" style="text-decoration:none;color:inherit;">
         <div class="stat-card-icon" style="background:rgba(34,197,94,.12);color:#15803d;">
             <i class="fa-solid fa-user-injured"></i>
         </div>
@@ -137,7 +137,7 @@ if ($rol === 'ecografista'):
     <div class="card">
         <div class="card-header">
             <h3><i class="fa-solid fa-calendar-check" style="margin-right:7px;color:var(--accent);"></i> Próximas Citas</h3>
-            <a href="mis_proximas_citas.php" style="font-size:12.5px;color:var(--accent-text);font-weight:600;">Ver todas →</a>
+            <a href="<?= eco_url('proximas-citas') ?>" style="font-size:12.5px;color:var(--accent-text);font-weight:600;">Ver todas →</a>
         </div>
         <?php if (empty($proximas)): ?>
             <p style="color:var(--text-muted);text-align:center;padding:30px 0;font-size:13px;">
@@ -304,7 +304,7 @@ elseif ($rol === 'paciente'):
             <h2 style="margin:0 0 4px;font-size:20px;font-weight:700;color:var(--text-primary);">Hola, <?= htmlspecialchars($primer_nombre) ?> 👋</h2>
             <p style="margin:0;font-size:13.5px;color:var(--text-secondary);">Bienvenido a tu portal clínico. Gestiona tus citas y consulta tus resultados ecográficos.</p>
         </div>
-        <a href="solicitar_cita_paciente.php" class="btn-primary" style="white-space:nowrap;"><i class="fa-solid fa-plus"></i> Solicitar nueva cita</a>
+        <a href="<?= eco_url('solicitar-cita') ?>" class="btn-primary" style="white-space:nowrap;"><i class="fa-solid fa-plus"></i> Solicitar nueva cita</a>
     </div>
 </div>
 
@@ -333,7 +333,7 @@ elseif ($rol === 'paciente'):
         <p class="stat-card-value success"><?= $citas_completadas ?></p>
         <p class="stat-card-sub">estudios realizados</p>
     </div>
-    <a href="mis_informes_paciente.php" class="stat-card" style="text-decoration:none;">
+    <a href="<?= eco_url('mis-informes') ?>" class="stat-card" style="text-decoration:none;">
         <div class="stat-card-icon"><i class="fa-solid fa-file-medical"></i></div>
         <p class="stat-card-label">Mis informes</p>
         <p class="stat-card-value accent"><?= $informes_total ?></p>
@@ -364,7 +364,7 @@ elseif ($rol === 'paciente'):
 <div class="card" style="margin-bottom:18px;">
     <div class="card-header">
         <h3><i class="fa-solid fa-file-waveform" style="margin-right:8px;color:var(--accent);"></i> Informes recientes</h3>
-        <a href="mis_informes_paciente.php" style="font-size:12.5px;color:var(--accent-text);font-weight:600;text-decoration:none;">Ver todos →</a>
+        <a href="<?= eco_url('mis-informes') ?>" style="font-size:12.5px;color:var(--accent-text);font-weight:600;text-decoration:none;">Ver todos →</a>
     </div>
     <?php if (empty($informes_recientes)): ?>
         <p style="color:var(--text-muted);font-size:13.5px;margin:6px 0;">Aún no tienes informes. Tus resultados aparecerán aquí al finalizar un estudio.</p>
@@ -372,7 +372,7 @@ elseif ($rol === 'paciente'):
         $raw = $inf['fecha_estudio'] ?: substr($inf['creado_en'], 0, 10);
         $f   = $raw ? date('d/m/Y', strtotime($raw)) : '—';
     ?>
-        <a href="ver_informe_estudio.php?informe_id=<?= (int)$inf['id'] ?>" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:12px 6px;<?= $i > 0 ? 'border-top:1px solid var(--border-soft);' : '' ?>text-decoration:none;color:inherit;">
+        <a href="<?= eco_url('informe/' . (int)$inf['id']) ?>" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:12px 6px;<?= $i > 0 ? 'border-top:1px solid var(--border-soft);' : '' ?>text-decoration:none;color:inherit;">
             <span style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#38bdf8);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="<?= htmlspecialchars($inf['tipo_icono'] ?: 'fa-solid fa-wave-square', ENT_QUOTES) ?>"></i></span>
             <span style="flex:1;min-width:0;">
                 <strong style="display:block;font-size:13.5px;color:var(--text-primary);"><?= htmlspecialchars($inf['tipo_nombre'] ?: 'Ecografía') ?></strong>
@@ -480,7 +480,7 @@ elseif ($rol === 'recepcionista'):
 ?>
 
 <div class="stats-grid">
-    <a href="recepcion_citas_pendientes.php" class="stat-card" style="text-decoration:none;color:inherit;">
+    <a href="<?= eco_url('citas-pendientes') ?>" class="stat-card" style="text-decoration:none;color:inherit;">
         <div class="stat-card-icon" style="background:rgba(245,158,11,.12);color:#b45309;"><i class="fa-solid fa-inbox"></i></div>
         <p class="stat-card-label">Citas pendientes</p>
         <p class="stat-card-value warning"><?= number_format($total_pendientes) ?></p>
@@ -512,7 +512,7 @@ elseif ($rol === 'recepcionista'):
     <div class="card">
         <div class="card-header">
             <h3><i class="fa-solid fa-calendar-check" style="color:var(--accent);margin-right:6px;"></i> Agenda de hoy</h3>
-            <a href="agenda_general.php" style="font-size:12.5px;font-weight:600;color:var(--accent-text);">Calendario completo →</a>
+            <a href="<?= eco_url('agenda') ?>" style="font-size:12.5px;font-weight:600;color:var(--accent-text);">Calendario completo →</a>
         </div>
         <?php if (empty($agenda_hoy)): ?>
             <p style="color:var(--text-muted);margin:0;font-size:13.5px;">No hay citas confirmadas para hoy.</p>
@@ -540,7 +540,7 @@ elseif ($rol === 'recepcionista'):
     <div class="card">
         <div class="card-header">
             <h3><i class="fa-solid fa-paper-plane" style="color:#6366f1;margin-right:6px;"></i> Solicitudes recientes</h3>
-            <a href="recepcion_citas_pendientes.php" style="font-size:12.5px;font-weight:600;color:var(--accent-text);">Ver todas →</a>
+            <a href="<?= eco_url('citas-pendientes') ?>" style="font-size:12.5px;font-weight:600;color:var(--accent-text);">Ver todas →</a>
         </div>
         <?php if (empty($solicitudes_recientes)): ?>
             <p style="color:var(--text-muted);margin:0;font-size:13.5px;">No hay solicitudes pendientes.</p>
@@ -562,7 +562,7 @@ elseif ($rol === 'recepcionista'):
     <div class="card">
         <div class="card-header">
             <h3><i class="fa-solid fa-user-plus" style="color:#15803d;margin-right:6px;"></i> Pacientes recientes</h3>
-            <a href="recepcion_gestion_pacientes.php" style="font-size:12.5px;font-weight:600;color:var(--accent-text);">Gestión →</a>
+            <a href="<?= eco_url('gestion-pacientes') ?>" style="font-size:12.5px;font-weight:600;color:var(--accent-text);">Gestión →</a>
         </div>
         <?php if (empty($pacientes_recientes)): ?>
             <p style="color:var(--text-muted);margin:0;font-size:13.5px;">Sin registros recientes.</p>
