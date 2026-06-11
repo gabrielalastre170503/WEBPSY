@@ -20,12 +20,12 @@ function guardar_cita_redirect_base(): string
 {
     global $rol;
     if ($rol === 'recepcionista') {
-        return 'recepcion_citas_pendientes.php';
+        return eco_url('citas-pendientes');
     }
     if ($rol === 'administrador') {
-        return 'dashboard_v2.php';
+        return eco_url('dashboard');
     }
-    return 'panel.php';
+    return eco_url('panel.php');
 }
 
 // Validar que los datos necesarios del formulario fueron enviados

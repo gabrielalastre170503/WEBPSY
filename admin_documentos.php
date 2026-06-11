@@ -67,7 +67,7 @@ $mapa_categorias = [
     'rar' => 'Archivos Comprimidos',
 ];
 $peso_maximo_bytes = 10 * 1024 * 1024;
-$redirectUrl = 'admin_documentos.php';
+$redirectUrl = eco_url('repositorio');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['documento_action'])) {
     $accionDocumento = $_POST['documento_action'];

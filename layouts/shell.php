@@ -32,7 +32,7 @@ if (!isset($_SESSION['usuario_id'])) {
 if (($_SESSION['rol'] ?? '') === 'paciente' && isset($conex) && $conex instanceof mysqli) {
     require_once __DIR__ . '/../lib/seguridad/consentimiento.php';
     if (!eco_consentimiento_vigente($conex, (int)$_SESSION['usuario_id'])) {
-        header('Location: consentimiento.php');
+        header('Location: ' . eco_url('consentimiento'));
         exit;
     }
 }

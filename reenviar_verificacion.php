@@ -13,7 +13,7 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 
 $uid = (int)$_SESSION['usuario_id'];
-$volver = 'dashboard_v2.php';
+$volver = eco_url('dashboard');
 
 $stmt = $conex->prepare("SELECT nombre_completo, correo, email_verificado FROM usuarios WHERE id = ?");
 $stmt->bind_param('i', $uid);

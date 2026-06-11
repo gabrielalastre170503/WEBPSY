@@ -23,6 +23,7 @@ $r->get('/perfil',    'perfil.php');
 $r->get('/reportes',  'reportes.php');
 $r->get('/agenda',    'agenda_general.php');
 $r->get('/facturacion', 'facturacion.php');
+$r->any('/consentimiento', 'consentimiento.php');
 
 /* ── Informes ── */
 $r->get('/informe/{informe_id}', 'ver_informe_estudio.php');
@@ -32,7 +33,7 @@ $r->get('/mis-informes',         'mis_informes_paciente.php');
 $r->get('/personal',      'admin_personal.php');
 $r->get('/usuarios',      'ver_usuarios.php');
 $r->get('/especialidades', 'admin_especialidades.php');
-$r->get('/documentos',    'admin_documentos.php');
+$r->get('/repositorio',   'admin_documentos.php');
 $r->get('/contenido',     'admin_contenido.php');
 $r->get('/auditoria',     'auditoria.php');
 $r->get('/notas-rapidas', 'notas_rapidas.php');

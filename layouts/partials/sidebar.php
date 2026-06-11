@@ -218,7 +218,7 @@ $menu = [
             'id' => 'admin-documentos',
             'label' => 'Repositorio Documentos',
             'icon' => 'fa-solid fa-folder-open',
-            'href' => 'documentos',
+            'href' => 'repositorio',
             'roles' => ['administrador'],
         ],
     ],
