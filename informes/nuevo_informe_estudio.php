@@ -1,7 +1,7 @@
 <?php
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/informes/estudios_render.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/informes/estudios_render.php';
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
     header('Location: ' . eco_url('login'));
@@ -360,7 +360,7 @@ $datos_iniciales_por_tipo = [
 
     <!-- ── Encabezado premium ── -->
     <div class="page-header-premium">
-        <a href="gestionar_paciente.php?paciente_id=<?php echo $paciente_id; ?>" class="btn-back">
+        <a href="<?= eco_url('gestionar-paciente') ?>?paciente_id=<?php echo $paciente_id; ?>" class="btn-back">
             <i class="fa-solid fa-arrow-left"></i> Volver
         </a>
         <div class="header-icon">

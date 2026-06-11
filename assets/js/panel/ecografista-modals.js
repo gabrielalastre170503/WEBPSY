@@ -1376,7 +1376,7 @@
         iframe.id = 'eco-print-frame';
         iframe.setAttribute('aria-hidden', 'true');
         iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:8.5in;height:11in;border:0;visibility:hidden;';
-        iframe.src = 'ver_informe_estudio.php?informe_id=' + encodeURIComponent(informeId) + '&print=1';
+        iframe.src = (window.ECO_BASE || '') + 'informe/' + encodeURIComponent(informeId) + '?print=1';
         document.body.appendChild(iframe);
         setTimeout(function () { try { iframe.remove(); } catch (e) {} }, 60000);
     }

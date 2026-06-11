@@ -26,7 +26,10 @@ $r->get('/facturacion', 'facturacion.php');
 $r->any('/consentimiento', 'consentimiento.php');
 
 /* ── Informes ── */
-$r->get('/informe/{informe_id}', 'ver_informe_estudio.php');
+$r->get('/informe/{informe_id}', 'informes/ver_informe_estudio.php');
+$r->get('/informes-estudio',     'informes/ver_informes_estudios.php');
+$r->get('/nuevo-informe',        'informes/nuevo_informe_estudio.php');
+$r->get('/gestionar-paciente',   'informes/gestionar_paciente.php');
 $r->get('/mis-informes',         'paciente/mis_informes_paciente.php');
 
 /* ── Administrador ── */

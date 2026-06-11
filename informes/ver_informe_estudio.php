@@ -1,9 +1,9 @@
 <?php
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/informes/estudios_render.php';
-require_once __DIR__ . '/lib/informes/archivos.php';
-require_once __DIR__ . '/lib/seguridad/seguridad.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/informes/estudios_render.php';
+require_once __DIR__ . '/../lib/informes/archivos.php';
+require_once __DIR__ . '/../lib/seguridad/seguridad.php';
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista', 'paciente'])) {
     header('Location: ' . eco_url('login'));
@@ -580,11 +580,11 @@ $titulo_print = mb_strtoupper('Reporte Ecográfico ' . preg_replace('/^Ecograf[i
 <div class="pagina">
 
     <div class="barra-acciones no-print">
-        <a href="ver_informes_estudios.php?paciente_id=<?php echo (int)$informe['paciente_id']; ?>" class="back-link">
+        <a href="<?= eco_url('informes-estudio') ?>?paciente_id=<?php echo (int)$informe['paciente_id']; ?>" class="back-link">
             <i class="fa-solid fa-arrow-left"></i> Volver al historial de estudios
         </a>
         <div class="acciones">
-            <a href="nuevo_informe_estudio.php?paciente_id=<?php echo (int)$informe['paciente_id']; ?>" class="btn btn-secundario">
+            <a href="<?= eco_url('nuevo-informe') ?>?paciente_id=<?php echo (int)$informe['paciente_id']; ?>" class="btn btn-secundario">
                 <i class="fa-solid fa-plus"></i> Nuevo Estudio
             </a>
             <a href="#" onclick="window.print(); return false;" class="btn btn-imprimir">
@@ -740,7 +740,7 @@ $titulo_print = mb_strtoupper('Reporte Ecográfico ' . preg_replace('/^Ecograf[i
             <?php if (!empty($archivos_adj)): ?>
             <div class="ei-adjuntos">
                 <?php foreach ($archivos_adj as $a): ?>
-                    <a class="ei-adj" href="descargar_archivo_informe.php?id=<?php echo (int)$a['id']; ?>" target="_blank" rel="noopener">
+                    <a class="ei-adj" href="<?= eco_url('descargar_archivo_informe.php') ?>?id=<?php echo (int)$a['id']; ?>" target="_blank" rel="noopener">
                         <i class="fa-solid fa-file-pdf"></i> <?php echo htmlspecialchars($a['nombre_original']); ?>
                     </a>
                 <?php endforeach; ?>

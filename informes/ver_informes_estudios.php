@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
     header('Location: ' . eco_url('login'));
@@ -73,7 +73,7 @@ $stmt->close();
 </head>
 <body>
 <div class="main-container">
-    <a href="gestionar_paciente.php?paciente_id=<?php echo $paciente_id; ?>" class="back-link">
+    <a href="<?= eco_url('gestionar-paciente') ?>?paciente_id=<?php echo $paciente_id; ?>" class="back-link">
         <i class="fa-solid fa-arrow-left"></i> Volver a Gestion de Paciente
     </a>
     <h1>Historial de Estudios Ecograficos</h1>
@@ -83,7 +83,7 @@ $stmt->close();
     </p>
 
     <div class="toolbar">
-        <a href="nuevo_informe_estudio.php?paciente_id=<?php echo $paciente_id; ?>" class="btn">
+        <a href="<?= eco_url('nuevo-informe') ?>?paciente_id=<?php echo $paciente_id; ?>" class="btn">
             <i class="fa-solid fa-plus"></i> Nuevo Informe
         </a>
     </div>

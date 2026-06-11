@@ -360,7 +360,7 @@ $page_scripts_extra = <<<'HTML'
         iframe.id = 'inf-print-frame';
         iframe.setAttribute('aria-hidden', 'true');
         iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:8.5in;height:11in;border:0;visibility:hidden;';
-        iframe.src = 'ver_informe_estudio.php?informe_id=' + encodeURIComponent(currentId) + '&print=1';
+        iframe.src = '<?= eco_url('informe') ?>/' + encodeURIComponent(currentId) + '?print=1';
         document.body.appendChild(iframe);
         setTimeout(function () { try { iframe.remove(); } catch (e) {} }, 60000);
     });

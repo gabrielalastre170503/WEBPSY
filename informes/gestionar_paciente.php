@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
     header('Location: ' . eco_url('login'));
@@ -72,14 +72,14 @@ $puede_crear = in_array($_SESSION['rol'], ['ecografista', 'administrador']);
     </div>
 
     <div class="action-grid">
-        <a href="ver_informes_estudios.php?paciente_id=<?php echo $paciente_id; ?>" class="action-card">
+        <a href="<?= eco_url('informes-estudio') ?>?paciente_id=<?php echo $paciente_id; ?>" class="action-card">
             <div class="icon-wrapper" style="background-color: #6f42c1;"><i class="fa-solid fa-folder-open"></i></div>
             <h3>Historial de Estudios<span class="badge-conteo"><?php echo $total_estudios; ?></span></h3>
             <p>Consulta todos los informes ecograficos previos registrados para este paciente.</p>
         </a>
 
         <?php if ($puede_crear): ?>
-            <a href="nuevo_informe_estudio.php?paciente_id=<?php echo $paciente_id; ?>" class="action-card">
+            <a href="<?= eco_url('nuevo-informe') ?>?paciente_id=<?php echo $paciente_id; ?>" class="action-card">
                 <div class="icon-wrapper" style="background-color: #02b1f4;"><i class="fa-solid fa-file-circle-plus"></i></div>
                 <h3>Nuevo Informe de Estudio</h3>
                 <p>Selecciona el tipo de ecografia y registra los hallazgos del estudio realizado hoy.</p>
