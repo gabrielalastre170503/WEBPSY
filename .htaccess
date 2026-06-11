@@ -28,3 +28,14 @@ php_value auto_prepend_file "C:/xampp/htdocs/Sistema_EcoMadelleineV1/bootstrap.p
 
 # --- No listar directorios ---
 Options -Indexes
+
+# --- Front controller / URLs limpias (router) ---
+# Solo enruta rutas que NO son un archivo o carpeta real: todos los .php
+# existentes, assets y AJAX se siguen sirviendo directo (no pasan por el router).
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /Sistema_EcoMadelleineV1/
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ router.php [L,QSA]
+</IfModule>
