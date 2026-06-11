@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -181,15 +181,15 @@ eco_render_staff_grid(
 $page_content = ob_get_clean();
 
 ob_start();
-include __DIR__ . '/layouts/partials/modal_admin_personal.php';
+include __DIR__ . '/../layouts/partials/modal_admin_personal.php';
 $staff_modals_html = ob_get_clean();
 
 ob_start();
-include __DIR__ . '/layouts/partials/modal_admin_personal_lista.php';
+include __DIR__ . '/../layouts/partials/modal_admin_personal_lista.php';
 $staff_modals_html .= ob_get_clean();
 
 ob_start();
-include __DIR__ . '/layouts/partials/modal_admin_personal_perfil.php';
+include __DIR__ . '/../layouts/partials/modal_admin_personal_perfil.php';
 $staff_modals_html .= ob_get_clean();
 
 $page_scripts_extra = $staff_modals_html
@@ -197,4 +197,4 @@ $page_scripts_extra = $staff_modals_html
     . '<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>'
     . '<script src="assets/js/admin/admin-personal-modals.js"></script>';
 
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

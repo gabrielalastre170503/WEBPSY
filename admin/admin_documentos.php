@@ -1,7 +1,7 @@
 <?php
 date_default_timezone_set('America/Caracas');
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -46,7 +46,7 @@ if (isset($_SESSION['documentos_feedback'])) {
     unset($_SESSION['documentos_feedback']);
 }
 
-$documentos_base_path = __DIR__ . DIRECTORY_SEPARATOR . 'documentos';
+$documentos_base_path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'documentos';
 if (!is_dir($documentos_base_path)) {
     @mkdir($documentos_base_path, 0777, true);
 }
@@ -396,4 +396,4 @@ document.querySelectorAll('.document-copy-link').forEach(function (btn) {
 
 <?php
 $page_content = ob_get_clean();
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

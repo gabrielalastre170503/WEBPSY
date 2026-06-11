@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -86,4 +86,4 @@ ob_start();
 
 <?php
 $page_content = ob_get_clean();
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

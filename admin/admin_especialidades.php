@@ -1,8 +1,8 @@
 <?php
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/personal/admin_data.php';
-require_once __DIR__ . '/lib/personal/especialidades.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/personal/admin_data.php';
+require_once __DIR__ . '/../lib/personal/especialidades.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -198,4 +198,4 @@ document.getElementById('specialty-search-input')?.addEventListener('input', fun
 
 <?php
 $page_content = ob_get_clean();
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';
