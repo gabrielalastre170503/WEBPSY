@@ -32,7 +32,7 @@ if (isset($_POST['cita_id'])) {
             if ($c = $conex->query("SELECT paciente_id FROM citas WHERE id = " . (int)$cita_id)->fetch_assoc()) {
                 eco_notificar($conex, (int)$c['paciente_id'], 'cita_completada', 'Estudio completado', [
                     'mensaje' => 'Tu estudio fue marcado como completado. Pronto tendrás tus resultados.',
-                    'url'     => 'mis_informes_paciente.php',
+                    'url'     => 'mis-informes',
                     'icono'   => 'fa-solid fa-clipboard-check',
                 ]);
             }

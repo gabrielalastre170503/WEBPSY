@@ -55,12 +55,12 @@ if (!function_exists('construir_kb')) {
             $kb[] = ['q' => $q, 'a' => $a, 'tags' => $tags, 'link' => $link];
         };
 
-        $L_solicitar = ['href' => 'solicitar_cita_paciente.php', 'label' => 'Solicitar cita'];
-        $L_citas     = ['href' => 'mis_citas_paciente.php', 'label' => 'Mis citas'];
-        $L_informes  = ['href' => 'mis_informes_paciente.php', 'label' => 'Mis informes'];
-        $L_prep      = ['href' => 'preparacion_estudios_paciente.php', 'label' => 'Preparación de estudios'];
-        $L_eco       = ['href' => 'ecografistas_paciente.php', 'label' => 'Ver ecografistas'];
-        $L_ayuda     = ['href' => 'paciente_ayuda.php', 'label' => 'Centro de Ayuda'];
+        $L_solicitar = ['href' => 'solicitar-cita', 'label' => 'Solicitar cita'];
+        $L_citas     = ['href' => 'mis-citas', 'label' => 'Mis citas'];
+        $L_informes  = ['href' => 'mis-informes', 'label' => 'Mis informes'];
+        $L_prep      = ['href' => 'preparacion', 'label' => 'Preparación de estudios'];
+        $L_eco       = ['href' => 'ecografistas', 'label' => 'Ver ecografistas'];
+        $L_ayuda     = ['href' => 'ayuda', 'label' => 'Centro de Ayuda'];
         $L_perfil    = ['href' => 'perfil.php', 'label' => 'Mi perfil'];
 
         /* ── 1) FAQs activas desde la BD ── */

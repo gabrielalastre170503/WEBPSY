@@ -28,7 +28,7 @@ if ($stmt->execute()) {
             $cuando = !empty($c['fecha_cita']) ? date('d/m/Y H:i', strtotime($c['fecha_cita'])) : '';
             eco_notificar($conex, (int)$c['paciente_id'], 'cita_confirmada', 'Cita confirmada', [
                 'mensaje' => $cuando ? ('Tu cita fue confirmada para el ' . $cuando . '.') : 'Tu cita fue confirmada.',
-                'url'     => 'mis_citas_paciente.php',
+                'url'     => 'mis-citas',
                 'icono'   => 'fa-solid fa-calendar-check',
             ]);
         }

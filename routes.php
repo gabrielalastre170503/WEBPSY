@@ -27,7 +27,7 @@ $r->any('/consentimiento', 'consentimiento.php');
 
 /* ── Informes ── */
 $r->get('/informe/{informe_id}', 'ver_informe_estudio.php');
-$r->get('/mis-informes',         'mis_informes_paciente.php');
+$r->get('/mis-informes',         'paciente/mis_informes_paciente.php');
 
 /* ── Administrador ── */
 $r->get('/personal',      'admin/admin_personal.php');
@@ -55,10 +55,10 @@ $r->get('/directorio',          'recepcion/recepcion_directorio.php');
 $r->get('/ficha-paciente',      'recepcion/recepcion_ficha_paciente.php');
 
 /* ── Paciente ── */
-$r->get('/mis-citas',       'mis_citas_paciente.php');
-$r->get('/solicitar-cita',  'solicitar_cita_paciente.php');
-$r->get('/ecografistas',    'ecografistas_paciente.php');
-$r->get('/preparacion',     'preparacion_estudios_paciente.php');
-$r->get('/precios',         'precios_ecografias_paciente.php');
-$r->get('/faq',             'paciente_faq.php');
-$r->get('/ayuda',           'paciente_ayuda.php');
+$r->get('/mis-citas',       'paciente/mis_citas_paciente.php');
+$r->get('/solicitar-cita',  'paciente/solicitar_cita_paciente.php');
+$r->get('/ecografistas',    'paciente/ecografistas_paciente.php');
+$r->get('/preparacion',     'paciente/preparacion_estudios_paciente.php');
+$r->get('/precios',         'paciente/precios_ecografias_paciente.php');
+$r->get('/faq',             'paciente/paciente_faq.php');
+$r->get('/ayuda',           'paciente/paciente_ayuda.php');

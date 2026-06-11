@@ -345,12 +345,12 @@ elseif ($rol === 'paciente'):
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:18px;">
     <?php
     $accesos = [
-        ['solicitar_cita_paciente.php', 'fa-solid fa-file-circle-plus', 'Solicitar cita'],
-        ['mis_citas_paciente.php',      'fa-solid fa-calendar-check',   'Mis citas'],
-        ['mis_informes_paciente.php',   'fa-solid fa-file-medical',     'Mis informes'],
-        ['ecografistas_paciente.php',   'fa-solid fa-user-doctor',      'Ecografistas'],
-        ['paciente_faq.php',            'fa-solid fa-circle-question',  'Preguntas'],
-        ['paciente_ayuda.php',          'fa-solid fa-life-ring',        'Ayuda'],
+        ['solicitar-cita', 'fa-solid fa-file-circle-plus', 'Solicitar cita'],
+        ['mis-citas',      'fa-solid fa-calendar-check',   'Mis citas'],
+        ['mis-informes',   'fa-solid fa-file-medical',     'Mis informes'],
+        ['ecografistas',   'fa-solid fa-user-doctor',      'Ecografistas'],
+        ['faq',            'fa-solid fa-circle-question',  'Preguntas'],
+        ['ayuda',          'fa-solid fa-life-ring',        'Ayuda'],
     ];
     foreach ($accesos as $a): ?>
         <a href="<?= $a[0] ?>" class="card" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;padding:16px;">

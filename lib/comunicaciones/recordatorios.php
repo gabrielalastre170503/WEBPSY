@@ -141,7 +141,7 @@ if (!function_exists('eco_wa_link')) {
                 }
                 if ($usaInApp) {
                     eco_notificar($conex, (int)$c['paciente_id'], 'recordatorio', $txt['titulo'], [
-                        'mensaje' => $txt['mensaje'], 'url' => 'mis_citas_paciente.php', 'icono' => 'fa-solid fa-bell',
+                        'mensaje' => $txt['mensaje'], 'url' => 'mis-citas', 'icono' => 'fa-solid fa-bell',
                     ]);
                     $out['in_app']++;
                 }

@@ -145,7 +145,7 @@ try {
 
     eco_notificar($conex, (int)$inf['paciente_id'], 'informe_firmado', 'Informe firmado disponible', [
         'mensaje' => 'Tu informe ' . $inf['numero_informe'] . ' está firmado y disponible para descargar.',
-        'url'     => 'mis_informes_paciente.php',
+        'url'     => 'mis-informes',
         'icono'   => 'fa-solid fa-file-signature',
     ]);
 
