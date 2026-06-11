@@ -33,9 +33,9 @@ if ($stmt->execute()) {
             ]);
         }
     }
-    header('Location: mis_solicitudes.php?status=cita_confirmada');
+    header('Location: ' . eco_url('solicitudes') . '?status=cita_confirmada');
 } else {
-    header('Location: mis_solicitudes.php?error=confirmacion_fallida');
+    header('Location: ' . eco_url('solicitudes') . '?error=confirmacion_fallida');
 }
 
 $stmt->close();

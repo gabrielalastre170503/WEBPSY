@@ -10,7 +10,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
 
 // Exige POST + token CSRF (cierra el hueco de CSRF por enlace GET).
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['id']) || !is_numeric($_POST['id'])) {
-    header('Location: ver_usuarios.php?error=parametros_invalidos');
+    header('Location: ' . eco_url('usuarios') . '?error=parametros_invalidos');
     exit();
 }
 require_csrf();
@@ -20,7 +20,7 @@ $filtro_origen = $_POST['filtro'] ?? 'aprobados';
 
 // Seguridad: El administrador no puede restablecer su propia contraseña desde aquí
 if ($usuario_id_a_resetear == $_SESSION['usuario_id']) {
-    header('Location: ver_usuarios.php?filtro=' . urlencode($filtro_origen) . '&error=auto_reset');
+    header('Location: ' . eco_url('usuarios') . '?filtro=' . urlencode($filtro_origen) . '&error=auto_reset');
     exit();
 }
 
@@ -38,7 +38,7 @@ if ($stmt->execute()) {
     $redirect_url = 'ver_usuarios.php?filtro=' . urlencode($filtro_origen) . '&status=password_reset&temp_pass=' . urlencode($contrasena_temporal);
     header('Location: ' . $redirect_url);
 } else {
-    header('Location: ver_usuarios.php?filtro=' . urlencode($filtro_origen) . '&error=reset_failed');
+    header('Location: ' . eco_url('usuarios') . '?filtro=' . urlencode($filtro_origen) . '&error=reset_failed');
 }
 
 $stmt->close();

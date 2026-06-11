@@ -24,5 +24,5 @@ if ($cita_id > 0) {
     $stmt->close();
 }
 
-header('Location: mis_proximas_citas.php');
+header('Location: ' . eco_url('proximas-citas'));
 exit();

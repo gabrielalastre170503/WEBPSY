@@ -12,7 +12,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Validar que todos los datos necesarios llegaron
     if (empty($_POST['ecografista_id']) || empty($_POST['fecha_seleccionada']) || empty($_POST['hora_seleccionada']) || empty($_POST['motivo_consulta'])) {
-        header('Location: solicitar_cita_paciente.php?error=faltan_datos');
+        header('Location: ' . eco_url('solicitar-cita') . '?error=faltan_datos');
         exit();
     }
 
@@ -57,9 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if ($stmt->execute()) {
         eco_cita_evento($conex, (int)$stmt->insert_id, 'solicitada', ['estado_nuevo' => 'pendiente', 'detalle' => ['tipo_ecografia_id' => $tipo_ecografia_id, 'fecha' => $fecha_cita]]);
-        header('Location: mis_citas_paciente.php?status=cita_creada');
+        header('Location: ' . eco_url('mis-citas') . '?status=cita_creada');
     } else {
-        header('Location: solicitar_cita_paciente.php?error=error_guardar');
+        header('Location: ' . eco_url('solicitar-cita') . '?error=error_guardar');
     }
     $stmt->close();
 }

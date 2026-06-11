@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'El código venció. Solicita uno nuevo.';
     } elseif ((int)$pend['intentos'] >= 5) {
         unset($_SESSION['2fa_pending']);
-        header('Location: login.php?status=2fa_bloqueado');
+        header('Location: ' . eco_url('login') . '?status=2fa_bloqueado');
         exit;
     } elseif ($codigo === '' || !password_verify($codigo, $pend['otp_hash'])) {
         $pend['intentos'] = (int)$pend['intentos'] + 1;

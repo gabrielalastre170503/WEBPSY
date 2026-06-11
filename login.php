@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             . "— EcoMadelleine · Centro de Diagnóstico";
                         eco_enviar_correo((string)$usuario['correo'], 'Tu código de acceso · EcoMadelleine', $cuerpo);
                         eco_auditar($conex, 'login_2fa_enviado', ['usuario_id' => (int)$usuario['id']]);
-                        header('Location: verificar_2fa.php');
+                        header('Location: ' . eco_url('verificar-2fa'));
                         exit();
                     }
 

@@ -59,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     . "El enlace vence en 24 horas. Si no creaste esta cuenta, ignora este mensaje.\n\n"
                     . "— EcoMadelleine · Centro de Diagnóstico";
                 eco_enviar_correo($correo, 'Verifica tu correo · EcoMadelleine', $cuerpo);
-                header('Location: login.php?status=verifica_correo');
+                header('Location: ' . eco_url('login') . '?status=verifica_correo');
                 exit();
             } else {
                 $mensaje = "Error al registrar el usuario.";

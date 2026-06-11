@@ -9,7 +9,7 @@ if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'paciente') 
     exit;
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: paciente_ayuda.php');
+    header('Location: ' . eco_url('ayuda'));
     exit;
 }
 
@@ -17,7 +17,7 @@ $asunto  = trim((string)($_POST['asunto'] ?? ''));
 $mensaje = trim((string)($_POST['mensaje'] ?? ''));
 
 if ($asunto === '' || $mensaje === '') {
-    header('Location: paciente_ayuda.php?error=campos_vacios');
+    header('Location: ' . eco_url('ayuda') . '?error=campos_vacios');
     exit;
 }
 
@@ -39,7 +39,7 @@ if ($stmt = $conex->prepare('SELECT correo FROM usuarios WHERE id = ?')) {
 $cfg = @include __DIR__ . '/config_correo.php';
 if (!is_array($cfg) || empty($cfg['smtp_pass']) || $cfg['smtp_pass'] === 'PEGA_AQUI_TU_APP_PASSWORD') {
     error_log('[ayuda] config_correo.php sin contraseña de aplicación configurada.');
-    header('Location: paciente_ayuda.php?error=config_correo');
+    header('Location: ' . eco_url('ayuda') . '?error=config_correo');
     exit;
 }
 
@@ -60,10 +60,10 @@ $err = null;
 $ok  = enviar_correo_smtp($cfg, $destino, $subject, $body, $correo_paciente, $nombre, $err);
 
 if ($ok) {
-    header('Location: paciente_ayuda.php?status=mensaje_enviado');
+    header('Location: ' . eco_url('ayuda') . '?status=mensaje_enviado');
     exit;
 }
 
 error_log('[ayuda] Fallo al enviar correo: ' . $err);
-header('Location: paciente_ayuda.php?error=envio_fallido');
+header('Location: ' . eco_url('ayuda') . '?error=envio_fallido');
 exit;

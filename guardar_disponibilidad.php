@@ -36,7 +36,7 @@ if ($accion == 'guardar_recurrente' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
     eco_auditar($conex, 'disponibilidad_actualizada', ['detalle' => ['accion' => 'horario_recurrente']]);
-    header('Location: gestionar_disponibilidad.php?status=ok');
+    header('Location: ' . eco_url('disponibilidad') . '?status=ok');
     exit();
 }
 
@@ -67,7 +67,7 @@ if ($accion == 'alternar_dia_libre' && isset($_POST['fecha'])) {
     }
     $stmt->close();
     eco_auditar($conex, 'disponibilidad_dia_alternado', ['detalle' => ['fecha' => $fecha]]);
-    header('Location: gestionar_disponibilidad.php?status=ok');
+    header('Location: ' . eco_url('disponibilidad') . '?status=ok');
     exit();
 }
 
@@ -80,7 +80,7 @@ if ($accion == 'eliminar_excepcion' && isset($_POST['id'])) {
     $stmt->execute();
     $stmt->close();
     eco_auditar($conex, 'disponibilidad_excepcion_eliminada', ['entidad' => 'disponibilidad_excepcion', 'entidad_id' => $excepcion_id]);
-    header('Location: gestionar_disponibilidad.php?status=ok');
+    header('Location: ' . eco_url('disponibilidad') . '?status=ok');
     exit();
 }
 

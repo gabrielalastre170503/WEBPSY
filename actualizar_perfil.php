@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion'])) {
     if ($_POST['accion'] == 'toggle_2fa') {
         $rol = $_SESSION['rol'] ?? '';
         if (!in_array($rol, ['administrador', 'ecografista', 'recepcionista', 'paciente'], true)) {
-            header('Location: perfil.php');
+            header('Location: ' . eco_url('perfil'));
             exit();
         }
         $activar = (isset($_POST['activar']) && $_POST['activar'] == '1') ? 1 : 0;
@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion'])) {
         $upd->execute();
         $upd->close();
         eco_auditar($conex, '2fa_modificado', ['detalle' => ['activado' => (bool)$activar]]);
-        header('Location: perfil.php?status=' . ($activar ? '2fa_activado' : '2fa_desactivado'));
+        header('Location: ' . eco_url('perfil') . '?status=' . ($activar ? '2fa_activado' : '2fa_desactivado'));
         exit();
     }
 
@@ -38,13 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion'])) {
 
         // 1. Verificar que la nueva contraseña y su confirmación coincidan
         if ($nueva_contrasena !== $confirmar_nueva_contrasena) {
-            header('Location: perfil.php?error=pass_no_coincide');
+            header('Location: ' . eco_url('perfil') . '?error=pass_no_coincide');
             exit();
         }
 
         // 2. Verificar la seguridad de la nueva contraseña
         if (strlen($nueva_contrasena) < 8 || !preg_match('/[A-Z]/', $nueva_contrasena) || !preg_match('/[\W_]/', $nueva_contrasena)) {
-            header('Location: perfil.php?error=pass_no_segura');
+            header('Location: ' . eco_url('perfil') . '?error=pass_no_segura');
             exit();
         }
 
@@ -55,9 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion'])) {
 
         if ($update_stmt->execute()) {
             eco_auditar($conex, 'password_cambiado');
-            header('Location: perfil.php?status=perfil_actualizado');
+            header('Location: ' . eco_url('perfil') . '?status=perfil_actualizado');
         } else {
-            header('Location: perfil.php?error=actualizacion_fallida');
+            header('Location: ' . eco_url('perfil') . '?error=actualizacion_fallida');
         }
         $update_stmt->close();
         exit();
@@ -65,5 +65,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['accion'])) {
 }
 
 $conex->close();
-header('Location: perfil.php'); // Redirigir si se accede al archivo directamente
+header('Location: ' . eco_url('perfil')); // Redirigir si se accede al archivo directamente
 ?>

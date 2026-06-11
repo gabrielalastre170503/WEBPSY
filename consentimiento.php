@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
         if (eco_consentimiento_registrar($conex, $uid, $ip, $ua)) {
             eco_auditar($conex, 'consentimiento_aceptado', ['detalle' => ['version' => ECO_CONSENT_VERSION]]);
-            header('Location: dashboard_v2.php?status=consentimiento_ok');
+            header('Location: ' . eco_url('dashboard') . '?status=consentimiento_ok');
             exit;
         }
         $error = 'No se pudo registrar tu consentimiento. Inténtalo de nuevo.';

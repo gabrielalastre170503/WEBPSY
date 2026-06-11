@@ -36,6 +36,6 @@ if (isset($_GET['cita_id']) && isset($_GET['accion'])) {
     }
 }
 
-header('Location: mis_citas_paciente.php');
+header('Location: ' . eco_url('mis-citas'));
 exit();
 ?>

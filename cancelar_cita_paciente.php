@@ -24,5 +24,5 @@ if ($cita_id > 0) {
     $stmt->close();
 }
 
-header('Location: mis_citas_paciente.php');
+header('Location: ' . eco_url('mis-citas'));
 exit();

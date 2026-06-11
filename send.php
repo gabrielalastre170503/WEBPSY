@@ -41,7 +41,7 @@ $check->bind_param("ss", $correo, $cedula);
 $check->execute();
 if ($check->get_result()->num_rows > 0) {
     $check->close();
-    header('Location: login.php?error=user_exists');
+    header('Location: ' . eco_url('login') . '?error=user_exists');
     exit();
 }
 $check->close();

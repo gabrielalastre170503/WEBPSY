@@ -12,7 +12,7 @@ if (($_SESSION['rol'] ?? '') !== 'recepcionista') {
 }
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header('Location: recepcion_gestion_pacientes.php');
+    header('Location: ' . eco_url('gestion-pacientes'));
     exit;
 }
 
@@ -24,7 +24,7 @@ $paciente = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$paciente) {
-    header('Location: recepcion_gestion_pacientes.php');
+    header('Location: ' . eco_url('gestion-pacientes'));
     exit;
 }
 

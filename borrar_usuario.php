@@ -10,7 +10,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
 
 // 2. Seguridad: requiere POST + token CSRF (cierra el hueco de CSRF por enlace GET).
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['id'])) {
-    header('Location: ver_usuarios.php');
+    header('Location: ' . eco_url('usuarios'));
     exit();
 }
 require_csrf();
@@ -20,7 +20,7 @@ $id_a_borrar = (int)$_POST['id'];
 // 3. Seguridad: El administrador no se puede borrar a sí mismo.
 if ($id_a_borrar == $_SESSION['usuario_id']) {
     // Redirigir con un mensaje de error (opcional)
-    header('Location: ver_usuarios.php?error=autodelete');
+    header('Location: ' . eco_url('usuarios') . '?error=autodelete');
     exit();
 }
 
@@ -31,10 +31,10 @@ $stmt->bind_param("i", $id_a_borrar);
 if ($stmt->execute()) {
     // Éxito al borrar
     eco_auditar($conex, 'usuario_borrado', ['entidad' => 'usuario', 'entidad_id' => $id_a_borrar]);
-    header('Location: ver_usuarios.php?status=deleted');
+    header('Location: ' . eco_url('usuarios') . '?status=deleted');
 } else {
     // Error al borrar
-    header('Location: ver_usuarios.php?error=deletefailed');
+    header('Location: ' . eco_url('usuarios') . '?error=deletefailed');
 }
 
 $stmt->close();

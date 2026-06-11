@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($upd->execute()) {
                 $upd->close();
                 eco_auditar($conex, 'password_restablecido', ['usuario_id' => $usuario_id]);
-                header('Location: login.php?status=password_actualizada');
+                header('Location: ' . eco_url('login') . '?status=password_actualizada');
                 exit;
             }
             $upd->close();
