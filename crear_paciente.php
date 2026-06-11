@@ -5,7 +5,7 @@ require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 // Seguridad: Solo roles autorizados pueden crear pacientes
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 

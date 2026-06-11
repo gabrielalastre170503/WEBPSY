@@ -6,7 +6,7 @@ require_once __DIR__ . '/lib/informes/archivos.php';
 require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista', 'paciente'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 

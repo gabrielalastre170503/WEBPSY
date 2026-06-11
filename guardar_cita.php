@@ -7,7 +7,7 @@ require_once __DIR__ . '/lib/citas/citas.php';
 
 // Seguridad: Solo roles autorizados pueden guardar una cita
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'recepcionista', 'administrador'], true)) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 

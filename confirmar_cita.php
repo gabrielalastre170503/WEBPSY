@@ -6,7 +6,7 @@ require_once __DIR__ . '/lib/comunicaciones/notificaciones.php';
 
 // Seguridad: Solo ecografistas pueden confirmar citas
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 

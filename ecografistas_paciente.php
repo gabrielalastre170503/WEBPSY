@@ -3,11 +3,11 @@ session_start();
 include 'conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit;
 }
 if ($_SESSION['rol'] !== 'paciente') {
-    header('Location: dashboard_v2.php');
+    header('Location: ' . eco_url('dashboard'));
     exit;
 }
 

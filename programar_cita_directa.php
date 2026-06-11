@@ -4,7 +4,7 @@ include 'conexion.php';
 
 // Seguridad: Solo psicólogos y roles autorizados
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 if (!isset($_GET['paciente_id'])) { die("Error: No se especificó un paciente."); }

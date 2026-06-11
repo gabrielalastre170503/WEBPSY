@@ -4,11 +4,11 @@ include 'conexion.php';
 include 'data_asistente.php';
 
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit;
 }
 if ($_SESSION['rol'] !== 'paciente') {
-    header('Location: dashboard_v2.php');
+    header('Location: ' . eco_url('dashboard'));
     exit;
 }
 

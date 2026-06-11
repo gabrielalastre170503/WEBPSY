@@ -4,7 +4,7 @@ include 'conexion.php';
 
 // Seguridad: solo el ecografista dueño de la cita puede cancelarla
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'ecografista') {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 

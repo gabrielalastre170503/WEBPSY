@@ -11,9 +11,9 @@ include 'conexion.php';
 require_once __DIR__ . '/lib/reportes/reportes.php';
 require_once __DIR__ . '/lib/facturacion/facturacion.php';
 
-if (!isset($_SESSION['usuario_id'])) { header('Location: login.php'); exit; }
+if (!isset($_SESSION['usuario_id'])) { header('Location: ' . eco_url('login')); exit; }
 $rol = $_SESSION['rol'] ?? '';
-if (!in_array($rol, ['administrador', 'recepcionista', 'ecografista'], true)) { header('Location: dashboard_v2.php'); exit; }
+if (!in_array($rol, ['administrador', 'recepcionista', 'ecografista'], true)) { header('Location: ' . eco_url('dashboard')); exit; }
 
 // Un ecografista solo ve sus propios datos; admin/recepcionista ven todo (null = sin filtro).
 $ecoId = ($rol === 'ecografista') ? (int)$_SESSION['usuario_id'] : null;

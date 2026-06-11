@@ -4,7 +4,7 @@ include 'conexion.php';
 
 // Seguridad: Solo secretarias y administradores pueden acceder
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['recepcionista', 'administrador'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 if (!isset($_GET['cita_id']) || !is_numeric($_GET['cita_id'])) {

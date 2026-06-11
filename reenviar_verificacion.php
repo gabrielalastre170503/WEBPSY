@@ -8,7 +8,7 @@ include 'conexion.php';
 require_once __DIR__ . '/lib/comunicaciones/correo_app.php';
 
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit;
 }
 
@@ -22,7 +22,7 @@ $u = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$u) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit;
 }
 

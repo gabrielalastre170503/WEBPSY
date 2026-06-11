@@ -4,7 +4,7 @@ include 'conexion.php';
 
 // Seguridad: solo el paciente dueño puede cancelar
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'paciente') {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 

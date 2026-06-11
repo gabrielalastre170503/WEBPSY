@@ -4,7 +4,7 @@ include 'conexion.php';
 
 // Seguridad: Solo administradores pueden ver esta página
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 

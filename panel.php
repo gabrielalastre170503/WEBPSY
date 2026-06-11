@@ -22,7 +22,7 @@ if (!function_exists('formatearBytes')) {
 
 // 1. Seguridad: Si no hay sesión, redirigir al login.
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 

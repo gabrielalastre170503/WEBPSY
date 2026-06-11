@@ -4,7 +4,7 @@ include 'conexion.php';
 
 // Seguridad: Solo psicólogos y psiquiatras pueden acceder
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 if (!isset($_GET['cita_id'])) { die("Error: No se especificó una cita."); }

@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         $up->close();
                     }
                     eco_auditar($conex, 'login_exito', ['usuario_id' => (int)$usuario['id']]);
-                    header('Location: dashboard_v2.php');
+                    header('Location: ' . eco_url('dashboard'));
                     exit();
                 } elseif ($usuario['estado'] == 'pendiente') {
                     $error = 'Tu cuenta aún está pendiente de aprobación.';

@@ -4,7 +4,7 @@ include 'conexion.php';
 require_once __DIR__ . '/lib/informes/estudios_render.php';
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 if (!isset($_GET['paciente_id']) || !is_numeric($_GET['paciente_id'])) {

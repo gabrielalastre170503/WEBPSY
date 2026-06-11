@@ -5,7 +5,7 @@ require 'enviar_correo.php';
 
 // Seguridad: solo pacientes pueden enviar mensajes de ayuda
 if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'paciente') {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit;
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

@@ -9,18 +9,18 @@ require_once __DIR__ . '/lib/seguridad/consentimiento.php';
 require_once __DIR__ . '/lib/seguridad/seguridad.php';
 
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit;
 }
 if (($_SESSION['rol'] ?? '') !== 'paciente') {
-    header('Location: dashboard_v2.php');
+    header('Location: ' . eco_url('dashboard'));
     exit;
 }
 $uid = (int)$_SESSION['usuario_id'];
 
 // Ya aceptó la versión vigente: no mostrar de nuevo.
 if (eco_consentimiento_vigente($conex, $uid)) {
-    header('Location: dashboard_v2.php');
+    header('Location: ' . eco_url('dashboard'));
     exit;
 }
 

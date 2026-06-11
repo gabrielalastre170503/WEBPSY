@@ -6,7 +6,7 @@ require_once __DIR__ . '/lib/seguridad/seguridad.php';
 // 1. Seguridad: Solo los administradores pueden borrar citas.
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {
     // Redirigir o mostrar un error si no es admin
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 

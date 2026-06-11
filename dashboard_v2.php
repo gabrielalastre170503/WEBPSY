@@ -4,7 +4,7 @@ include 'conexion.php';
 require_once __DIR__ . '/lib/facturacion/facturacion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit;
 }
 

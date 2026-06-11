@@ -8,7 +8,7 @@ include 'conexion.php';
 require_once __DIR__ . '/lib/comunicaciones/correo_app.php';
 
 if (empty($_SESSION['2fa_pending']) || !is_array($_SESSION['2fa_pending'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit;
 }
 $pend = &$_SESSION['2fa_pending'];
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $up->execute();
             $up->close();
         }
-        header('Location: dashboard_v2.php');
+        header('Location: ' . eco_url('dashboard'));
         exit;
     }
 }

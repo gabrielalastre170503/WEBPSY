@@ -5,7 +5,7 @@ require_once __DIR__ . '/lib/citas/citas.php';
 
 // Seguridad
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 

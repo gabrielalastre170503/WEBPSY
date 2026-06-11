@@ -4,13 +4,13 @@ include 'conexion.php';
 require_once __DIR__ . '/lib/facturacion/facturacion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit;
 }
 $rol = $_SESSION['rol'] ?? '';
 $uid = (int)$_SESSION['usuario_id'];
 if (!in_array($rol, ['recepcionista', 'administrador', 'ecografista'], true)) {
-    header('Location: dashboard_v2.php');
+    header('Location: ' . eco_url('dashboard'));
     exit;
 }
 

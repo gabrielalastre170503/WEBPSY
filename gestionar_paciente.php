@@ -3,7 +3,7 @@ session_start();
 include 'conexion.php';
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista', 'administrador', 'recepcionista'])) {
-    header('Location: login.php');
+    header('Location: ' . eco_url('login'));
     exit();
 }
 if (!isset($_GET['paciente_id']) || !is_numeric($_GET['paciente_id'])) {

@@ -2,8 +2,8 @@
 session_start();
 include 'conexion.php';
 
-if (!isset($_SESSION['usuario_id'])) { header('Location: login.php'); exit; }
-if ($_SESSION['rol'] !== 'ecografista') { header('Location: dashboard_v2.php'); exit; }
+if (!isset($_SESSION['usuario_id'])) { header('Location: ' . eco_url('login')); exit; }
+if ($_SESSION['rol'] !== 'ecografista') { header('Location: ' . eco_url('dashboard')); exit; }
 
 $ecografista_id = (int)$_SESSION['usuario_id'];
 

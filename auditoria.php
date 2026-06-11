@@ -7,8 +7,8 @@ session_start();
 include 'conexion.php';
 require_once __DIR__ . '/lib/core/paginacion.php';
 
-if (!isset($_SESSION['usuario_id'])) { header('Location: login.php'); exit; }
-if (($_SESSION['rol'] ?? '') !== 'administrador') { header('Location: dashboard_v2.php'); exit; }
+if (!isset($_SESSION['usuario_id'])) { header('Location: ' . eco_url('login')); exit; }
+if (($_SESSION['rol'] ?? '') !== 'administrador') { header('Location: ' . eco_url('dashboard')); exit; }
 
 $grupo = in_array($_GET['grupo'] ?? '', ['clinico', 'todos'], true) ? $_GET['grupo'] : 'clinico';
 $qs_q  = trim((string)($_GET['q'] ?? ''));
