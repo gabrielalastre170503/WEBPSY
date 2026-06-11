@@ -26,6 +26,13 @@ if (!isset($_SESSION['usuario_id'])) {
     exit();
 }
 
+// ── Panel clásico retirado (deprecación, Fase 1) ──────────────────────
+// La UI por pestañas (?vista=) fue reemplazada por el shell nuevo y las
+// páginas dedicadas con rutas limpias. Se redirige al dashboard. El resto
+// del archivo se conserva por ahora para poder revertir sin fricción.
+header('Location: ' . eco_url('dashboard'));
+exit();
+
 // 2. Obtener datos del usuario de la sesión.
 $usuario_id = $_SESSION['usuario_id'];
 $nombre_usuario = $_SESSION['nombre_completo'];

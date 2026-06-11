@@ -591,7 +591,6 @@ else:
     <i class="fa-solid fa-rocket" style="font-size:3rem;color:var(--accent);opacity:.6;margin-bottom:14px;"></i>
     <h2 style="margin:0 0 8px;color:var(--text-primary);">Bienvenido, <?= htmlspecialchars($primer_nombre) ?></h2>
     <p style="color:var(--text-secondary);margin:0 0 20px;">Tu panel personalizado se está construyendo. Mientras tanto, usa el menú lateral para acceder a tus funciones.</p>
-    <a href="panel.php" class="btn-primary"><i class="fa-solid fa-arrow-right"></i> Ir al panel clásico</a>
 </div>
 <?php endif;
 
