@@ -115,7 +115,7 @@ ob_start();
 
 <script>
 function confirmarSolicitud(id) {
-    fetch('check_conflict.php?cita_id=' + encodeURIComponent(id))
+    fetch((window.ECO_BASE || '') + 'api/check_conflict.php?cita_id=' + encodeURIComponent(id))
         .then(function (r) { return r.json(); })
         .then(function (d) {
             if (d.conflict) {

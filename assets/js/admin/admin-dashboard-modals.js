@@ -53,7 +53,7 @@
         fd.append('tipo', tipo);
         fd.append('query', query || '');
 
-        fetch('dashboard_buscar_kpi.php', { method: 'POST', body: fd })
+        fetch((window.ECO_BASE || '') + 'api/dashboard_buscar_kpi.php', { method: 'POST', body: fd })
             .then(function (r) { return r.text(); })
             .then(function (html) {
                 body.innerHTML = html || '<p class="admin-kpi-empty">Sin resultados.</p>';

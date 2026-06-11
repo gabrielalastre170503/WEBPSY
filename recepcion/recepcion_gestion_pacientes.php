@@ -96,7 +96,7 @@ window.abrirModalGestionarPaciente = function (id) {
     window.buscarPacientesRecepcion = function (q) {
         if (!box) return;
         box.innerHTML = '<p style="padding:20px;color:var(--text-muted);margin:0;">Cargando…</p>';
-        fetch('buscar_pacientes_secretaria.php', {
+        fetch((window.ECO_BASE || '') + 'api/buscar_pacientes_secretaria.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'query=' + encodeURIComponent(q || '')

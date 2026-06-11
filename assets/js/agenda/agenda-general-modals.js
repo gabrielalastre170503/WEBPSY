@@ -66,7 +66,7 @@
         var box = byId('agenda-lista-body');
         if (!box) return;
         box.innerHTML = '<p class="agenda-modal-empty"><i class="fa-solid fa-spinner fa-spin"></i> Buscando…</p>';
-        fetch('buscar_citas_secretaria.php', {
+        fetch((window.ECO_BASE || '') + 'api/buscar_citas_secretaria.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'query=' + encodeURIComponent(q || '')
@@ -161,7 +161,7 @@
             return;
         }
         pacienteAbort = new AbortController();
-        fetch('agenda_buscar_pacientes.php?q=' + encodeURIComponent(q), { signal: pacienteAbort.signal })
+        fetch((window.ECO_BASE || '') + 'api/agenda_buscar_pacientes.php?q=' + encodeURIComponent(q), { signal: pacienteAbort.signal })
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 renderPacienteResults(data.pacientes || []);

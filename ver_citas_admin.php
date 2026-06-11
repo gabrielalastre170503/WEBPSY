@@ -147,7 +147,7 @@ $resultado = $conex->query($sql);
         let queryActualCitas = '';
         function buscarCitas(query, page = 1) {
             queryActualCitas = query;
-            fetch('buscar_citas_admin.php', {
+            fetch((window.ECO_BASE || '') + 'api/buscar_citas_admin.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `query=${encodeURIComponent(query)}&page=${page}`

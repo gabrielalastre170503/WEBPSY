@@ -29,7 +29,7 @@
         fd.append('query', query || '');
         fd.append('filtro', filtroActual);
 
-        fetch('buscar_usuarios_filtro.php', { method: 'POST', body: fd })
+        fetch((window.ECO_BASE || '') + 'api/buscar_usuarios_filtro.php', { method: 'POST', body: fd })
             .then(function (r) { return r.text(); })
             .then(function (html) {
                 container.innerHTML = html || '<p class="vu-users-empty" data-vu-total="0"><i class="fa-solid fa-users-slash"></i>Sin resultados.</p>';

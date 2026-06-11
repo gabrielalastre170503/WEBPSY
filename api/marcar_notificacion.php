@@ -4,9 +4,9 @@
  *   - todas=1            -> marca todas las del usuario
  *   - id=<n>             -> marca una
  */
-require_once __DIR__ . '/lib/core/api.php';
-include 'conexion.php';
-require_once __DIR__ . '/lib/comunicaciones/notificaciones.php';
+require_once __DIR__ . '/../lib/core/api.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/comunicaciones/notificaciones.php';
 
 api_json();
 api_require_login();

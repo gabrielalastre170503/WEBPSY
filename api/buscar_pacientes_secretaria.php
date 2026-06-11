@@ -1,7 +1,7 @@
 <?php
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/core/table_sort_helpers.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/core/table_sort_helpers.php';
 
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['recepcionista', 'administrador'], true)) {
     exit('Acceso denegado');

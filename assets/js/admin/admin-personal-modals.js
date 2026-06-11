@@ -105,7 +105,7 @@
         fd.append('tipo', tipo);
         fd.append('query', q || '');
 
-        fetch('listar_personal_staff.php', { method: 'POST', body: fd })
+        fetch((window.ECO_BASE || '') + 'api/listar_personal_staff.php', { method: 'POST', body: fd })
             .then(function (r) { return r.text(); })
             .then(function (html) {
                 body.innerHTML = html || '<p class="staff-lista-empty">Sin resultados.</p>';

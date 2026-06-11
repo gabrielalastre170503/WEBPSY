@@ -90,7 +90,7 @@
 
     function marcarUna(id) {
         var body = new URLSearchParams(); body.set('id', id);
-        fetch('marcar_notificacion.php', {
+        fetch((window.ECO_BASE || '') + 'api/marcar_notificacion.php', {
             method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString()
         }).then(function (r) { return r.json(); }).then(function (d) {
             if (d && typeof d.no_leidas !== 'undefined') setBadge(d.no_leidas);
@@ -100,7 +100,7 @@
     if (readAll) readAll.addEventListener('click', function (e) {
         e.stopPropagation();
         var body = new URLSearchParams(); body.set('todas', '1');
-        fetch('marcar_notificacion.php', {
+        fetch((window.ECO_BASE || '') + 'api/marcar_notificacion.php', {
             method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString()
         }).then(function (r) { return r.json(); }).then(function () {
             setBadge(0);
