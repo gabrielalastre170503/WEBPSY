@@ -383,7 +383,7 @@
                             var q = new URLSearchParams();
                             q.set('registro', 'ok');
                             if (data.nombre) q.set('nombre', data.nombre);
-                            window.location.href = 'admin_personal.php?' + q.toString();
+                            window.location.href = (window.ECO_BASE || '') + 'personal?' + q.toString();
                         } else {
                             showErr(errId, data.message || 'No se pudo registrar.');
                         }

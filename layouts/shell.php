@@ -54,6 +54,7 @@ $page_scripts_extra  = $page_scripts_extra  ?? '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?= csrf_meta() ?>
+    <script>window.ECO_BASE = '<?= eco_url() ?>';</script>
     <title><?= htmlspecialchars($html_title) ?> · EcoMadelleine</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">

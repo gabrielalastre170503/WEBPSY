@@ -109,7 +109,7 @@
                     html += '</div>';
                     html += '<div style="display:flex;align-items:center;gap:8px;">';
                     html += '<span style="font-size:11px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent-text);">' + esc(inf.estado_label || inf.estado || '') + '</span>';
-                    html += '<a class="btn-primary" style="padding:6px 12px;font-size:12px;text-decoration:none;white-space:nowrap;" href="ver_informe_estudio.php?informe_id=' + encodeURIComponent(inf.id) + '" target="_blank" rel="noopener">' +
+                    html += '<a class="btn-primary" style="padding:6px 12px;font-size:12px;text-decoration:none;white-space:nowrap;" href="' + (window.ECO_BASE || '') + 'informe/' + encodeURIComponent(inf.id) + '" target="_blank" rel="noopener">' +
                         '<i class="fa-solid fa-file-lines"></i> Ver detalle</a>';
                     html += '</div></div></div>';
                 });

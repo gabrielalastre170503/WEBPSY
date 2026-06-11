@@ -8,7 +8,7 @@
             sub: 'Cuentas aprobadas en el sistema',
             icon: 'fa-solid fa-users',
             iconClass: '',
-            href: 'ver_usuarios.php?filtro=aprobados',
+            href: (window.ECO_BASE || '') + 'usuarios?filtro=aprobados',
             placeholder: 'Buscar por nombre, cédula o correo…'
         },
         pacientes: {
@@ -16,7 +16,7 @@
             sub: 'Pacientes con cuenta aprobada',
             icon: 'fa-solid fa-hospital-user',
             iconClass: 'icon--green',
-            href: 'ver_usuarios.php?filtro=pacientes',
+            href: (window.ECO_BASE || '') + 'usuarios?filtro=pacientes',
             placeholder: 'Buscar paciente…'
         },
         personal: {
@@ -24,7 +24,7 @@
             sub: 'Ecografistas y recepcionistas aprobados',
             icon: 'fa-solid fa-user-tie',
             iconClass: 'icon--amber',
-            href: 'ver_usuarios.php?filtro=personal',
+            href: (window.ECO_BASE || '') + 'usuarios?filtro=personal',
             placeholder: 'Buscar personal…'
         },
         citas: {
