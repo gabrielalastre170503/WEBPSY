@@ -130,7 +130,7 @@ $correo_masked = preg_replace_callback('/^(.).*(.@.*)$/u', fn($m) => $m[1] . '‚Ä
 
         <div class="links">
             <a href="verificar_2fa.php?reenviar=1"><i class="fa-solid fa-rotate-right"></i> Reenviar c√≥digo</a>
-            <a href="login.php"><i class="fa-solid fa-arrow-left"></i> Cancelar</a>
+            <a href="<?= eco_url('login') ?>"><i class="fa-solid fa-arrow-left"></i> Cancelar</a>
         </div>
     </div>
 </body>

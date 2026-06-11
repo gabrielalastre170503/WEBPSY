@@ -673,7 +673,7 @@ $total_tipos = (int)($r->fetch_assoc()['c'] ?? 0);
         <span class="ic"><i class="fa-solid fa-wave-square"></i></span>
         <span class="txt">EcoMadelleine<small>Centro de Diagnóstico</small></span>
     </a>
-    <a href="login.php" class="back-link">
+    <a href="<?= eco_url('login') ?>" class="back-link">
         <i class="fa-solid fa-arrow-left"></i> <span>Iniciar sesión</span>
     </a>
 </nav>
@@ -807,8 +807,8 @@ $total_tipos = (int)($r->fetch_assoc()['c'] ?? 0);
         </form>
 
         <div class="form-footer">
-            ¿Ya tienes una cuenta? <a href="login.php">Inicia sesión aquí</a>
-            <div style="margin-top:8px;">Al registrarte aceptas nuestro <a href="privacidad.php">Aviso de privacidad</a></div>
+            ¿Ya tienes una cuenta? <a href="<?= eco_url('login') ?>">Inicia sesión aquí</a>
+            <div style="margin-top:8px;">Al registrarte aceptas nuestro <a href="<?= eco_url('privacidad') ?>">Aviso de privacidad</a></div>
         </div>
     </section>
 </main>

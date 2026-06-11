@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <i class="fa-solid fa-paper-plane"></i>
                 <span>Si ese correo está registrado, te enviamos un enlace para restablecer tu contraseña. Revisa tu bandeja de entrada (y spam). El enlace vence en 1 hora.</span>
             </div>
-            <div class="foot"><a href="login.php"><i class="fa-solid fa-arrow-left"></i> Volver a iniciar sesión</a></div>
+            <div class="foot"><a href="<?= eco_url('login') ?>"><i class="fa-solid fa-arrow-left"></i> Volver a iniciar sesión</a></div>
         <?php else: ?>
             <p class="sub">Introduce el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña.</p>
             <?php if ($error): ?>
@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <button type="submit" class="btn"><i class="fa-solid fa-paper-plane"></i> Enviar enlace</button>
             </form>
-            <div class="foot"><a href="login.php"><i class="fa-solid fa-arrow-left"></i> Volver a iniciar sesión</a></div>
+            <div class="foot"><a href="<?= eco_url('login') ?>"><i class="fa-solid fa-arrow-left"></i> Volver a iniciar sesión</a></div>
         <?php endif; ?>
     </div>
 </body>

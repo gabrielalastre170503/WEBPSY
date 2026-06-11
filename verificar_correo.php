@@ -77,7 +77,7 @@ if ($token === '' || !preg_match('/^[a-f0-9]{64}$/', $token)) {
         </div>
         <h1><?= $ok ? '¡Correo verificado!' : 'No se pudo verificar' ?></h1>
         <p><?= htmlspecialchars($mensaje) ?></p>
-        <a class="btn" href="login.php"><i class="fa-solid fa-right-to-bracket"></i> Ir a iniciar sesión</a>
+        <a class="btn" href="<?= eco_url('login') ?>"><i class="fa-solid fa-right-to-bracket"></i> Ir a iniciar sesión</a>
     </div>
 </body>
 </html>

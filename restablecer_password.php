@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="ic ic--err"><i class="fa-solid fa-link-slash"></i></div>
             <h1>Enlace inválido</h1>
             <p class="sub"><?= htmlspecialchars($error ?: 'Este enlace de recuperación es inválido o ya venció.') ?></p>
-            <div class="foot"><a href="recuperar.php"><i class="fa-solid fa-rotate-right"></i> Solicitar uno nuevo</a></div>
+            <div class="foot"><a href="<?= eco_url('recuperar') ?>"><i class="fa-solid fa-rotate-right"></i> Solicitar uno nuevo</a></div>
         <?php else: ?>
             <div class="ic"><i class="fa-solid fa-lock"></i></div>
             <h1>Crea tu nueva contraseña</h1>

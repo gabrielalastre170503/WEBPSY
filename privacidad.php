@@ -47,7 +47,7 @@ $ver = defined('ECO_CONSENT_VERSION') ? ECO_CONSENT_VERSION : '1.0';
 </head>
 <body>
 <div class="wrap">
-    <a href="login.php" class="back"><i class="fa-solid fa-arrow-left"></i> Volver al inicio de sesión</a>
+    <a href="<?= eco_url('login') ?>" class="back"><i class="fa-solid fa-arrow-left"></i> Volver al inicio de sesión</a>
     <div class="card">
         <div class="head">
             <div class="ic"><i class="fa-solid fa-user-shield"></i></div>

@@ -707,7 +707,7 @@ $total_pacientes = (int)($r->fetch_assoc()['c'] ?? 0);
                 <label class="remember">
                     <input type="checkbox" name="recordar"> Recordarme
                 </label>
-                <a href="recuperar.php" class="forgot">¿Olvidaste tu contraseña?</a>
+                <a href="<?= eco_url('recuperar') ?>" class="forgot">¿Olvidaste tu contraseña?</a>
             </div>
 
             <button type="submit" class="btn-submit">
@@ -716,8 +716,8 @@ $total_pacientes = (int)($r->fetch_assoc()['c'] ?? 0);
         </form>
 
         <div class="form-footer">
-            ¿Aún no tienes una cuenta? <a href="registro.php">Regístrate aquí</a>
-            <div style="margin-top:8px;"><a href="privacidad.php">Aviso de privacidad</a></div>
+            ¿Aún no tienes una cuenta? <a href="<?= eco_url('registro') ?>">Regístrate aquí</a>
+            <div style="margin-top:8px;"><a href="<?= eco_url('privacidad') ?>">Aviso de privacidad</a></div>
         </div>
     </section>
 </main>

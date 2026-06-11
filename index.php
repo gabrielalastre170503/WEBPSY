@@ -1431,7 +1431,7 @@
                 <li><a href="#servicios">Estudios</a></li>
                 <li><a href="#beneficios">Beneficios</a></li>
                 <li><a href="#contacto">Contacto</a></li>
-                <li><a href="login.php" class="nav-cta"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</a></li>
+                <li><a href="<?= eco_url('login') ?>" class="nav-cta"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</a></li>
             </ul>
             <button type="button" class="hamburger" id="hamburger" aria-label="Menú">
                 <i class="fa-solid fa-bars"></i>
@@ -1462,7 +1462,7 @@
                 <a href="#contacto" class="btn btn-primary">
                     Agendar estudio <i class="fa-solid fa-arrow-right"></i>
                 </a>
-                <a href="login.php" class="btn btn-glass">
+                <a href="<?= eco_url('login') ?>" class="btn btn-glass">
                     <i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión
                 </a>
             </div>
@@ -1684,7 +1684,7 @@
                     $delay = ($idx % 4) + 1;
                     $idx++;
             ?>
-                <a href="login.php" class="service-card reveal" data-delay="<?php echo $delay; ?>"
+                <a href="<?= eco_url('login') ?>" class="service-card reveal" data-delay="<?php echo $delay; ?>"
                    style="--c1:<?php echo $pal['c1']; ?>;--soft:<?php echo $pal['soft']; ?>;--tcolor:<?php echo $pal['text']; ?>;">
                     <div class="service-icon"><i class="<?php echo $icono; ?>"></i></div>
                     <?php if ($cat !== ''): ?>
@@ -1698,9 +1698,9 @@
                 endwhile;
             else:
             ?>
-                <a href="login.php" class="service-card"><div class="service-icon"><i class="fa-solid fa-wave-square"></i></div><h3>Ecografía Abdominal</h3></a>
-                <a href="login.php" class="service-card"><div class="service-icon"><i class="fa-solid fa-baby"></i></div><h3>Ecografía Obstétrica</h3></a>
-                <a href="login.php" class="service-card"><div class="service-icon"><i class="fa-solid fa-user-doctor"></i></div><h3>Ecografía de Tiroides</h3></a>
+                <a href="<?= eco_url('login') ?>" class="service-card"><div class="service-icon"><i class="fa-solid fa-wave-square"></i></div><h3>Ecografía Abdominal</h3></a>
+                <a href="<?= eco_url('login') ?>" class="service-card"><div class="service-icon"><i class="fa-solid fa-baby"></i></div><h3>Ecografía Obstétrica</h3></a>
+                <a href="<?= eco_url('login') ?>" class="service-card"><div class="service-icon"><i class="fa-solid fa-user-doctor"></i></div><h3>Ecografía de Tiroides</h3></a>
             <?php endif; ?>
         </div>
     </div>
@@ -1856,7 +1856,7 @@
             <div>
                 <h5>Acceso</h5>
                 <ul>
-                    <li><a href="login.php">Iniciar sesión</a></li>
+                    <li><a href="<?= eco_url('login') ?>">Iniciar sesión</a></li>
                     <li><a href="#contacto">Crear cuenta</a></li>
                     <li><a href="#contacto">Agendar estudio</a></li>
                 </ul>

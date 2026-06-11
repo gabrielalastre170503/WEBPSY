@@ -105,7 +105,7 @@ $nombre = $_SESSION['nombre_completo'] ?? 'Paciente';
                 <span>He leído y comprendo la información anterior y otorgo mi consentimiento informado para el tratamiento de mis datos personales y de salud descrito.</span>
             </label>
             <div class="row">
-                <a href="logout.php" class="logout"><i class="fa-solid fa-arrow-left"></i> Salir</a>
+                <a href="<?= eco_url('logout') ?>" class="logout"><i class="fa-solid fa-arrow-left"></i> Salir</a>
                 <button type="submit" class="btn"><i class="fa-solid fa-check"></i> Acepto y continúo</button>
             </div>
         </form>
