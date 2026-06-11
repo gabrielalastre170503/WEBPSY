@@ -32,8 +32,8 @@ $r->get('/mis-informes',         'mis_informes_paciente.php');
 /* ── Administrador ── */
 $r->get('/personal',      'admin_personal.php');
 $r->get('/usuarios',      'ver_usuarios.php');
-$r->get('/especialidades', 'admin_especialidades.php');
-$r->get('/repositorio',   'admin_documentos.php');
+$r->any('/especialidades', 'admin_especialidades.php');
+$r->any('/repositorio',   'admin_documentos.php');
 $r->get('/contenido',     'admin_contenido.php');
 $r->get('/auditoria',     'auditoria.php');
 $r->get('/notas-rapidas', 'notas_rapidas.php');
