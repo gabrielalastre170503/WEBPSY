@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -98,7 +98,7 @@ ob_start();
     </button>
 </div>
 
-<?php include __DIR__ . '/layouts/partials/modal_rx_gestion_pacientes.php'; ?>
+<?php include __DIR__ . '/../layouts/partials/modal_rx_gestion_pacientes.php'; ?>
 
 <?php
 $page_content = ob_get_clean();
@@ -109,4 +109,4 @@ $page_scripts_extra = <<<'HTML'
 <script src="assets/js/recepcion/recepcion_rx_pacientes.js"></script>
 HTML;
 
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

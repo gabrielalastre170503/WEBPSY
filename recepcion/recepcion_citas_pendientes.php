@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -229,4 +229,4 @@ $page_scripts_extra = <<<'HTML'
 </script>
 HTML;
 
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

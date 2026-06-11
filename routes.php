@@ -48,10 +48,11 @@ $r->get('/historial-citas', 'mi_historial_citas.php');
 $r->get('/notas-sesion',   'mis_notas_sesion.php');
 
 /* ── Recepcionista ── */
-$r->get('/citas-pendientes',    'recepcion_citas_pendientes.php');
-$r->get('/gestion-pacientes',   'recepcion_gestion_pacientes.php');
-$r->get('/historial-recepcion', 'recepcion_historial_citas.php');
-$r->get('/directorio',          'recepcion_directorio.php');
+$r->get('/citas-pendientes',    'recepcion/recepcion_citas_pendientes.php');
+$r->get('/gestion-pacientes',   'recepcion/recepcion_gestion_pacientes.php');
+$r->get('/historial-recepcion', 'recepcion/recepcion_historial_citas.php');
+$r->get('/directorio',          'recepcion/recepcion_directorio.php');
+$r->get('/ficha-paciente',      'recepcion/recepcion_ficha_paciente.php');
 
 /* ── Paciente ── */
 $r->get('/mis-citas',       'mis_citas_paciente.php');

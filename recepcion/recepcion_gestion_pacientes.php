@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -65,8 +65,8 @@ ob_start();
 </div>
 
 <?php
-include __DIR__ . '/layouts/partials/modal_crear_paciente.php';
-include __DIR__ . '/layouts/partials/modal_rx_gestion_pacientes.php';
+include __DIR__ . '/../layouts/partials/modal_crear_paciente.php';
+include __DIR__ . '/../layouts/partials/modal_rx_gestion_pacientes.php';
 $page_content = ob_get_clean();
 
 $page_scripts_extra = <<<'HTML'
@@ -76,7 +76,7 @@ $page_scripts_extra = <<<'HTML'
 <script src="assets/js/recepcion/recepcion_rx_pacientes.js"></script>
 <script>
 window.abrirModalGestionarPaciente = function (id) {
-    window.location.href = 'recepcion_ficha_paciente.php?id=' + encodeURIComponent(id);
+    window.location.href = '<?= eco_url('ficha-paciente') ?>?id=' + encodeURIComponent(id);
 };
 </script>
 <script>
@@ -197,4 +197,4 @@ window.abrirModalGestionarPaciente = function (id) {
 </script>
 HTML;
 
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';
