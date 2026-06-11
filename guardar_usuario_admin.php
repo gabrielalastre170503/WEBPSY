@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         eco_auditar($conex, 'usuario_creado', ['entidad' => 'usuario', 'entidad_id' => $insert_stmt->insert_id, 'detalle' => ['rol' => $rol, 'correo' => $correo]]);
         $_SESSION['nuevo_paciente_nombre'] = $nombre; // Reutilizamos la variable de sesión
         $_SESSION['contrasena_temporal'] = $contrasena_temporal;
-        header('Location: panel.php?vista=admin-dashboard'); // Volver al dashboard del admin
+        header('Location: ' . eco_url('dashboard')); // Volver al dashboard del admin
     } else {
         header('Location: crear_usuario_admin.php?error=guardado');
     }

@@ -36,6 +36,6 @@ if (isset($_GET['id']) && isset($_GET['accion'])) {
     }
 }
 
-header('Location: panel.php');
+header('Location: ' . eco_url('usuarios'));
 exit();
 ?>

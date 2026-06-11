@@ -88,5 +88,5 @@ if (isset($_GET['accion']) && $_GET['accion'] === 'borrar') {
 }
 
 $conex->close();
-header('Location: panel.php');
+header('Location: ' . eco_url('contenido'));
 exit();

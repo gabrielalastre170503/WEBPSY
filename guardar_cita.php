@@ -25,7 +25,7 @@ function guardar_cita_redirect_base(): string
     if ($rol === 'administrador') {
         return eco_url('dashboard');
     }
-    return eco_url('panel.php');
+    return eco_url('mi-agenda');
 }
 
 // Validar que los datos necesarios del formulario fueron enviados

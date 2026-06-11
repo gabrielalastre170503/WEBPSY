@@ -85,5 +85,5 @@ if ($accion == 'eliminar_excepcion' && isset($_POST['id'])) {
 }
 
 // Si no hay acción válida, redirigir
-header('Location: panel.php');
+header('Location: ' . eco_url('disponibilidad'));
 ?>
