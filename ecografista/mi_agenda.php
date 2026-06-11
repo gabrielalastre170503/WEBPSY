@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
         buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día' },
         allDayText: 'Todo el día',
-        events: 'get_citas.php',
+        events: (window.ECO_BASE || '') + 'api/get_citas.php',
         eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short', hour12: true },
         slotLabelFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short', hour12: true },
         eventClick: function(info) {

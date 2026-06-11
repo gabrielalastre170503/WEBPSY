@@ -90,7 +90,7 @@
         var ik = String(informeId);
         var existing = informeEcoDetalleInflight.get(ik);
         if (existing) return existing;
-        var p = fetch('get_informe_detalle.php?informe_id=' + encodeURIComponent(informeId))
+        var p = fetch((window.ECO_BASE || '') + 'api/get_informe_detalle.php?informe_id=' + encodeURIComponent(informeId))
             .then(function (r) { return r.json(); })
             .finally(function () {
                 informeEcoDetalleInflight.delete(ik);
@@ -192,7 +192,7 @@
         cont.innerHTML =
             '<div class="eco-inf-img-head"><i class="fa-solid fa-images"></i> Imágenes y adjuntos</div>' +
             '<div class="eco-inf-img-loading"><i class="fa-solid fa-spinner fa-spin"></i></div>';
-        fetch('get_archivos_informe.php?informe_id=' + encodeURIComponent(informeId))
+        fetch((window.ECO_BASE || '') + 'api/get_archivos_informe.php?informe_id=' + encodeURIComponent(informeId))
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (!d || !d.success) { cont.innerHTML = ''; return; }
@@ -486,7 +486,7 @@
         if (telEl) { telEl.textContent = ''; telEl.style.display = 'none'; }
         EcoModal.open('eco-modal-gestionar-paciente-eco');
 
-        fetch('get_patient_details.php?id=' + encodeURIComponent(pacienteId))
+        fetch((window.ECO_BASE || '') + 'api/get_patient_details.php?id=' + encodeURIComponent(pacienteId))
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.error) {
@@ -652,7 +652,7 @@
         EcoModal.close('eco-modal-gestionar-paciente-eco');
         EcoModal.open('eco-modal-informes-paciente-eco');
 
-        fetch('get_informes_paciente.php?paciente_id=' + encodeURIComponent(pacienteId))
+        fetch((window.ECO_BASE || '') + 'api/get_informes_paciente.php?paciente_id=' + encodeURIComponent(pacienteId))
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.error) {
@@ -765,7 +765,7 @@
         EcoModal.close('eco-modal-gestionar-paciente-eco');
         EcoModal.open('eco-modal-historia-clinica-eco');
 
-        fetch('get_historia_clinica.php?paciente_id=' + encodeURIComponent(pacienteId))
+        fetch((window.ECO_BASE || '') + 'api/get_historia_clinica.php?paciente_id=' + encodeURIComponent(pacienteId))
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.error) {
@@ -895,7 +895,7 @@
         EcoModal.open('eco-modal-facturacion-paciente-eco');
 
         function cargar() {
-            fetch('get_facturacion_paciente.php?paciente_id=' + encodeURIComponent(pacienteId))
+            fetch((window.ECO_BASE || '') + 'api/get_facturacion_paciente.php?paciente_id=' + encodeURIComponent(pacienteId))
                 .then(function (r) { return r.json(); })
                 .then(render)
                 .catch(function () {
@@ -1054,7 +1054,7 @@
             return;
         }
 
-        fetch('get_patient_details.php?id=' + encodeURIComponent(pacienteId))
+        fetch((window.ECO_BASE || '') + 'api/get_patient_details.php?id=' + encodeURIComponent(pacienteId))
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.error) {
@@ -1502,8 +1502,8 @@
         EcoModal.open('eco-modal-formulario-estudio-eco');
 
         var formUrl = editInformeId
-            ? 'get_form_ecografia.php?informe_id=' + encodeURIComponent(editInformeId)
-            : 'get_form_ecografia.php?paciente_id=' + encodeURIComponent(patientState.id) + '&tipo_id=' + encodeURIComponent(studyState.tipoId);
+            ? (window.ECO_BASE || '') + 'api/get_form_ecografia.php?informe_id=' + encodeURIComponent(editInformeId)
+            : (window.ECO_BASE || '') + 'api/get_form_ecografia.php?paciente_id=' + encodeURIComponent(patientState.id) + '&tipo_id=' + encodeURIComponent(studyState.tipoId);
 
         fetch(formUrl)
             .then(function (r) { return r.json(); })
@@ -1820,7 +1820,7 @@
         if (!list) return;
 
         list.innerHTML = '<p class="eco-modal__body-text">Cargando...</p>';
-        fetch('get_notas_paciente.php?paciente_id=' + encodeURIComponent(patientState.id))
+        fetch((window.ECO_BASE || '') + 'api/get_notas_paciente.php?paciente_id=' + encodeURIComponent(patientState.id))
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (!data.ok) {
@@ -1854,7 +1854,7 @@
         body.innerHTML = '<p class="eco-modal__body-text">Cargando detalle...</p>';
         EcoModal.open('eco-modal-detalle-cita-eco');
 
-        fetch('get_cita_details_psicologo.php?cita_id=' + encodeURIComponent(citaId))
+        fetch((window.ECO_BASE || '') + 'api/get_cita_details_psicologo.php?cita_id=' + encodeURIComponent(citaId))
             .then(function (r) { return r.json(); })
             .then(function (resp) {
                 if (!resp.success) {
@@ -1896,7 +1896,7 @@
                 // Linea de tiempo de la cita (Fase 4C)
                 var tlBox = byId('eco-cita-tl');
                 if (tlBox) {
-                    fetch('get_cita_timeline.php?cita_id=' + encodeURIComponent(citaId))
+                    fetch((window.ECO_BASE || '') + 'api/get_cita_timeline.php?cita_id=' + encodeURIComponent(citaId))
                         .then(function (r) { return r.json(); })
                         .then(function (t) { tlBox.innerHTML = (t && t.success) ? t.html : ''; })
                         .catch(function () { tlBox.innerHTML = ''; });
@@ -2004,7 +2004,7 @@
         var repMotivoBox = byId('eco-rep-motivo-box'); if (repMotivoBox) repMotivoBox.style.display = 'none';
 
         // Enriquecer con los detalles completos de la cita
-        fetch('get_solicitud_details.php?id=' + encodeURIComponent(citaId))
+        fetch((window.ECO_BASE || '') + 'api/get_solicitud_details.php?id=' + encodeURIComponent(citaId))
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (!d || d.error) return;

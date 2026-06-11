@@ -221,7 +221,7 @@ $page_scripts_extra = <<<'HTML'
         propSet('eco-prop-sub', '—'); propSet('eco-prop-estudio', '—'); propSet('eco-prop-modalidad', '—');
         var propEstado = document.getElementById('eco-prop-estado'); if (propEstado) { propEstado.textContent = '—'; propEstado.className = 'badge'; }
         var propMotivoBox = document.getElementById('eco-prop-motivo-box'); if (propMotivoBox) propMotivoBox.style.display = 'none';
-        fetch('get_solicitud_details.php?id=' + encodeURIComponent(citaId))
+        fetch((window.ECO_BASE || '') + 'api/get_solicitud_details.php?id=' + encodeURIComponent(citaId))
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (!d || d.error) return;
@@ -290,7 +290,7 @@ $page_scripts_extra = <<<'HTML'
     window.verDetalleSolicitud = function (citaId) {
         solBody.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:30px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando…</p>';
         EcoModal.open(SOLMODAL);
-        fetch('get_solicitud_details.php?id=' + encodeURIComponent(citaId))
+        fetch((window.ECO_BASE || '') + 'api/get_solicitud_details.php?id=' + encodeURIComponent(citaId))
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (d.error) { solBody.innerHTML = '<p style="color:#b91c1c;padding:16px;">' + escSol(d.error) + '</p>'; return; }

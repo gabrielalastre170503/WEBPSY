@@ -655,7 +655,7 @@ $page_scripts_extra = <<<'HTML'
         if (!rol) { if (step2Hint) step2Hint.style.display = 'flex'; return; }
         if (step2Hint) step2Hint.style.display = 'none';
 
-        fetch('get_professionals_by_specialty.php?rol=' + encodeURIComponent(rol))
+        fetch((window.ECO_BASE || '') + 'api/get_professionals_by_specialty.php?rol=' + encodeURIComponent(rol))
             .then(function (r) { return r.json(); })
             .then(function (profs) {
                 psicologoSelector.innerHTML = '<option value="">Elige un profesional</option>';
@@ -680,7 +680,7 @@ $page_scripts_extra = <<<'HTML'
         refresh();
         if (!id) return;
 
-        fetch('get_available_dates.php?ecografista_id=' + encodeURIComponent(id))
+        fetch((window.ECO_BASE || '') + 'api/get_available_dates.php?ecografista_id=' + encodeURIComponent(id))
             .then(function (r) { return r.json(); })
             .then(function (dates) {
                 datePickerGroup.style.display = 'block';
@@ -693,7 +693,7 @@ $page_scripts_extra = <<<'HTML'
                         refresh();
                         timeSlotsContainer.innerHTML = 'Cargando…';
                         timeSlotsGroup.style.display = 'block';
-                        fetch('get_available_times.php?ecografista_id=' + encodeURIComponent(id) + '&fecha=' + encodeURIComponent(dateStr))
+                        fetch((window.ECO_BASE || '') + 'api/get_available_times.php?ecografista_id=' + encodeURIComponent(id) + '&fecha=' + encodeURIComponent(dateStr))
                             .then(function (res) { return res.json(); })
                             .then(function (times) {
                                 timeSlotsContainer.innerHTML = '';

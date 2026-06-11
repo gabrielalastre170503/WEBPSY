@@ -223,7 +223,7 @@
         setPerfilView(false);
         EcoModal.open(PERFIL_MODAL);
 
-        fetch('get_perfil_personal_ajax.php?id=' + encodeURIComponent(id))
+        fetch((window.ECO_BASE || '') + 'api/get_perfil_personal_ajax.php?id=' + encodeURIComponent(id))
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.success && data.perfil) {

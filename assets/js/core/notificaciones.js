@@ -57,7 +57,7 @@
     }
 
     function cargar() {
-        fetch('get_notificaciones.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        fetch((window.ECO_BASE || '') + 'api/get_notificaciones.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (!d || !d.success) return;

@@ -376,7 +376,7 @@ $page_scripts_extra = <<<'HTML'
         pacEl.textContent = '';
         bodyEl.innerHTML = '<div class="modal-form-eco-loader"><i class="fa-solid fa-spinner fa-spin"></i><p>Cargando informe…</p></div>';
         EcoModal.open('eco-modal-informe-detalle-eco');
-        fetch('get_informe_detalle.php?informe_id=' + encodeURIComponent(id))
+        fetch((window.ECO_BASE || '') + 'api/get_informe_detalle.php?informe_id=' + encodeURIComponent(id))
             .then(function (r) { return r.json(); })
             .then(render)
             .catch(function (err) {

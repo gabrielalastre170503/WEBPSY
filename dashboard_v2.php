@@ -193,7 +193,7 @@ if ($rol === 'ecografista'):
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-fetch('get_chart_data.php').then(r=>r.json()).then(d => {
+fetch((window.ECO_BASE || '') + 'api/get_chart_data.php').then(r=>r.json()).then(d => {
     const ctx = document.getElementById('dashChart');
     if (!ctx) return;
     new Chart(ctx, {
@@ -395,7 +395,7 @@ elseif ($rol === 'paciente'):
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-fetch('get_patient_chart_data.php').then(r => r.json()).then(d => {
+fetch((window.ECO_BASE || '') + 'api/get_patient_chart_data.php').then(r => r.json()).then(d => {
     const ctx = document.getElementById('patientDashChart');
     if (!ctx) return;
     new Chart(ctx, {

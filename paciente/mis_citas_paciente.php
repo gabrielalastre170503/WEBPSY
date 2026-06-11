@@ -540,7 +540,7 @@ $page_scripts_extra = <<<'HTML'
         bodyEl.innerHTML = '<p class="cd-loading"><i class="fa-solid fa-spinner fa-spin"></i> Cargando detalles…</p>';
         if (subEl) subEl.textContent = '…';
         if (typeof EcoModal !== 'undefined') EcoModal.open(modalId);
-        fetch('get_cita_details_paciente.php?id=' + encodeURIComponent(citaId))
+        fetch((window.ECO_BASE || '') + 'api/get_cita_details_paciente.php?id=' + encodeURIComponent(citaId))
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.error) {

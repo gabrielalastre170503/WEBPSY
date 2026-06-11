@@ -320,7 +320,7 @@ $page_scripts_extra = <<<'HTML'
         document.getElementById('prof-shell-rol').textContent = '…';
         document.getElementById('prof-shell-body').innerHTML = '<p class="pd-loading"><i class="fa-solid fa-spinner fa-spin"></i> Cargando…</p>';
         if (typeof EcoModal !== 'undefined') EcoModal.open(modalId);
-        fetch('get_professional_details.php?id=' + encodeURIComponent(id))
+        fetch((window.ECO_BASE || '') + 'api/get_professional_details.php?id=' + encodeURIComponent(id))
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 var bodyEl = document.getElementById('prof-shell-body');

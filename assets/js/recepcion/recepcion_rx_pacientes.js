@@ -76,7 +76,7 @@
         body.innerHTML = '<p class="eco-modal__body-text" style="margin:16px 0;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando informes…</p>';
         EcoModal.open('eco-modal-rx-informes-paciente');
 
-        fetch('get_informes_paciente.php?paciente_id=' + encodeURIComponent(pacienteId))
+        fetch((window.ECO_BASE || '') + 'api/get_informes_paciente.php?paciente_id=' + encodeURIComponent(pacienteId))
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.error) {

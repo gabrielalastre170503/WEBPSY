@@ -157,11 +157,11 @@
         }).catch(() => {});
     };
 
-    doughnut('adminPatientAgeChart', 'get_patient_age_distribution.php');
-    barH('adminWorkloadChart', 'get_workload_data.php');
-    lineChart('adminUserGrowthChart', 'get_user_growth_data.php');
-    stackedBar('adminAppointmentTypesChart', 'get_appointment_types_data.php');
-    barV('adminDailyAppointmentsChart', 'get_daily_appointments_data.php', 'Citas');
-    pieChart('adminConfirmedReprogrammedChart', 'get_confirmed_reprogrammed_data.php');
+    doughnut('adminPatientAgeChart', (window.ECO_BASE || '') + 'api/get_patient_age_distribution.php');
+    barH('adminWorkloadChart', (window.ECO_BASE || '') + 'api/get_workload_data.php');
+    lineChart('adminUserGrowthChart', (window.ECO_BASE || '') + 'api/get_user_growth_data.php');
+    stackedBar('adminAppointmentTypesChart', (window.ECO_BASE || '') + 'api/get_appointment_types_data.php');
+    barV('adminDailyAppointmentsChart', (window.ECO_BASE || '') + 'api/get_daily_appointments_data.php', 'Citas');
+    pieChart('adminConfirmedReprogrammedChart', (window.ECO_BASE || '') + 'api/get_confirmed_reprogrammed_data.php');
 })();
 </script>

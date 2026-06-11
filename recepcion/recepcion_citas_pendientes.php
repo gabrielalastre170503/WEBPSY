@@ -166,7 +166,7 @@ $page_scripts_extra = <<<'HTML'
         document.getElementById('asignar-rx-cita-id').value = citaId;
         if (typeof EcoModal !== 'undefined') EcoModal.open(modalId);
 
-        fetch('get_cita_details_secretaria.php?cita_id=' + encodeURIComponent(citaId))
+        fetch((window.ECO_BASE || '') + 'api/get_cita_details_secretaria.php?cita_id=' + encodeURIComponent(citaId))
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.error) {

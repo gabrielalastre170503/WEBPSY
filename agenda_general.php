@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día' },
         allDayText: 'Todo el día',
-        events: 'get_all_citas.php',
+        events: (window.ECO_BASE || '') + 'api/get_all_citas.php',
         eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short', hour12: true },
         slotLabelFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short', hour12: true },
         eventClick: function() {
