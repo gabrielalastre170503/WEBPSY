@@ -21,14 +21,14 @@ ob_start();
 
 <div class="admin-contenido-grid">
 
-    <a href="gestionar_faq.php" class="card admin-contenido-card">
+    <a href="<?= eco_url('gestionar-faq') ?>" class="card admin-contenido-card">
         <div class="admin-contenido-card__icon admin-contenido-card__icon--faq"><i class="fa-solid fa-circle-question"></i></div>
         <strong class="admin-contenido-card__title">Preguntas frecuentes</strong>
         <p class="admin-contenido-card__desc">Edita la sección FAQ del sitio público.</p>
         <span class="admin-contenido-card__cta">Gestionar <i class="fa-solid fa-arrow-right"></i></span>
     </a>
 
-    <a href="gestionar_textos.php" class="card admin-contenido-card">
+    <a href="<?= eco_url('gestionar-textos') ?>" class="card admin-contenido-card">
         <div class="admin-contenido-card__icon admin-contenido-card__icon--textos"><i class="fa-solid fa-file-lines"></i></div>
         <strong class="admin-contenido-card__title">Textos «Nosotros»</strong>
         <p class="admin-contenido-card__desc">Misión, visión y textos institucionales.</p>
@@ -42,7 +42,7 @@ ob_start();
         <span class="admin-contenido-card__cta">Abrir <i class="fa-solid fa-arrow-up-right-from-square"></i></span>
     </a>
 
-    <a href="gestionar_estudios_ecograficos.php" class="card admin-contenido-card">
+    <a href="<?= eco_url('gestionar-estudios') ?>" class="card admin-contenido-card">
         <div class="admin-contenido-card__icon admin-contenido-card__icon--estudios"><i class="fa-solid fa-wave-square"></i></div>
         <strong class="admin-contenido-card__title">Estudios ecográficos</strong>
         <p class="admin-contenido-card__desc">Añade y administra los tipos de estudio del catálogo.</p>
@@ -62,21 +62,21 @@ ob_start();
                     <td><strong>Sección Nosotros</strong> (público)</td>
                     <td style="text-align:right;white-space:nowrap;">
                         <a href="index.php#nosotros" target="_blank" class="btn-secondary" style="font-size:12px;">Ver</a>
-                        <a href="gestionar_textos.php" class="btn-primary" style="font-size:12px;">Editar</a>
+                        <a href="<?= eco_url('gestionar-textos') ?>" class="btn-primary" style="font-size:12px;">Editar</a>
                     </td>
                 </tr>
                 <tr>
                     <td><strong>Estudios ecográficos</strong> (listado en inicio)</td>
                     <td style="text-align:right;white-space:nowrap;">
                         <a href="index.php#servicios" target="_blank" class="btn-secondary" style="font-size:12px;">Ver</a>
-                        <a href="gestionar_estudios_ecograficos.php" class="btn-primary" style="font-size:12px;">Editar</a>
+                        <a href="<?= eco_url('gestionar-estudios') ?>" class="btn-primary" style="font-size:12px;">Editar</a>
                     </td>
                 </tr>
                 <tr>
                     <td><strong>FAQ</strong></td>
                     <td style="text-align:right;white-space:nowrap;">
                         <a href="index.php#faq" target="_blank" class="btn-secondary" style="font-size:12px;">Ver</a>
-                        <a href="gestionar_faq.php" class="btn-primary" style="font-size:12px;">Editar</a>
+                        <a href="<?= eco_url('gestionar-faq') ?>" class="btn-primary" style="font-size:12px;">Editar</a>
                     </td>
                 </tr>
             </tbody>

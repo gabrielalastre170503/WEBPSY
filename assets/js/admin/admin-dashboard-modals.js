@@ -32,7 +32,7 @@
             sub: 'Historial completo de citas en la clínica',
             icon: 'fa-solid fa-calendar-check',
             iconClass: 'icon--violet',
-            href: 'ver_citas_admin.php',
+            href: (window.ECO_BASE || '') + 'citas-admin',
             placeholder: 'Buscar por paciente, ecografista o estudio…'
         }
     };

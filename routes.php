@@ -40,6 +40,10 @@ $r->any('/repositorio',   'admin/admin_documentos.php');
 $r->get('/contenido',     'admin/admin_contenido.php');
 $r->get('/auditoria',     'common/auditoria.php');
 $r->get('/notas-rapidas', 'common/notas_rapidas.php');
+$r->get('/citas-admin',    'admin/ver_citas_admin.php');
+$r->get('/gestionar-faq',   'admin/gestionar_faq.php');
+$r->get('/gestionar-textos', 'admin/gestionar_textos.php');
+$r->get('/gestionar-estudios', 'admin/gestionar_estudios_ecograficos.php');
 
 /* ── Ecografista ── */
 $r->get('/mis-pacientes',  'ecografista/mis_pacientes.php');

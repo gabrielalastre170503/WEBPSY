@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
         eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short', hour12: true },
         slotLabelFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short', hour12: true },
         eventClick: function() {
-            window.location.href = <?= json_encode($rol_agenda === 'recepcionista' ? eco_url('historial-recepcion') : 'ver_citas_admin.php', JSON_UNESCAPED_SLASHES) ?>;
+            window.location.href = <?= json_encode($rol_agenda === 'recepcionista' ? eco_url('historial-recepcion') : eco_url('citas-admin'), JSON_UNESCAPED_SLASHES) ?>;
         }
     });
     calendar.render();
