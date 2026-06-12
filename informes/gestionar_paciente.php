@@ -60,7 +60,7 @@ $puede_crear = in_array($_SESSION['rol'], ['ecografista', 'administrador']);
 </head>
 <body>
 <div class="main-container">
-    <a href="panel.php?vista=pacientes" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver a la lista de pacientes</a>
+    <a href="<?= eco_url('mis-pacientes') ?>" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver a la lista de pacientes</a>
     <div class="panel-header">
         <h1>Panel de Gestion del Paciente</h1>
         <p><strong><?php echo htmlspecialchars($paciente['nombre_completo']); ?></strong></p>

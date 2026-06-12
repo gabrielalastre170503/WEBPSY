@@ -60,7 +60,7 @@ if ($stmt->execute()) {
     $_SESSION['nombre_completo']= $nombre;
     $_SESSION['correo']         = $correo;
     $_SESSION['rol']            = $rol;
-    header('Location: panel.php?status=success');
+    header('Location: ' . eco_url('login') . '?status=registro_ok');
     exit();
 }
 

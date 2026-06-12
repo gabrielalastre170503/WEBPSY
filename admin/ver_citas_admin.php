@@ -89,7 +89,7 @@ $resultado = $conex->query($sql);
 </head>
 <body>
     <div class="main-container">
-        <a href="panel.php" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al Panel</a>
+        <a href="<?= eco_url('dashboard') ?>" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al Panel</a>
         <h1>Historial Completo de Citas</h1>
 
         <!-- BARRA DE BÚSQUEDA AÑADIDA -->
