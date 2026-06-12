@@ -162,7 +162,7 @@ ob_start();
    añade automáticamente la cabecera X-CSRF-Token. */
 function ecoMarcarCompletada(id){
     if(!confirm('¿Marcar esta cita como completada?')) return;
-    fetch('marcar_completada.php', {
+    fetch((window.ECO_BASE || '') + 'api/marcar_completada.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'cita_id=' + encodeURIComponent(id)

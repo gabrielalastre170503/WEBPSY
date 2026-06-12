@@ -282,7 +282,7 @@ ob_start();
         var orig = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-        fetch('registrar_pago.php', { method: 'POST', body: fd })
+        fetch((window.ECO_BASE || '') + 'api/registrar_pago.php', { method: 'POST', body: fd })
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 btn.disabled = false; btn.innerHTML = orig;

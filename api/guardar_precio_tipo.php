@@ -3,8 +3,8 @@
  * Actualiza el precio de un tipo de estudio (solo administrador).
  */
 session_start();
-require_once __DIR__ . '/lib/core/api.php';
-include 'conexion.php';
+require_once __DIR__ . '/../lib/core/api.php';
+include __DIR__ . '/../conexion.php';
 
 api_json();
 $response = ['success' => false, 'message' => 'Ocurrio un error.'];

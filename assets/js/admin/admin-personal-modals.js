@@ -306,7 +306,7 @@
                 fd.append('nuevo_estado', nuevoEstado);
 
                 btnEstadoPerfil.disabled = true;
-                fetch('cambiar_estado_usuario.php', { method: 'POST', body: fd })
+                fetch((window.ECO_BASE || '') + 'api/cambiar_estado_usuario.php', { method: 'POST', body: fd })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         btnEstadoPerfil.disabled = false;

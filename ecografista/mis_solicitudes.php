@@ -260,7 +260,7 @@ $page_scripts_extra = <<<'HTML'
         var fd = new FormData(e.target);
         var btn = document.getElementById('eco-proponer-submit');
         btn.disabled = true;
-        fetch('guardar_propuesta.php', { method: 'POST', body: fd })
+        fetch((window.ECO_BASE || '') + 'api/guardar_propuesta.php', { method: 'POST', body: fd })
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 btn.disabled = false;

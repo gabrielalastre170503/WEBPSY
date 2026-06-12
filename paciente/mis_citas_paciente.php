@@ -601,7 +601,7 @@ $page_scripts_extra = <<<'HTML'
         fd.append('cita_id', encCitaId);
         fd.append('puntuacion', encPunt);
         fd.append('comentario', document.getElementById('enc-comentario').value);
-        fetch('guardar_encuesta.php', { method: 'POST', body: fd })
+        fetch((window.ECO_BASE || '') + 'api/guardar_encuesta.php', { method: 'POST', body: fd })
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 encBtn.disabled = false;

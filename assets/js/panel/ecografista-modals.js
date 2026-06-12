@@ -340,7 +340,7 @@
         var body = new URLSearchParams();
         body.set('informe_id', informeId);
         body.set('expira_horas', '72');   // 3 dias
-        fetch('generar_enlace_resultado.php', {
+        fetch((window.ECO_BASE || '') + 'api/generar_enlace_resultado.php', {
             method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString()
         })
             .then(function (r) { return r.json(); })
@@ -408,7 +408,7 @@
 
         if (tipo === 'firmar') {
             if (!window.confirm('¿Firmar este informe? Una vez firmado no podrá editarse.')) return;
-            url = 'firmar_informe.php';
+            url = (window.ECO_BASE || '') + 'api/firmar_informe.php';
         } else {
             var motivo = window.prompt('Motivo de la anulación (mínimo 5 caracteres).\nEl informe NO se borra: queda registrado como anulado.');
             if (motivo === null) return;
@@ -994,7 +994,7 @@
             fd.append('abono', String(ab));
             fd.append('metodo_pago', metodoEl ? metodoEl.value : '');
 
-            fetch('registrar_pago.php', { method: 'POST', body: fd })
+            fetch((window.ECO_BASE || '') + 'api/registrar_pago.php', { method: 'POST', body: fd })
                 .then(function (r) { return r.json(); })
                 .then(function (d) {
                     if (d && d.success) {
@@ -2044,7 +2044,7 @@
             notasForm.addEventListener('submit', function (e) {
                 e.preventDefault();
                 setError('eco-notas-eco-error', '');
-                fetch('guardar_nota.php', { method: 'POST', body: new FormData(notasForm) })
+                fetch((window.ECO_BASE || '') + 'api/guardar_nota.php', { method: 'POST', body: new FormData(notasForm) })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (data.ok) {
@@ -2067,7 +2067,7 @@
                 if (!window.confirm('Borrar todas las notas de ' + (patientState.name || 'este paciente') + '?')) return;
                 var fd = new FormData();
                 fd.append('paciente_id', patientState.id);
-                fetch('limpiar_notas.php', { method: 'POST', body: fd })
+                fetch((window.ECO_BASE || '') + 'api/limpiar_notas.php', { method: 'POST', body: fd })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (data.ok) {
@@ -2116,7 +2116,7 @@
                 setError('eco-reprogramar-error', '');
                 var btn = byId('eco-reprogramar-submit');
                 if (btn) btn.disabled = true;
-                fetch('actualizar_cita.php', { method: 'POST', body: new FormData(reprogramarForm) })
+                fetch((window.ECO_BASE || '') + 'api/actualizar_cita.php', { method: 'POST', body: new FormData(reprogramarForm) })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (btn) btn.disabled = false;
@@ -2190,7 +2190,7 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Firmando…';
             var payload = new URLSearchParams();
             payload.set('informe_id', ctx.informeId);
-            fetch('firmar_informe.php', {
+            fetch((window.ECO_BASE || '') + 'api/firmar_informe.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: payload.toString()

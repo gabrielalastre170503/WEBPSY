@@ -3,8 +3,8 @@
  * guardar_encuesta.php — Encuesta de satisfacción post-estudio (Fase 4). POST + CSRF.
  * El paciente califica (1-5) una cita propia ya completada. Una encuesta por cita.
  */
-require_once __DIR__ . '/lib/core/api.php';
-include 'conexion.php';
+require_once __DIR__ . '/../lib/core/api.php';
+include __DIR__ . '/../conexion.php';
 
 api_json();
 api_require_roles(['paciente']);

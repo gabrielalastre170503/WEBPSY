@@ -167,7 +167,7 @@ document.querySelectorAll('.precio-save').forEach(function (btn) {
         fd.append('tipo_id', id);
         fd.append('precio', precio);
 
-        fetch('guardar_precio_tipo.php', { method: 'POST', body: fd })
+        fetch((window.ECO_BASE || '') + 'api/guardar_precio_tipo.php', { method: 'POST', body: fd })
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 btn.disabled = false;

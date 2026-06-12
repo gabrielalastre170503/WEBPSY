@@ -58,7 +58,7 @@
         fd.append('id', userId);
         fd.append('nuevo_estado', newState);
 
-        fetch('cambiar_estado_usuario.php', { method: 'POST', body: fd })
+        fetch((window.ECO_BASE || '') + 'api/cambiar_estado_usuario.php', { method: 'POST', body: fd })
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.success) {
