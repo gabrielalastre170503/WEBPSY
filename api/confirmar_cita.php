@@ -1,8 +1,8 @@
 <?php
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/citas/citas.php';
-require_once __DIR__ . '/lib/comunicaciones/notificaciones.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/citas/citas.php';
+require_once __DIR__ . '/../lib/comunicaciones/notificaciones.php';
 
 // Seguridad: Solo ecografistas pueden confirmar citas
 if (!isset($_SESSION['usuario_id']) || !in_array($_SESSION['rol'], ['ecografista'])) {

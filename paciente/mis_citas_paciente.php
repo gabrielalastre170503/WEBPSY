@@ -511,8 +511,8 @@ $page_scripts_extra = <<<'HTML'
                 html += '<p class="cd-banner__text"><strong>Motivo:</strong> <em>' + multiline(data.reprogramacion_motivo) + '</em></p>';
             }
             html += '<div class="cd-banner__actions">';
-            html += '<a href="gestionar_propuesta.php?cita_id=' + encodeURIComponent(data.id) + '&accion=rechazar" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Rechazar</a>';
-            html += '<a href="gestionar_propuesta.php?cita_id=' + encodeURIComponent(data.id) + '&accion=aceptar" class="btn-primary"><i class="fa-solid fa-check"></i> Aceptar nueva fecha</a>';
+            html += '<a href="' + (window.ECO_BASE || '') + 'api/gestionar_propuesta.php?cita_id=' + encodeURIComponent(data.id) + '&accion=rechazar" class="btn-secondary"><i class="fa-solid fa-xmark"></i> Rechazar</a>';
+            html += '<a href="' + (window.ECO_BASE || '') + 'api/gestionar_propuesta.php?cita_id=' + encodeURIComponent(data.id) + '&accion=aceptar" class="btn-primary"><i class="fa-solid fa-check"></i> Aceptar nueva fecha</a>';
             html += '</div></div>';
         }
 
@@ -561,7 +561,7 @@ $page_scripts_extra = <<<'HTML'
     /* Cancelar una próxima cita (con confirmación en modal) */
     window.cancelarCitaPaciente = function (id) {
         var a = document.getElementById('cancelar-cita-confirm');
-        if (a) a.href = 'cancelar_cita_paciente.php?cita_id=' + encodeURIComponent(id);
+        if (a) a.href = (window.ECO_BASE || '') + 'api/cancelar_cita_paciente.php?cita_id=' + encodeURIComponent(id);
         if (typeof EcoModal !== 'undefined') EcoModal.open('eco-modal-cancelar-cita');
     };
 

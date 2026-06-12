@@ -5,8 +5,8 @@
  * de estudios (finalizados/firmados) y citas. Sin dependencias externas (EcoPdf).
  */
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/core/pdf_simple.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/core/pdf_simple.php';
 
 if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'paciente') {
     http_response_code(403);

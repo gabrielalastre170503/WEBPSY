@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 // Seguridad: solo el paciente dueño puede cancelar
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'paciente') {

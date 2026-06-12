@@ -251,7 +251,7 @@
                     e.stopPropagation();
                     if (!window.confirm('¿Eliminar este archivo?')) return;
                     var body = new URLSearchParams(); body.set('archivo_id', b.getAttribute('data-del-arch'));
-                    fetch('borrar_archivo_informe.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+                    fetch((window.ECO_BASE || '') + 'api/borrar_archivo_informe.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
                         .then(function (r) { return r.json(); })
                         .then(function (d) {
                             if (d && d.success) { ecoToast({ type: 'success', message: 'Archivo eliminado.' }); cargarImagenesInformeEco(informeId, puedeEditar); }
@@ -281,7 +281,7 @@
                 fd.set('informe_id', informeId);
                 fd.set('categoria', f.type === 'application/pdf' ? 'adjunto' : 'imagen');
                 fd.set('archivo', f);
-                return fetch('subir_archivo_informe.php', { method: 'POST', body: fd })
+                return fetch((window.ECO_BASE || '') + 'api/subir_archivo_informe.php', { method: 'POST', body: fd })
                     .then(function (r) { return r.json(); })
                     .then(function (d) {
                         if (d && d.success) { done++; }
@@ -415,7 +415,7 @@
             motivo = motivo.trim();
             if (motivo.length < 5) { ecoToast('El motivo es demasiado corto.', 'error'); return; }
             payload.set('motivo', motivo);
-            url = 'anular_informe.php';
+            url = (window.ECO_BASE || '') + 'api/anular_informe.php';
         }
 
         fetch(url, {

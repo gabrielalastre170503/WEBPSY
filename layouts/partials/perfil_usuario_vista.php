@@ -159,7 +159,7 @@ if (!isset($avatarInicial) || $avatarInicial === '') {
                 <li><i class="fa-solid fa-shield<?= !empty($dosFactorActivo) ? '-halved' : '' ?>"></i> 2FA: <?= !empty($dosFactorActivo) ? 'activada' : 'desactivada' ?>.</li>
             </ul>
             <?php if ($rol_usuario === 'paciente'): ?>
-            <a href="descargar_historial.php" class="perfil-action-link"><i class="fa-solid fa-download"></i> Descargar historial</a>
+            <a href="<?= eco_url('api/descargar_historial.php') ?>" class="perfil-action-link"><i class="fa-solid fa-download"></i> Descargar historial</a>
             <?php endif; ?>
         </div>
     </div>

@@ -83,11 +83,11 @@ ob_start();
         <button type="submit" class="btn-primary" style="padding:9px 16px;"><i class="fa-solid fa-filter"></i> Aplicar</button>
         <div style="flex:1;"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?formato=pdf&<?= $qs ?>"><i class="fa-solid fa-file-pdf" style="color:#b91c1c;"></i> PDF</a>
-            <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?r=resumen&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Resumen</a>
-            <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?r=tipos&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Por tipo</a>
+            <a class="btn-secondary" style="padding:9px 14px;" href="<?= eco_url('api/exportar_reporte.php') ?>?formato=pdf&<?= $qs ?>"><i class="fa-solid fa-file-pdf" style="color:#b91c1c;"></i> PDF</a>
+            <a class="btn-secondary" style="padding:9px 14px;" href="<?= eco_url('api/exportar_reporte.php') ?>?r=resumen&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Resumen</a>
+            <a class="btn-secondary" style="padding:9px 14px;" href="<?= eco_url('api/exportar_reporte.php') ?>?r=tipos&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Por tipo</a>
             <?php if (!$ecoId): ?>
-            <a class="btn-secondary" style="padding:9px 14px;" href="exportar_reporte.php?r=ecografistas&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Por ecografista</a>
+            <a class="btn-secondary" style="padding:9px 14px;" href="<?= eco_url('api/exportar_reporte.php') ?>?r=ecografistas&<?= $qs ?>"><i class="fa-solid fa-file-csv"></i> Por ecografista</a>
             <?php endif; ?>
         </div>
     </form>

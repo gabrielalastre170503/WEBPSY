@@ -7,9 +7,9 @@
  *   desde  = Y-m-d   hasta = Y-m-d            (default: mes actual)
  * Acceso: administrador o recepcionista.
  */
-require_once __DIR__ . '/lib/core/api.php';
-include 'conexion.php';
-require_once __DIR__ . '/lib/reportes/reportes.php';
+require_once __DIR__ . '/../lib/core/api.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/reportes/reportes.php';
 
 api_require_roles(['administrador', 'recepcionista', 'ecografista']);
 
@@ -23,8 +23,8 @@ if ($ecoId && $r === 'ecografistas') { $r = 'resumen'; }
 
 /* ── Formato PDF: reporte completo (resumen + desgloses) ── */
 if (($_GET['formato'] ?? '') === 'pdf') {
-    require_once __DIR__ . '/lib/core/pdf_simple.php';
-    require_once __DIR__ . '/lib/facturacion/facturacion.php';
+    require_once __DIR__ . '/../lib/core/pdf_simple.php';
+    require_once __DIR__ . '/../lib/facturacion/facturacion.php';
 
     $k       = eco_reporte_resumen($conex, $desde, $hasta, $ecoId);
     $tipos   = eco_reporte_por_tipo($conex, $desde, $hasta, $ecoId);

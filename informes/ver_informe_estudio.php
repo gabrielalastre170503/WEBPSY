@@ -730,7 +730,7 @@ $titulo_print = mb_strtoupper('Reporte Ecográfico ' . preg_replace('/^Ecograf[i
             <h3 class="ei-title"><i class="fa-solid fa-images"></i> Imágenes del estudio</h3>
             <?php if (!empty($archivos_img)): ?>
             <div class="ei-grid">
-                <?php foreach ($archivos_img as $a): $u = 'descargar_archivo_informe.php?id=' . (int)$a['id']; ?>
+                <?php foreach ($archivos_img as $a): $u = eco_url('api/descargar_archivo_informe.php') . '?id=' . (int)$a['id']; ?>
                     <a class="ei-item" href="<?php echo $u; ?>" data-img="<?php echo $u; ?>" target="_blank" rel="noopener">
                         <img src="<?php echo $u; ?>" alt="<?php echo htmlspecialchars($a['nombre_original'], ENT_QUOTES); ?>" loading="lazy">
                     </a>
@@ -740,7 +740,7 @@ $titulo_print = mb_strtoupper('Reporte Ecográfico ' . preg_replace('/^Ecograf[i
             <?php if (!empty($archivos_adj)): ?>
             <div class="ei-adjuntos">
                 <?php foreach ($archivos_adj as $a): ?>
-                    <a class="ei-adj" href="<?= eco_url('descargar_archivo_informe.php') ?>?id=<?php echo (int)$a['id']; ?>" target="_blank" rel="noopener">
+                    <a class="ei-adj" href="<?= eco_url('api/descargar_archivo_informe.php') ?>?id=<?php echo (int)$a['id']; ?>" target="_blank" rel="noopener">
                         <i class="fa-solid fa-file-pdf"></i> <?php echo htmlspecialchars($a['nombre_original']); ?>
                     </a>
                 <?php endforeach; ?>

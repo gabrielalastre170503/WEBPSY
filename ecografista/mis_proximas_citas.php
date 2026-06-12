@@ -154,7 +154,7 @@ function cancelarCitaEco(id, paciente) {
     var p = document.getElementById('cce-paciente');
     if (p) p.textContent = paciente || '—';
     var a = document.getElementById('cce-confirm');
-    if (a) a.href = 'cancelar_cita_ecografista.php?cita_id=' + encodeURIComponent(id);
+    if (a) a.href = (window.ECO_BASE || '') + 'api/cancelar_cita_ecografista.php?cita_id=' + encodeURIComponent(id);
     if (typeof EcoModal !== 'undefined') EcoModal.open('eco-modal-cancelar-cita-eco');
 }
 </script>

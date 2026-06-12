@@ -5,9 +5,9 @@
  * Los binarios viven fuera del alcance HTTP directo; este handler es la unica via.
  */
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/informes/informes.php';
-require_once __DIR__ . '/lib/informes/archivos.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/informes/informes.php';
+require_once __DIR__ . '/../lib/informes/archivos.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     http_response_code(403);
