@@ -22,12 +22,18 @@ if (!function_exists('eco_base_url')) {
         $scheme = $https ? 'https' : 'http';
         $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
-        // Subcarpeta: a partir de la ruta del script, sube hasta la raíz del proyecto.
-        $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
-        $dir    = rtrim(str_replace('/lib', '', dirname($script)), '/');
-        // Si el script está en la raíz del proyecto, dirname ya da la subcarpeta.
-        if ($dir === '' || $dir === '.') {
-            $dir = '';
+        // Subcarpeta del proyecto: reutiliza eco_url() (robusta, derivada de la raíz
+        // del proyecto vía DOCUMENT_ROOT) cuando está disponible — así no se rompe
+        // según la profundidad del script (p.ej. publico/reenviar_verificacion.php).
+        // Si no existe (CLI sin bootstrap), cae al método anterior.
+        if (function_exists('eco_url')) {
+            $dir = rtrim(eco_url(''), '/');
+        } else {
+            $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+            $dir    = rtrim(str_replace('/lib', '', dirname($script)), '/');
+            if ($dir === '' || $dir === '.') {
+                $dir = '';
+            }
         }
         return $scheme . '://' . $host . $dir;
     }
