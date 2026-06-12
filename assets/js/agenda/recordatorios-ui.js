@@ -37,7 +37,7 @@
         var prev = btn.innerHTML; btn.disabled=true; runBtn.disabled=true; dryBtn.disabled=true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando…';
         var body = new URLSearchParams(); if(dry) body.set('dry','1');
-        fetch('cron_recordatorios.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()})
+        fetch((window.ECO_BASE || '') + 'cli/cron_recordatorios.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()})
             .then(function(r){return r.json();})
             .then(function(d){
                 runBtn.disabled=false; dryBtn.disabled=false; btn.innerHTML=prev;

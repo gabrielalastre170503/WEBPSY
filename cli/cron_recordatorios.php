@@ -13,16 +13,16 @@
 
 $cli = (PHP_SAPI === 'cli');
 
-require_once __DIR__ . '/config/env_loader.php';
-eco_load_env(__DIR__ . '/.env');
+require_once __DIR__ . '/../config/env_loader.php';
+eco_load_env(__DIR__ . '/../.env');
 
 if (!$cli) {
     // En web, bootstrap.php (auto_prepend) ya cargo env + CSRF; arrancamos sesion.
     if (session_status() === PHP_SESSION_NONE) session_start();
 }
 
-include __DIR__ . '/conexion.php';
-require_once __DIR__ . '/lib/comunicaciones/recordatorios.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/comunicaciones/recordatorios.php';
 
 /* ── Autorizacion ────────────────────────────────────────────────────── */
 $cronKey    = (string) eco_env('ECO_CRON_KEY', '');
