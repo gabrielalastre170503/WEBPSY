@@ -193,7 +193,7 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<form action="solicitar_cita_directa.php" method="post" id="form-solicitar-cita" data-preselect-eco="<?= $pre_ecografista_id ?>">
+<form action="<?= eco_url('api/solicitar_cita_directa.php') ?>" method="post" id="form-solicitar-cita" data-preselect-eco="<?= $pre_ecografista_id ?>">
 
     <div class="sol-stepper" id="sol-stepper">
         <div class="sol-step is-current" data-step="0">

@@ -182,7 +182,7 @@
             if (actions) actions.hidden = false;
             if (hint) hint.hidden = true;
             if (btnReset) {
-                btnReset.href = 'reset_password.php?id=' + p.id;
+                btnReset.href = (window.ECO_BASE || '') + 'api/reset_password.php?id=' + p.id;
                 btnReset.onclick = function () {
                     return confirm('¿Restablecer la contraseña de este usuario?');
                 };

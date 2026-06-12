@@ -242,7 +242,7 @@
                     submit.disabled = true;
                     submit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando…';
                 }
-                fetch('guardar_cita_directa.php', { method: 'POST', body: new FormData(form) })
+                fetch((window.ECO_BASE || '') + 'api/guardar_cita_directa.php', { method: 'POST', body: new FormData(form) })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (submit) {

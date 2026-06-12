@@ -1,7 +1,7 @@
 <?php
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/citas/citas.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/citas/citas.php';
 
 // Seguridad: Solo pacientes pueden solicitar
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'paciente') {
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Cargo inicial: el "Total $X" acordado en el resumen de servicios (incluye todo
     // el bundle); si no hay total en el texto, el precio del estudio seleccionado.
-    require_once __DIR__ . '/lib/facturacion/facturacion.php';
+    require_once __DIR__ . '/../lib/facturacion/facturacion.php';
     $monto_total = eco_total_desde_texto($motivo_principal);
     if ($monto_total === null && $tipo_ecografia_id) {
         if ($pst = $conex->prepare("SELECT precio FROM tipos_ecografias WHERE id = ?")) {

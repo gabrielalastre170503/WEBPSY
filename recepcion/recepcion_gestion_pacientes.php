@@ -161,7 +161,7 @@ window.abrirModalGestionarPaciente = function (id) {
             var err = document.getElementById('eco-crear-paciente-error');
             if (err) { err.style.display = 'none'; err.textContent = ''; }
             if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando…'; }
-            fetch('guardar_paciente.php', { method: 'POST', body: new FormData(formEco) })
+            fetch((window.ECO_BASE || '') + 'api/guardar_paciente.php', { method: 'POST', body: new FormData(formEco) })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (data.success) {

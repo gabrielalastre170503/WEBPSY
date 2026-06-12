@@ -138,7 +138,7 @@ ob_start();
                 <button type="button" class="disp-quick-btn disp-quick-btn--ghost" data-template="limpiar"><i class="fa-solid fa-eraser"></i> Limpiar</button>
             </div>
 
-            <form action="guardar_disponibilidad.php" method="POST" class="disp-schedule-form" id="form-horario-recurrente">
+            <form action="<?= eco_url('api/guardar_disponibilidad.php') ?>" method="POST" class="disp-schedule-form" id="form-horario-recurrente">
                 <?= csrf_field() ?>
                 <input type="hidden" name="accion" value="guardar_recurrente">
 

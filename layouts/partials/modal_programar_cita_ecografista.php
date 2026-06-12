@@ -27,7 +27,7 @@ $eco_prog_tipos_rows = eco_catalogo_tipos_activos($conex);
                 <button type="button" class="eco-modal__close" onclick="window.cerrarProgramarCitaEco && cerrarProgramarCitaEco()" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
                 <h4 class="eco-modal__title">Detalle de la cita</h4>
                 <div id="eco-prog-cita-error" style="display:none;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#b91c1c;" role="alert"></div>
-                <form id="eco-form-programar-cita-eco" action="guardar_cita_directa.php" method="post" novalidate>
+                <form id="eco-form-programar-cita-eco" action="<?= eco_url('api/guardar_cita_directa.php') ?>" method="post" novalidate>
                     <input type="hidden" name="paciente_id" id="eco-prog-paciente-id" value="">
                     <div class="eco-field">
                         <label for="eco-prog-tipo-eco">Tipo de ecografía</label>

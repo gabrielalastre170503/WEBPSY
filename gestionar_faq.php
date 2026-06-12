@@ -57,7 +57,7 @@ ob_start();
             </div>
         </div>
         <div class="cw-panel__body">
-            <form action="acciones_contenido.php" method="POST" class="cw-form">
+            <form action="<?= eco_url('api/acciones_contenido.php') ?>" method="POST" class="cw-form">
                 <input type="hidden" name="tipo" value="faq">
                 <div class="cw-field">
                     <label for="pregunta"><i class="fa-solid fa-circle-question"></i> Pregunta</label>

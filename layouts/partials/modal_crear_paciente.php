@@ -23,7 +23,7 @@ $rol_modal = $_SESSION['rol'] ?? '';
                 <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
                 <h4 class="eco-modal__title">Datos del paciente</h4>
                 <div id="eco-crear-paciente-error" style="display:none;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#b91c1c;" role="alert"></div>
-                <form id="form-crear-paciente-eco" action="guardar_paciente.php" method="post" novalidate>
+                <form id="form-crear-paciente-eco" action="<?= eco_url('api/guardar_paciente.php') ?>" method="post" novalidate>
                     <?= csrf_field() ?>
                     <div class="eco-field">
                         <label for="nombre_completo_eco">Nombre completo</label>

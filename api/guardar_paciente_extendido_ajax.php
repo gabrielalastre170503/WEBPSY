@@ -1,12 +1,15 @@
 <?php
+/**
+ * Alta paciente desde recepción con contraseña elegida por el usuario (AJAX JSON).
+ */
 session_start();
-require_once __DIR__ . '/lib/core/api.php';
-include 'conexion.php';
+require_once __DIR__ . '/../lib/core/api.php';
+include __DIR__ . '/../conexion.php';
 
 api_json();
 $response = ['success' => false, 'message' => ''];
 
-api_require_roles(['administrador']);
+api_require_roles(['recepcionista', 'administrador']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode($response);
@@ -14,13 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 api_require_csrf();
-
-$rol = trim((string)($_POST['rol'] ?? ''));
-if (!in_array($rol, ['ecografista', 'recepcionista'], true)) {
-    $response['message'] = 'Rol no válido.';
-    echo json_encode($response);
-    exit;
-}
 
 $nombre_completo  = trim((string)($_POST['nombre_completo'] ?? ''));
 $fecha_nacimiento = (string)($_POST['fecha_nacimiento'] ?? '');
@@ -57,6 +53,7 @@ if (strlen($contrasena) < 8 || !preg_match('/[A-Z]/', $contrasena) || !preg_matc
 }
 
 $cedula = $cedula_tipo . $cedula_numero;
+$creado_por_id = (int)$_SESSION['usuario_id'];
 
 try {
     $fecha_nac = new DateTime($fecha_nacimiento);
@@ -79,22 +76,23 @@ if ($check->get_result()->num_rows > 0) {
 $check->close();
 
 $contrasena_hasheada = password_hash($contrasena, PASSWORD_DEFAULT);
+$rol = 'paciente';
 $estado = 'aprobado';
 
-$email_verificado = 1; // creado por el administrador → cuenta de confianza
-$insert = $conex->prepare('INSERT INTO usuarios (nombre_completo, fecha_nacimiento, cedula, direccion, telefono, correo, contrasena, rol, estado, email_verificado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-$insert->bind_param('sssssssssi', $nombre_completo, $fecha_nacimiento, $cedula, $direccion, $telefono, $correo, $contrasena_hasheada, $rol, $estado, $email_verificado);
+$email_verificado = 1; // creado por recepción → cuenta de confianza
+$insert = $conex->prepare('INSERT INTO usuarios (nombre_completo, fecha_nacimiento, cedula, direccion, telefono, correo, contrasena, rol, estado, email_verificado, creado_por_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+$insert->bind_param('sssssssssii', $nombre_completo, $fecha_nacimiento, $cedula, $direccion, $telefono, $correo, $contrasena_hasheada, $rol, $estado, $email_verificado, $creado_por_id);
 
 if ($insert->execute()) {
     $response['success'] = true;
-    $response['message'] = 'Cuenta creada correctamente.';
+    $response['message'] = 'Paciente registrado.';
     $response['nombre'] = $nombre_completo;
 } else {
     // FIX SEGURIDAD: log interno + mensaje genérico; detecta duplicado (correo/cédula).
-    error_log('registrar_personal_admin: ' . $insert->error);
+    error_log('guardar_paciente_extendido: ' . $insert->error);
     $response['message'] = ($insert->errno === 1062)
         ? 'El correo o la cédula ya están registrados.'
-        : 'No se pudo guardar el registro. Inténtalo de nuevo.';
+        : 'No se pudo guardar el paciente. Inténtalo de nuevo.';
 }
 
 $insert->close();

@@ -103,7 +103,7 @@ if (!isset($avatarInicial) || $avatarInicial === '') {
             <ul class="perfil-checklist">
                 <li><i class="fa-solid fa-check-circle"></i> Evita compartir tus datos.</li>
             </ul>
-            <form action="actualizar_perfil.php" method="POST" class="perfil-form">
+            <form action="<?= eco_url('api/actualizar_perfil.php') ?>" method="POST" class="perfil-form">
                 <?= csrf_field() ?>
                 <input type="hidden" name="accion" value="cambiar_contrasena">
                 <div class="form-group">
@@ -134,7 +134,7 @@ if (!isset($avatarInicial) || $avatarInicial === '') {
                     Añade una capa extra de seguridad: un código de un solo uso enviado a tu correo en cada inicio de sesión.
                 <?php endif; ?>
             </p>
-            <form action="actualizar_perfil.php" method="POST">
+            <form action="<?= eco_url('api/actualizar_perfil.php') ?>" method="POST">
                 <?= csrf_field() ?>
                 <input type="hidden" name="accion" value="toggle_2fa">
                 <input type="hidden" name="activar" value="<?= !empty($dosFactorActivo) ? '0' : '1' ?>">

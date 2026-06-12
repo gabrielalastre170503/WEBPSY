@@ -1,7 +1,7 @@
 <?php
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/seguridad/seguridad.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/seguridad/seguridad.php';
 
 // Seguridad: El usuario debe estar logueado
 if (!isset($_SESSION['usuario_id'])) {

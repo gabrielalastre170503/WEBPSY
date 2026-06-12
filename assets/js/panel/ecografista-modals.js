@@ -1604,7 +1604,7 @@
         var fd = new FormData(form);
         fd.set('accion', accion);
 
-        fetch('guardar_informe_estudio.php', { method: 'POST', body: fd })
+        fetch((window.ECO_BASE || '') + 'api/guardar_informe_estudio.php', { method: 'POST', body: fd })
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (feedbackEl) feedbackEl.style.display = 'block';
@@ -2089,7 +2089,7 @@
                 setError('eco-prog-cita-error', '');
                 var btnProg = byId('eco-prog-submit');
                 if (btnProg) btnProg.disabled = true;
-                fetch('guardar_cita_directa.php', { method: 'POST', body: new FormData(progCitaForm) })
+                fetch((window.ECO_BASE || '') + 'api/guardar_cita_directa.php', { method: 'POST', body: new FormData(progCitaForm) })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (btnProg) btnProg.disabled = false;

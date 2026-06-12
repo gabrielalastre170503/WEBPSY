@@ -122,7 +122,7 @@ ob_start();
     <!-- Formulario -->
     <div class="card">
         <h3 class="ah-card-title"><i class="fa-solid fa-paper-plane"></i> Enviar un mensaje</h3>
-        <form action="enviar_ayuda.php" method="post" id="ah-form">
+        <form action="<?= eco_url('api/enviar_ayuda.php') ?>" method="post" id="ah-form">
             <div class="ah-field">
                 <label for="asunto_ayuda">Asunto</label>
                 <div class="ah-chips" id="ah-chips">

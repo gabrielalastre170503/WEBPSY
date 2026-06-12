@@ -122,7 +122,7 @@ $resultado = $conex->query($sql);
                 <td><?php echo $cita['fecha_cita'] ? htmlspecialchars(date('d/m/Y h:i A', strtotime($cita['fecha_cita']))) : 'N/A'; ?></td>
                 <td><span class="status-badge status-<?php echo htmlspecialchars($cita['estado']); ?>"><?php echo htmlspecialchars(ucfirst($cita['estado'])); ?></span></td>
                 <td class="action-links">
-                    <form method="post" action="borrar_cita_admin.php" style="display:inline"
+                    <form method="post" action="<?= eco_url('api/borrar_cita_admin.php') ?>" style="display:inline"
                           onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta cita permanentemente?');">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?php echo (int)$cita['id']; ?>">

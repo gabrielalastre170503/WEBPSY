@@ -47,7 +47,7 @@ ob_start();
 <div style="display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:18px;align-items:start;">
     <div class="card" style="padding:22px;">
         <h3 style="margin:0 0 16px;font-size:16px;color:var(--text-primary);"><i class="fa-solid fa-plus" style="color:var(--accent);margin-right:8px;"></i> Añadir estudio</h3>
-        <form action="acciones_contenido.php" method="post" style="display:flex;flex-direction:column;gap:14px;">
+        <form action="<?= eco_url('api/acciones_contenido.php') ?>" method="post" style="display:flex;flex-direction:column;gap:14px;">
             <input type="hidden" name="tipo" value="eco_tipo">
             <input type="hidden" name="accion" value="agregar">
             <div>

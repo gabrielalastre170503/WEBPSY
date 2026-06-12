@@ -199,7 +199,7 @@
                     btn.disabled = true;
                     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando…';
                 }
-                fetch('guardar_cita_directa.php', { method: 'POST', body: new FormData(fProg) })
+                fetch((window.ECO_BASE || '') + 'api/guardar_cita_directa.php', { method: 'POST', body: new FormData(fProg) })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (btn) {
@@ -245,7 +245,7 @@
                     btn.disabled = true;
                     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando…';
                 }
-                fetch('guardar_paciente_extendido_ajax.php', { method: 'POST', body: new FormData(fExt) })
+                fetch((window.ECO_BASE || '') + 'api/guardar_paciente_extendido_ajax.php', { method: 'POST', body: new FormData(fExt) })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (btn) {

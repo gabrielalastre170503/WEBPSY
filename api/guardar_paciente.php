@@ -1,8 +1,8 @@
 <?php
 session_start();
-require_once __DIR__ . '/lib/core/api.php';
-include 'conexion.php';
-require_once __DIR__ . '/lib/seguridad/seguridad.php';
+require_once __DIR__ . '/../lib/core/api.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/seguridad/seguridad.php';
 
 api_json();
 $response = ['success' => false, 'message' => 'Ocurrio un error inesperado.'];

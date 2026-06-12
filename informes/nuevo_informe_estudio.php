@@ -430,7 +430,7 @@ $datos_iniciales_por_tipo = [
                 </div>
             </div>
 
-            <form method="POST" action="guardar_informe_estudio.php" class="form-estudio">
+            <form method="POST" action="<?= eco_url('api/guardar_informe_estudio.php') ?>" class="form-estudio">
                 <?= csrf_field() ?>
                 <input type="hidden" name="paciente_id"       value="<?php echo $paciente_id; ?>">
                 <input type="hidden" name="tipo_ecografia_id" value="<?php echo (int)$tipo['id']; ?>">

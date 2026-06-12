@@ -210,7 +210,7 @@ $page_scripts_extra = <<<'HTML'
             var btn = form.querySelector('button[type="submit"]');
             var fd = new FormData(form);
             if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
-            fetch('guardar_cita.php', { method: 'POST', body: fd })
+            fetch((window.ECO_BASE || '') + 'api/guardar_cita.php', { method: 'POST', body: fd })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (data.success) {

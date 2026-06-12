@@ -64,7 +64,7 @@ $staff_form_fields = static function (string $pfx, string $rol): void {
                 <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
                 <h4 class="eco-modal__title">Datos del profesional</h4>
                 <div id="staff-eco-error" class="staff-modal-alert" hidden role="alert"></div>
-                <form id="staff-form-ecografista" class="staff-register-form" data-endpoint="registrar_personal_admin_ajax.php" novalidate>
+                <form id="staff-form-ecografista" class="staff-register-form" data-endpoint="<?= eco_url('api/registrar_personal_admin_ajax.php') ?>" novalidate>
                     <?php $staff_form_fields('staff-eco', 'ecografista'); ?>
                     <div class="eco-modal__footer">
                         <button type="button" class="btn-secondary" data-eco-modal-close>Cancelar</button>
@@ -89,7 +89,7 @@ $staff_form_fields = static function (string $pfx, string $rol): void {
                 <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
                 <h4 class="eco-modal__title">Datos del personal</h4>
                 <div id="staff-rx-error" class="staff-modal-alert" hidden role="alert"></div>
-                <form id="staff-form-recepcionista" class="staff-register-form" data-endpoint="registrar_personal_admin_ajax.php" novalidate>
+                <form id="staff-form-recepcionista" class="staff-register-form" data-endpoint="<?= eco_url('api/registrar_personal_admin_ajax.php') ?>" novalidate>
                     <?php $staff_form_fields('staff-rx', 'recepcionista'); ?>
                     <div class="eco-modal__footer">
                         <button type="button" class="btn-secondary" data-eco-modal-close>Cancelar</button>
@@ -114,7 +114,7 @@ $staff_form_fields = static function (string $pfx, string $rol): void {
                 <button type="button" class="eco-modal__close" data-eco-modal-close aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
                 <h4 class="eco-modal__title">Datos del paciente</h4>
                 <div id="staff-pat-error" class="staff-modal-alert" hidden role="alert"></div>
-                <form id="staff-form-paciente" class="staff-register-form" data-endpoint="guardar_paciente_extendido_ajax.php" novalidate>
+                <form id="staff-form-paciente" class="staff-register-form" data-endpoint="<?= eco_url('api/guardar_paciente_extendido_ajax.php') ?>" novalidate>
                     <?php $staff_form_fields('staff-pat', 'paciente'); ?>
                     <div class="eco-modal__footer">
                         <button type="button" class="btn-secondary" data-eco-modal-close>Cancelar</button>

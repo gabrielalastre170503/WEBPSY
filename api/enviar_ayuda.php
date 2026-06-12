@@ -1,7 +1,7 @@
 <?php
 session_start();
-require 'conexion.php';
-require 'enviar_correo.php';
+require __DIR__ . '/../conexion.php';
+require __DIR__ . '/../enviar_correo.php';
 
 // Seguridad: solo pacientes pueden enviar mensajes de ayuda
 if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'paciente') {
