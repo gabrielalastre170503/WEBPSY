@@ -13,7 +13,7 @@
 
 $cli = (PHP_SAPI === 'cli');
 
-require_once __DIR__ . '/env_loader.php';
+require_once __DIR__ . '/config/env_loader.php';
 eco_load_env(__DIR__ . '/.env');
 
 if (!$cli) {

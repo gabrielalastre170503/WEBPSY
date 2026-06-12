@@ -21,7 +21,7 @@ if (defined('ECO_BOOTSTRAP')) {
 }
 define('ECO_BOOTSTRAP', 1);
 
-require_once __DIR__ . '/env_loader.php';
+require_once __DIR__ . '/config/env_loader.php';
 eco_load_env(__DIR__ . '/.env');
 
 /* ── 1. Endurecimiento de la sesión ───────────────────────────────── */

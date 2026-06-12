@@ -1,7 +1,7 @@
 <?php
 session_start();
 require __DIR__ . '/../conexion.php';
-require __DIR__ . '/../enviar_correo.php';
+require __DIR__ . '/../lib/comunicaciones/enviar_correo.php';
 
 // Seguridad: solo pacientes pueden enviar mensajes de ayuda
 if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'paciente') {
@@ -36,7 +36,7 @@ if ($stmt = $conex->prepare('SELECT correo FROM usuarios WHERE id = ?')) {
 }
 
 // Configuración SMTP
-$cfg = @include __DIR__ . '/config_correo.php';
+$cfg = @include __DIR__ . '/../config/config_correo.php';
 if (!is_array($cfg) || empty($cfg['smtp_pass']) || $cfg['smtp_pass'] === 'PEGA_AQUI_TU_APP_PASSWORD') {
     error_log('[ayuda] config_correo.php sin contraseña de aplicación configurada.');
     header('Location: ' . eco_url('ayuda') . '?error=config_correo');

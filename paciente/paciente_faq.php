@@ -1,7 +1,7 @@
 <?php
 session_start();
 include __DIR__ . '/../conexion.php';
-include __DIR__ . '/../data_asistente.php';
+include __DIR__ . '/../lib/data_asistente.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
