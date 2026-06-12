@@ -119,7 +119,7 @@ $page_scripts_extra  = $page_scripts_extra  ?? '';
                                 Tu correo aún no está verificado. Verifícalo para asegurar tu cuenta y recibir notificaciones.
                             <?php endif; ?>
                         </span>
-                        <a href="reenviar_verificacion.php" class="eco-verif-banner__btn">
+                        <a href="<?= eco_url('publico/reenviar_verificacion.php') ?>" class="eco-verif-banner__btn">
                             <i class="fa-solid fa-paper-plane"></i> Reenviar correo
                         </a>
                     </div>

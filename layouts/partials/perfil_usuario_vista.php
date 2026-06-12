@@ -154,7 +154,7 @@ if (!isset($avatarInicial) || $avatarInicial === '') {
                 <?php if (!empty($correoVerificado)): ?>
                     <li><i class="fa-solid fa-envelope-circle-check" style="color:#15803d;"></i> Correo verificado.</li>
                 <?php else: ?>
-                    <li><i class="fa-solid fa-envelope" style="color:#d97706;"></i> Correo sin verificar — <a href="reenviar_verificacion.php" style="color:var(--accent,#02b1f4);font-weight:600;">reenviar enlace</a>.</li>
+                    <li><i class="fa-solid fa-envelope" style="color:#d97706;"></i> Correo sin verificar — <a href="<?= eco_url('publico/reenviar_verificacion.php') ?>" style="color:var(--accent,#02b1f4);font-weight:600;">reenviar enlace</a>.</li>
                 <?php endif; ?>
                 <li><i class="fa-solid fa-shield<?= !empty($dosFactorActivo) ? '-halved' : '' ?>"></i> 2FA: <?= !empty($dosFactorActivo) ? 'activada' : 'desactivada' ?>.</li>
             </ul>

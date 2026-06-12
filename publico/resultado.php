@@ -6,10 +6,10 @@
  * adjuntos de su estudio. El acceso lo concede un token de un solo parametro (?t)
  * con caducidad y tope de aperturas; cada carga consume una apertura.
  */
-include 'conexion.php';
-require_once __DIR__ . '/lib/informes/archivos.php';
-require_once __DIR__ . '/lib/core/tokens.php';
-require_once __DIR__ . '/lib/seguridad/seguridad.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/informes/archivos.php';
+require_once __DIR__ . '/../lib/core/tokens.php';
+require_once __DIR__ . '/../lib/seguridad/seguridad.php';
 
 $raw = isset($_GET['t']) ? (string)$_GET['t'] : '';
 $est = eco_token_abrir($conex, $raw, eco_client_ip());

@@ -52,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             if ($insert_stmt->execute()) {
                 // Correo de verificación (no bloquea el registro si el envío falla)
-                $link = eco_base_url() . '/verificar_correo.php?token=' . urlencode($token_verif);
+                $link = eco_base_url() . '/publico/verificar_correo.php?token=' . urlencode($token_verif);
                 $cuerpo = "Hola {$nombre_completo},\n\n"
                     . "Gracias por registrarte en EcoMadelleine. Para verificar tu correo y activar todas las funciones de tu cuenta, abre este enlace:\n\n"
                     . $link . "\n\n"

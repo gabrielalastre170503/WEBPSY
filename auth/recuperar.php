@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $upd->execute();
             $upd->close();
 
-            $link = eco_base_url() . '/restablecer_password.php?token=' . urlencode($token);
+            $link = eco_base_url() . '/publico/restablecer_password.php?token=' . urlencode($token);
             $cuerpo = "Hola {$u['nombre_completo']},\n\n"
                 . "Recibimos una solicitud para restablecer tu contraseña en EcoMadelleine. "
                 . "Para crear una nueva, abre este enlace:\n\n"

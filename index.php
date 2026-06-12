@@ -5,7 +5,7 @@
     while ($fila = $resultado->fetch_assoc()) {
         $contenido_web[$fila['clave']] = $fila['valor'];
     }
-    include 'send.php';
+    include __DIR__ . '/publico/send.php';
 
     /* ───────────────────────────────────────────────────────────────
        MÉTRICAS REALES desde la base de datos

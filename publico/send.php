@@ -3,7 +3,7 @@ if (!isset($_POST['send'])) {
     return;
 }
 
-include "conexion.php";
+include __DIR__ . "/../conexion.php";
 
 $nombre        = trim($_POST['name'] ?? '');
 $fecha_nac     = trim($_POST['fecha_nacimiento'] ?? '');

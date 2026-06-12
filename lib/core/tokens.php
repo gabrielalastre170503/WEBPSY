@@ -192,6 +192,6 @@ if (!function_exists('eco_token_hash')) {
         $scheme = $https ? 'https' : 'http';
         $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
         $dir  = rtrim(str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/'))), '/');
-        return $scheme . '://' . $host . $dir . '/resultado.php?t=' . $raw;
+        return $scheme . '://' . $host . $dir . '/publico/resultado.php?t=' . $raw;
     }
 }

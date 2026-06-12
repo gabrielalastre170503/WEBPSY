@@ -4,7 +4,7 @@
  * Marca usuarios.email_verificado = 1 y limpia el token.
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 $ok = false;
 $titulo = 'Verificación de correo';

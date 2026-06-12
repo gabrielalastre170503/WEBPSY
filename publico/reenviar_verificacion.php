@@ -4,8 +4,8 @@
  * autenticado que aún no ha verificado su cuenta (Fase 1).
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/comunicaciones/correo_app.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/comunicaciones/correo_app.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -39,7 +39,7 @@ $upd->bind_param('ssi', $token, $expira, $uid);
 $upd->execute();
 $upd->close();
 
-$link = eco_base_url() . '/verificar_correo.php?token=' . urlencode($token);
+$link = eco_base_url() . '/publico/verificar_correo.php?token=' . urlencode($token);
 $cuerpo = "Hola {$u['nombre_completo']},\n\n"
     . "Para verificar tu correo en EcoMadelleine, abre este enlace:\n\n"
     . $link . "\n\n"
