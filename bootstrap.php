@@ -175,7 +175,17 @@ if (!function_exists('eco_url')) {
     {
         static $base = null;
         if ($base === null) {
-            $base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+            // La base es la carpeta del proyecto relativa al DOCUMENT_ROOT, derivada
+            // de la ubicacion de bootstrap.php (__DIR__ = raiz del proyecto), NO del
+            // SCRIPT_NAME: asi no se rompe segun la profundidad del script en
+            // ejecucion (endpoints en api/, paginas en subcarpetas accedidas directo).
+            $docroot = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+            $appdir  = rtrim(str_replace('\\', '/', __DIR__), '/');
+            if ($docroot !== '' && stripos($appdir, $docroot) === 0) {
+                $base = substr($appdir, strlen($docroot));
+            } else {
+                $base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+            }
         }
         if ($path === '') {
             return $base !== '' ? $base . '/' : '/';
