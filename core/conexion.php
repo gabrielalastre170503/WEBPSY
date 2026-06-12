@@ -11,7 +11,7 @@
  */
 
 // --- Credenciales: se leen del .env (con fallback a XAMPP en desarrollo) ---
-require_once __DIR__ . '/config/env_loader.php';
+require_once __DIR__ . '/../config/env_loader.php';
 eco_load_env(__DIR__ . '/.env');
 
 // Zona horaria del sistema (Venezuela, UTC-04:00). Se fija en PHP y, mas abajo,

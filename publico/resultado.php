@@ -6,7 +6,7 @@
  * adjuntos de su estudio. El acceso lo concede un token de un solo parametro (?t)
  * con caducidad y tope de aperturas; cada carga consume una apertura.
  */
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/informes/archivos.php';
 require_once __DIR__ . '/../lib/core/tokens.php';
 require_once __DIR__ . '/../lib/seguridad/seguridad.php';

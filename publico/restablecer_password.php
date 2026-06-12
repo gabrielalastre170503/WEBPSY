@@ -3,7 +3,7 @@
  * restablecer_password.php — Define una nueva contraseña a partir del token (Fase 1).
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/seguridad/seguridad.php';
 
 $error = '';

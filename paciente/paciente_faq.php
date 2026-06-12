@@ -1,6 +1,6 @@
 <?php
 session_start();
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 include __DIR__ . '/../lib/data_asistente.php';
 
 if (!isset($_SESSION['usuario_id'])) {

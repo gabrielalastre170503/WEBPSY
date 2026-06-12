@@ -6,7 +6,7 @@
  * Ejecutar UNA SOLA VEZ:
  *   http://localhost/Sistema_EcoMadelleineV1/database/seed_musculo_subtipos.php
  */
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 /* Schema genérico reutilizable por todas las articulaciones */
 function schema_articulacion(string $articulacion): array

@@ -7,7 +7,7 @@
  * (scopeado a SUS propias citas — no ve ingresos globales ni otros ecografistas).
  */
 session_start();
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/reportes/reportes.php';
 require_once __DIR__ . '/../lib/facturacion/facturacion.php';
 

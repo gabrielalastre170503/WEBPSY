@@ -1,7 +1,7 @@
 <?php
 date_default_timezone_set('America/Caracas');
 session_start();
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));

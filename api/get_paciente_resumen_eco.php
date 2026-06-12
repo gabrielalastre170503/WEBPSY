@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../lib/core/api.php';
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 api_json();
 

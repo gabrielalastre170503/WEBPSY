@@ -3,7 +3,7 @@
  * Ejecutar UNA SOLA VEZ para registrar/actualizar el esquema de Ecografía Abdominal Total.
  * Acceder desde: http://localhost/Sistema_EcoMadelleineV1/database/seed_schema_abd_total.php
  */
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 $schema = [
     'version'   => 1,

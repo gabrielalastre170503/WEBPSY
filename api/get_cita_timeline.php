@@ -7,7 +7,7 @@
  * Acceso segun rol: admin/recep cualquiera; ecografista y paciente solo las suyas.
  */
 require_once __DIR__ . '/../lib/core/api.php';
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/citas/citas.php';
 
 api_json();

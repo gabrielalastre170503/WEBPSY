@@ -4,7 +4,7 @@
  * Requiere $_SESSION['2fa_pending'] (creado en login.php tras validar la contraseña).
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/comunicaciones/correo_app.php';
 
 if (empty($_SESSION['2fa_pending']) || !is_array($_SESSION['2fa_pending'])) {

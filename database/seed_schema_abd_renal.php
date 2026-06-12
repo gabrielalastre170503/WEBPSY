@@ -3,7 +3,7 @@
  * Ejecutar UNA SOLA VEZ para subir el esquema de Ecografía Abdominal/Renal (id=4).
  * Acceder desde: http://localhost/Sistema_EcoMadelleineV1/database/seed_schema_abd_renal.php
  */
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 $schema = [
     'version' => 1,

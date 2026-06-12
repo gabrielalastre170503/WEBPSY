@@ -1,6 +1,6 @@
 <?php
 session_start();
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/citas/citas.php';
 
 // Seguridad

@@ -1,6 +1,6 @@
 <?php
 session_start();
-require __DIR__ . '/../conexion.php';
+require __DIR__ . '/../core/conexion.php';
 require __DIR__ . '/../lib/comunicaciones/enviar_correo.php';
 
 // Seguridad: solo pacientes pueden enviar mensajes de ayuda

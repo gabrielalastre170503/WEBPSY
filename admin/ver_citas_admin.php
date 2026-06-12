@@ -1,6 +1,6 @@
 ﻿<?php
 session_start();
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 // Seguridad: Solo los administradores pueden acceder a esta página
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] != 'administrador') {

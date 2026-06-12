@@ -3,7 +3,7 @@
  * Lista (JSON) los archivos de un informe. Acceso: autor/admin o paciente dueno.
  */
 require_once __DIR__ . '/../lib/core/api.php';
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/informes/informes.php';
 require_once __DIR__ . '/../lib/informes/archivos.php';
 

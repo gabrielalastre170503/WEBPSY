@@ -14,7 +14,7 @@
  * fecha, huella, integro/valido).
  */
 session_start();
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/informes/firma.php';
 
 $informe_id = isset($_GET['informe_id']) ? (int)$_GET['informe_id'] : 0;

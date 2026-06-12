@@ -4,7 +4,7 @@
  * autenticado que aún no ha verificado su cuenta (Fase 1).
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/comunicaciones/correo_app.php';
 
 if (!isset($_SESSION['usuario_id'])) {

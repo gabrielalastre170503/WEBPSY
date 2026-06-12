@@ -1,5 +1,5 @@
 <?php
-    include 'conexion.php';
+    include 'core/conexion.php';
     $contenido_web = [];
     $resultado = $conex->query("SELECT clave, valor FROM contenido_web");
     while ($fila = $resultado->fetch_assoc()) {

@@ -9,7 +9,7 @@
  *   php database/migrations/2026_fase3b_rebackfill_montos.php
  */
 
-require __DIR__ . '/../../conexion.php';
+require __DIR__ . '/../../core/conexion.php';
 require __DIR__ . '/../../lib/facturacion/facturacion.php';
 
 $res = $conex->query("

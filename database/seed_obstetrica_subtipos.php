@@ -5,7 +5,7 @@
  *   • Ecografía Obstétrica II y III Trimestre
  * Acceder desde: http://localhost/Sistema_EcoMadelleineV1/database/seed_obstetrica_subtipos.php
  */
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 /* Encabezado + Antecedentes comunes a ambos sub-tipos */
 $encabezado_paciente = [

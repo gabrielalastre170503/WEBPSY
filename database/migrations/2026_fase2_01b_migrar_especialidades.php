@@ -7,7 +7,7 @@
  *   php database/migrations/2026_fase2_01b_migrar_especialidades.php
  */
 
-require __DIR__ . '/../../conexion.php';
+require __DIR__ . '/../../core/conexion.php';
 require __DIR__ . '/../../lib/personal/especialidades.php';
 
 // Comprueba que la columna aun exista (si ya se dropeo, no hay nada que migrar).

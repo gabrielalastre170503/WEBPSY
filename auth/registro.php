@@ -1,6 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start(); // necesaria para el token CSRF antes de imprimir HTML
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/comunicaciones/correo_app.php';
 $mensaje = '';
 

@@ -1,6 +1,6 @@
 <?php
 session_start();
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 header('Content-Type: application/json; charset=utf-8');
 $response = ['success' => false, 'message' => ''];

@@ -4,7 +4,7 @@
  * El paciente califica (1-5) una cita propia ya completada. Una encuesta por cita.
  */
 require_once __DIR__ . '/../lib/core/api.php';
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 api_json();
 api_require_roles(['paciente']);

@@ -3,7 +3,7 @@
  * Ejecutar UNA SOLA VEZ para registrar/actualizar el esquema de Ecografía Pélvica (Ginecológica).
  * Acceder desde: http://localhost/Sistema_EcoMadelleineV1/database/seed_schema_pelvica.php
  */
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 /* Campos comunes a ambos ovarios (par: Derecho / Izquierdo) */
 $campos_ovario = [

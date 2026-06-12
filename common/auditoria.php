@@ -4,7 +4,7 @@
  * Por defecto muestra los accesos a datos clínicos (acceso_*); permite ver todo.
  */
 session_start();
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/core/paginacion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: ' . eco_url('login')); exit; }

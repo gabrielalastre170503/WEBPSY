@@ -21,7 +21,7 @@ if (!$cli) {
     if (session_status() === PHP_SESSION_NONE) session_start();
 }
 
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/comunicaciones/recordatorios.php';
 
 /* ── Autorizacion ────────────────────────────────────────────────────── */

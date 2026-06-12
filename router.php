@@ -14,6 +14,6 @@ require_once __DIR__ . '/lib/core/Router.php';
 $urlBase = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
 
 $r = new EcoRouter($urlBase, __DIR__);
-require __DIR__ . '/routes.php';
+require __DIR__ . '/core/routes.php';
 
 $r->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');

@@ -6,7 +6,7 @@
  * descargas de adjuntos). NO consume aperturas del token: solo verifica que el
  * token siga vigente y que el archivo pertenezca al informe de ese token.
  */
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 require_once __DIR__ . '/../lib/informes/archivos.php';
 require_once __DIR__ . '/../lib/core/tokens.php';
 

@@ -6,7 +6,7 @@
  *   • Partes Blandas — Región Inguinal
  * Acceder desde: http://localhost/Sistema_EcoMadelleineV1/database/seed_partes_blandas_subtipos.php
  */
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 /* Encabezado del paciente (común) */
 $encabezado_paciente = [

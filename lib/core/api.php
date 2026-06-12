@@ -8,7 +8,7 @@
  *
  * Uso tipico:
  *   require_once __DIR__ . '/lib/core/api.php';
- *   include 'conexion.php';
+ *   include 'core/conexion.php';
  *   api_json();
  *   api_require_roles(['administrador', 'recepcionista']);
  *   api_require_post();

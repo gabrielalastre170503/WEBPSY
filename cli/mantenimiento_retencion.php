@@ -15,7 +15,7 @@ if (PHP_SAPI !== 'cli') {
     exit('Este script solo se ejecuta por línea de comandos.');
 }
 
-require __DIR__ . '/../conexion.php';
+require __DIR__ . '/../core/conexion.php';
 require __DIR__ . '/../lib/seguridad/retencion.php';
 require_once __DIR__ . '/../lib/seguridad/seguridad.php';
 

@@ -4,7 +4,7 @@
  * con la estructura LITERAL extraída del documento físico Dra. Madelleine Toro.
  * Acceder desde: http://localhost/Sistema_EcoMadelleineV1/database/seed_schema_tobillo.php
  */
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 $schema = [
     'version'   => 1,

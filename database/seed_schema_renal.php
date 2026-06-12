@@ -4,7 +4,7 @@
  * Acceder desde: http://localhost/Sistema_EcoMadelleineV1/database/seed_schema_renal.php
  * También se puede ejecutar via PHP CLI.
  */
-include __DIR__ . '/../conexion.php';
+include __DIR__ . '/../core/conexion.php';
 
 /* Campos comunes a ambos riñones (se renderizan en columnas paralelas D / I) */
 $campos_rinon = [
