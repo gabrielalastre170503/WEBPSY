@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -134,19 +134,19 @@ document.addEventListener('DOMContentLoaded', function () {
 .fc .fc-event { border-radius: 4px; padding: 2px 6px; font-size: 11.5px; cursor: pointer; }
 </style>
 
-<?php include __DIR__ . '/layouts/partials/modal_recordatorios.php'; ?>
+<?php include __DIR__ . '/../layouts/partials/modal_recordatorios.php'; ?>
 
 <?php
 $page_content = ob_get_clean();
 
 ob_start();
-include __DIR__ . '/layouts/partials/modal_agenda_general.php';
+include __DIR__ . '/../layouts/partials/modal_agenda_general.php';
 $agenda_modals_html = ob_get_clean();
 
 $page_scripts_extra = $agenda_modals_html
     . '<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>'
     . '<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>'
     . '<script src="assets/js/agenda/agenda-general-modals.js"></script>'
-    . '<script src="assets/js/agenda/recordatorios-ui.js?v=' . (@filemtime(__DIR__ . '/assets/js/agenda/recordatorios-ui.js') ?: '1') . '"></script>';
+    . '<script src="assets/js/agenda/recordatorios-ui.js?v=' . (@filemtime(__DIR__ . '/../assets/js/agenda/recordatorios-ui.js') ?: '1') . '"></script>';
 
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

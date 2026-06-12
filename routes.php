@@ -18,12 +18,12 @@ $r->get('/privacidad',    'auth/privacidad.php');
 $r->get('/logout',        'auth/logout.php');
 
 /* ── Comunes ── */
-$r->get('/dashboard', 'dashboard_v2.php');
-$r->get('/perfil',    'perfil.php');
-$r->get('/reportes',  'reportes.php');
-$r->get('/agenda',    'agenda_general.php');
-$r->get('/facturacion', 'facturacion.php');
-$r->any('/consentimiento', 'consentimiento.php');
+$r->get('/dashboard', 'common/dashboard_v2.php');
+$r->get('/perfil',    'common/perfil.php');
+$r->get('/reportes',  'common/reportes.php');
+$r->get('/agenda',    'common/agenda_general.php');
+$r->get('/facturacion', 'common/facturacion.php');
+$r->any('/consentimiento', 'common/consentimiento.php');
 
 /* ── Informes ── */
 $r->get('/informe/{informe_id}', 'informes/ver_informe_estudio.php');
@@ -34,12 +34,12 @@ $r->get('/mis-informes',         'paciente/mis_informes_paciente.php');
 
 /* ── Administrador ── */
 $r->get('/personal',      'admin/admin_personal.php');
-$r->get('/usuarios',      'ver_usuarios.php');
+$r->get('/usuarios',      'common/ver_usuarios.php');
 $r->any('/especialidades', 'admin/admin_especialidades.php');
 $r->any('/repositorio',   'admin/admin_documentos.php');
 $r->get('/contenido',     'admin/admin_contenido.php');
-$r->get('/auditoria',     'auditoria.php');
-$r->get('/notas-rapidas', 'notas_rapidas.php');
+$r->get('/auditoria',     'common/auditoria.php');
+$r->get('/notas-rapidas', 'common/notas_rapidas.php');
 
 /* ── Ecografista ── */
 $r->get('/mis-pacientes',  'ecografista/mis_pacientes.php');

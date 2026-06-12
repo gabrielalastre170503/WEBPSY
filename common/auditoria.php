@@ -4,8 +4,8 @@
  * Por defecto muestra los accesos a datos clínicos (acceso_*); permite ver todo.
  */
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/core/paginacion.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/core/paginacion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: ' . eco_url('login')); exit; }
 if (($_SESSION['rol'] ?? '') !== 'administrador') { header('Location: ' . eco_url('dashboard')); exit; }
@@ -145,4 +145,4 @@ ob_start();
 </div>
 <?php
 $page_content = ob_get_clean();
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -85,7 +85,7 @@ $body_class     = 'perfil-usuario-page';
 $page_head_extra = '<link rel="stylesheet" href="assets/css/perfil/perfil-usuario.css">';
 
 ob_start();
-include __DIR__ . '/layouts/partials/perfil_usuario_vista.php';
+include __DIR__ . '/../layouts/partials/perfil_usuario_vista.php';
 $page_content = ob_get_clean();
 
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

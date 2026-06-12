@@ -4,9 +4,9 @@
  * Standalone (no usa shell.php para evitar el propio guard). Bloquea hasta aceptar.
  */
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/seguridad/consentimiento.php';
-require_once __DIR__ . '/lib/seguridad/seguridad.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/seguridad/consentimiento.php';
+require_once __DIR__ . '/../lib/seguridad/seguridad.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -98,7 +98,7 @@ $nombre = $_SESSION['nombre_completo'] ?? 'Paciente';
 
         <div class="doc"><?= eco_consentimiento_texto() ?></div>
 
-        <form method="POST" action="consentimiento.php">
+        <form method="POST" action="<?= eco_url('consentimiento') ?>">
             <?= csrf_field() ?>
             <label class="acepto">
                 <input type="checkbox" name="acepto" value="1">

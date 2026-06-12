@@ -7,9 +7,9 @@
  * (scopeado a SUS propias citas — no ve ingresos globales ni otros ecografistas).
  */
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/reportes/reportes.php';
-require_once __DIR__ . '/lib/facturacion/facturacion.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/reportes/reportes.php';
+require_once __DIR__ . '/../lib/facturacion/facturacion.php';
 
 if (!isset($_SESSION['usuario_id'])) { header('Location: ' . eco_url('login')); exit; }
 $rol = $_SESSION['rol'] ?? '';
@@ -343,4 +343,4 @@ if ($clin) {
 HTML;
 }
 
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

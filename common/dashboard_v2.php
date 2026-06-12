@@ -1,7 +1,7 @@
 <?php
 session_start();
-include 'conexion.php';
-require_once __DIR__ . '/lib/facturacion/facturacion.php';
+include __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../lib/facturacion/facturacion.php';
 
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ' . eco_url('login'));
@@ -246,7 +246,7 @@ elseif ($rol === 'administrador'):
         $stats_admin['total_citas'] = (int)$r->fetch_assoc()['c'];
     }
 
-    include __DIR__ . '/layouts/partials/dashboard_admin_content.php';
+    include __DIR__ . '/../layouts/partials/dashboard_admin_content.php';
 
 /* ===================================================================
    DASHBOARD DEL PACIENTE
@@ -601,11 +601,11 @@ if ($rol === 'administrador') {
         . '<link rel="stylesheet" href="assets/css/admin/admin-dashboard-modals.css">';
 
     ob_start();
-    include __DIR__ . '/layouts/partials/modal_dashboard_admin_kpi.php';
+    include __DIR__ . '/../layouts/partials/modal_dashboard_admin_kpi.php';
     $admin_kpi_modals_html = ob_get_clean();
 
     $page_scripts_extra = ($admin_kpi_modals_html ?? '')
         . '<script src="assets/js/admin/admin-dashboard-modals.js"></script>';
 }
 
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';

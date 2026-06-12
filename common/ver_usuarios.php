@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'conexion.php';
+include __DIR__ . '/../conexion.php';
 
 if (!isset($_SESSION['usuario_id']) || ($_SESSION['rol'] ?? '') !== 'administrador') {
     header('Location: ' . eco_url('login'));
@@ -102,4 +102,4 @@ $page_scripts_extra = $modal_temp_pass
     . '<script src="assets/js/usuarios/ver-usuarios.js"></script>'
     . '<script>window.VU_FILTRO = ' . json_encode($filtro, JSON_UNESCAPED_UNICODE) . ';</script>';
 
-include __DIR__ . '/layouts/shell.php';
+include __DIR__ . '/../layouts/shell.php';
