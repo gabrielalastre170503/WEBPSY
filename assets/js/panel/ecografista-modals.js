@@ -379,7 +379,7 @@
         if (!informeId) return;
         var prev = btn ? btn.innerHTML : '';
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando…'; }
-        fetch('verificar_firma.php?format=json&informe_id=' + encodeURIComponent(informeId))
+        fetch((window.ECO_BASE || '') + 'api/verificar_firma.php?format=json&informe_id=' + encodeURIComponent(informeId))
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (btn) { btn.disabled = false; btn.innerHTML = prev; }
