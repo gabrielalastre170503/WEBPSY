@@ -567,7 +567,7 @@
     /* ── Visual hero: panel ecográfico abstracto ── */
     .hero-visual {
         position: relative;
-        max-width: 440px;
+        max-width: 520px;
         margin: 0 auto;
     }
     /* ── Panel "en vivo" del hero (reemplaza el monitor + pills) ── */
@@ -577,7 +577,7 @@
         backdrop-filter: blur(30px) saturate(1.9); -webkit-backdrop-filter: blur(30px) saturate(1.9);
         border: 1px solid var(--silver-edge); border-radius: var(--r-2xl);
         box-shadow: inset 0 1px 0 var(--silver-top), inset 0 -1px 0 var(--silver-bot), var(--sh-deep);
-        padding: 24px; display: flex; flex-direction: column; gap: 16px;
+        padding: 30px; display: flex; flex-direction: column; gap: 22px;
         animation: floatY 10s ease-in-out infinite;
     }
     .hp-top { display: flex; align-items: center; justify-content: space-between; }
@@ -591,7 +591,7 @@
     .hp-chart { background: rgba(255,255,255,.5); border: 1px solid var(--silver-edge); border-radius: 16px; padding: 16px 16px 14px; }
     .hp-chart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; font-size: .82rem; }
     .hp-chart-head span { color: #475569; font-weight: 600; } .hp-chart-head b { color: var(--azul-dark); }
-    .hp-bars { display: flex; align-items: flex-end; gap: 9px; height: 104px; }
+    .hp-bars { display: flex; align-items: flex-end; gap: 11px; height: 150px; }
     .hp-bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 7px; height: 100%; }
     .hp-bar i { width: 100%; height: var(--h); min-height: 6px; border-radius: 7px 7px 4px 4px; background: linear-gradient(180deg, #02b1f4, rgba(2,177,244,.32)); transform-origin: bottom; animation: hpGrow .9s var(--ease-spring) backwards; }
     .hp-bar:nth-child(1) i { animation-delay: .05s; } .hp-bar:nth-child(2) i { animation-delay: .11s; } .hp-bar:nth-child(3) i { animation-delay: .17s; }
