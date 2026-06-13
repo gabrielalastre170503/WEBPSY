@@ -440,7 +440,7 @@
     }
     .hero-grid {
         display: grid;
-        grid-template-columns: 1.1fr 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: 64px;
         align-items: center;
     }
@@ -567,7 +567,7 @@
     /* ── Visual hero: panel ecográfico abstracto ── */
     .hero-visual {
         position: relative;
-        max-width: 520px;
+        max-width: 570px;
         margin: -40px auto 0;
     }
     /* ── Panel "en vivo" del hero (reemplaza el monitor + pills) ── */
