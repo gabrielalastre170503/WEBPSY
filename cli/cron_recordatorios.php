@@ -3,12 +3,12 @@
  * cron_recordatorios.php — Fase 4 (B): disparador de recordatorios de cita.
  *
  * Tres formas de ejecutarlo:
- *   1. CLI  (Windows Task Scheduler):  php cron_recordatorios.php [--dry]
- *   2. Token (machine-to-machine):     GET cron_recordatorios.php?key=ECO_CRON_KEY
+ *   1. CLI  (Windows Task Scheduler):  php cli/cron_recordatorios.php [--dry]
+ *   2. Token (machine-to-machine):     GET cli/cron_recordatorios.php?key=ECO_CRON_KEY
  *   3. Sesion admin/recepcion + POST + CSRF  (boton "ejecutar ahora")
  *
  * Programar en Windows (cada 30 min p.ej.):
- *   schtasks /create /tn "EcoRecordatorios" /tr "\"C:\xampp\php\php.exe\" \"C:\xampp\htdocs\Sistema_EcoMadelleineV1\cron_recordatorios.php\"" /sc minute /mo 30
+ *   schtasks /create /tn "EcoRecordatorios" /tr "\"C:\xampp\php\php.exe\" \"C:\xampp\htdocs\Sistema_EcoMadelleineV1\cli\cron_recordatorios.php\"" /sc minute /mo 30
  */
 
 $cli = (PHP_SAPI === 'cli');

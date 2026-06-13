@@ -4,11 +4,11 @@
  * SOLO CLI (no accesible por web).
  *
  * Uso:
- *   php mantenimiento_retencion.php            # dry-run: muestra cuántos se purgarían
- *   php mantenimiento_retencion.php --apply    # ejecuta el borrado
+ *   php cli/mantenimiento_retencion.php            # dry-run: muestra cuántos se purgarían
+ *   php cli/mantenimiento_retencion.php --apply    # ejecuta el borrado
  *
  * Cron sugerido (semanal, domingo 03:00):
- *   0 3 * * 0  php /ruta/al/proyecto/mantenimiento_retencion.php --apply
+ *   0 3 * * 0  php /ruta/al/proyecto/cli/mantenimiento_retencion.php --apply
  */
 if (PHP_SAPI !== 'cli') {
     http_response_code(403);

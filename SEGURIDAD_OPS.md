@@ -50,10 +50,10 @@ X-Frame-Options, Referrer-Policy y Permissions-Policy.
 
 ## 4. Política de retención (hecho)
 
-`mantenimiento_retencion.php` (CLI) purga datos efímeros (intentos de login,
+`cli/mantenimiento_retencion.php` (CLI) purga datos efímeros (intentos de login,
 enlaces caducados). Programar semanalmente:
 ```
-0 3 * * 0  php /ruta/al/proyecto/mantenimiento_retencion.php --apply
+0 3 * * 0  php /ruta/al/proyecto/cli/mantenimiento_retencion.php --apply
 ```
 
 ## 5. TLS / HTTPS (producción)
