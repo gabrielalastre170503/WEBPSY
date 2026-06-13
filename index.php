@@ -567,13 +567,44 @@
     /* ── Visual hero: panel ecográfico abstracto ── */
     .hero-visual {
         position: relative;
-        aspect-ratio: 1 / 1.08;
-        max-width: 480px;
-        margin-left: auto;
-        margin-right: 220px;
-        margin-top: -80px;
-        perspective: 1000px;
+        max-width: 440px;
+        margin: 0 auto;
     }
+    /* ── Panel "en vivo" del hero (reemplaza el monitor + pills) ── */
+    .hero-panel {
+        position: relative; z-index: 2;
+        background: var(--glass-strong);
+        backdrop-filter: blur(30px) saturate(1.9); -webkit-backdrop-filter: blur(30px) saturate(1.9);
+        border: 1px solid var(--silver-edge); border-radius: var(--r-2xl);
+        box-shadow: inset 0 1px 0 var(--silver-top), inset 0 -1px 0 var(--silver-bot), var(--sh-deep);
+        padding: 24px; display: flex; flex-direction: column; gap: 16px;
+        animation: floatY 10s ease-in-out infinite;
+    }
+    .hp-top { display: flex; align-items: center; justify-content: space-between; }
+    .hp-brand { display: flex; align-items: center; gap: 11px; }
+    .hp-logo { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; color: #fff; font-size: 1.1rem; background: linear-gradient(135deg, #02b1f4, #0284c7); box-shadow: 0 8px 20px rgba(2,177,244,.42); }
+    .hp-brand strong { display: block; font-size: .98rem; font-weight: 700; color: var(--azul-deep); letter-spacing: -.01em; }
+    .hp-brand span { font-size: .74rem; color: #64748b; }
+    .hp-live { display: inline-flex; align-items: center; gap: 7px; font-size: .72rem; font-weight: 700; color: #15803d; background: #dcfce7; padding: 5px 11px; border-radius: 999px; }
+    .hp-live .dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; animation: hpPing 1.8s infinite; }
+    @keyframes hpPing { 0% { box-shadow: 0 0 0 0 rgba(34,197,94,.5); } 70% { box-shadow: 0 0 0 7px rgba(34,197,94,0); } 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); } }
+    .hp-chart { background: rgba(255,255,255,.5); border: 1px solid var(--silver-edge); border-radius: 16px; padding: 16px 16px 14px; }
+    .hp-chart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; font-size: .82rem; }
+    .hp-chart-head span { color: #475569; font-weight: 600; } .hp-chart-head b { color: var(--azul-dark); }
+    .hp-bars { display: flex; align-items: flex-end; gap: 9px; height: 104px; }
+    .hp-bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 7px; height: 100%; }
+    .hp-bar i { width: 100%; height: var(--h); min-height: 6px; border-radius: 7px 7px 4px 4px; background: linear-gradient(180deg, #02b1f4, rgba(2,177,244,.32)); transform-origin: bottom; animation: hpGrow .9s var(--ease-spring) backwards; }
+    .hp-bar:nth-child(1) i { animation-delay: .05s; } .hp-bar:nth-child(2) i { animation-delay: .11s; } .hp-bar:nth-child(3) i { animation-delay: .17s; }
+    .hp-bar:nth-child(4) i { animation-delay: .23s; } .hp-bar:nth-child(5) i { animation-delay: .29s; } .hp-bar:nth-child(6) i { animation-delay: .35s; }
+    .hp-bar em { font-size: .64rem; color: #94a3b8; font-weight: 600; font-style: normal; }
+    @keyframes hpGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+    .hp-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .hp-metric { display: flex; align-items: center; gap: 11px; background: rgba(255,255,255,.5); border: 1px solid var(--silver-edge); border-radius: 14px; padding: 12px 13px; }
+    .hp-metric .ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 1.05rem; color: var(--c); background: var(--cb); flex-shrink: 0; }
+    .hp-metric .t span { display: block; font-size: 1.2rem; font-weight: 800; color: var(--azul-deep); line-height: 1; }
+    .hp-metric .t em { font-size: .68rem; color: #64748b; font-style: normal; font-weight: 600; }
+    .hp-foot { display: flex; align-items: center; gap: 9px; font-size: .74rem; color: #475569; font-weight: 600; }
+    .hp-foot i { color: #02b1f4; }
     .hv-glow {
         position: absolute;
         inset: -10%;
@@ -589,114 +620,9 @@
         to   { transform: scale(1.1) translate(-3%, 3%); }
     }
 
-    /* Tarjeta principal: monitor ecográfico */
-    .hv-monitor {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(160deg, rgba(255,255,255,.7) 0%, rgba(255,255,255,.4) 100%);
-        backdrop-filter: blur(30px) saturate(2);
-        -webkit-backdrop-filter: blur(30px) saturate(2);
-        border: 1px solid var(--silver-edge);
-        border-radius: var(--r-2xl);
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-deep);
-        overflow: hidden;
-        animation: floatY 10s ease-in-out infinite;
-    }
     @keyframes floatY {
         0%, 100% { transform: translateY(0); }
         50%      { transform: translateY(-8px); }
-    }
-    .hv-monitor svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-
-    /* Mini-cards glass flotantes — estáticas (sin bounce) */
-    .hv-pill {
-        position: absolute;
-        background: var(--glass-strong);
-        backdrop-filter: blur(22px) saturate(1.8);
-        -webkit-backdrop-filter: blur(22px) saturate(1.8);
-        border: 1px solid var(--silver-edge);
-        border-radius: var(--r-lg);
-        padding: 16px 22px 16px 14px;
-        display: inline-flex;
-        align-items: center;
-        gap: 14px;
-        width: max-content;
-        max-width: none;
-        white-space: nowrap;
-        z-index: 3;
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            0 18px 38px rgba(12, 26, 46, .14);
-        transition: transform .5s var(--ease), box-shadow .5s var(--ease);
-    }
-    .hv-pill:hover {
-        transform: translateY(-3px);
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            0 22px 48px rgba(12, 26, 46, .18);
-    }
-    .hv-pill.p1 { top: -4%;    left: -40px; right: auto; }
-    .hv-pill.p2 { bottom: 22%; left: auto;  right: 80px; }
-
-    .hv-pill .icn {
-        width: 46px; height: 46px;
-        border-radius: 13px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 17px;
-        flex-shrink: 0;
-    }
-    .hv-pill.p1 .icn { background: rgba(34, 197, 94, .15); color: #15803d; }
-    .hv-pill.p2 .icn { background: rgba(2, 177, 244, .15); color: var(--azul-dark); }
-    .hv-pill .txt {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        line-height: 1;
-        min-width: 0;
-    }
-    .hv-pill .lbl {
-        font-size: 10.5px;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        color: var(--gris-soft);
-        font-weight: 600;
-        white-space: nowrap;
-        line-height: 1;
-    }
-    .hv-pill .val {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--ink);
-        line-height: 1.15;
-        white-space: nowrap;
-        letter-spacing: -0.01em;
-    }
-
-    /* Wave animado del monitor */
-    .ecg-wave {
-        stroke-dasharray: 1200;
-        stroke-dashoffset: 1200;
-        animation: drawWave 4.5s cubic-bezier(.65,.05,.36,1) infinite;
-    }
-    @keyframes drawWave {
-        0%   { stroke-dashoffset: 1200; opacity: .4; }
-        60%  { stroke-dashoffset: 0;    opacity: 1; }
-        100% { stroke-dashoffset: 0;    opacity: 0; }
-    }
-    .pulse-ring {
-        transform-origin: center;
-        animation: pulseRing 2.6s ease-out infinite;
-    }
-    @keyframes pulseRing {
-        0%   { transform: scale(.55); opacity: .85; }
-        100% { transform: scale(1.7);  opacity: 0; }
     }
 
     /* ════════════════════════════════════════════════════════════════
@@ -1428,8 +1354,6 @@
         .navbar ul.open a { padding: 12px 16px; width: 100%; }
         .navbar ul.open .nav-cta { margin-left: 0; margin-top: 6px; }
         .hamburger { display: inline-flex; }
-        .hv-pill.p1 { left: 8px;   top: 4%;    right: auto; }
-        .hv-pill.p2 { left: auto;  right: 8px; bottom: 8%; }
         .servicios-grid { grid-template-columns: 1fr 1fr; }
         .beneficios-grid { grid-template-columns: 1fr; }
         .footer-grid { grid-template-columns: 1fr; gap: 32px; }
@@ -1520,71 +1444,33 @@
 
         <div class="hero-visual reveal" data-delay="2">
             <div class="hv-glow"></div>
-            <div class="hv-monitor">
-                <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-                    <defs>
-                        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#02b1f4" stop-opacity="0.15"/>
-                            <stop offset="100%" stop-color="#014a82" stop-opacity="0.05"/>
-                        </linearGradient>
-                        <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#02b1f4"/>
-                            <stop offset="100%" stop-color="#014a82"/>
-                        </linearGradient>
-                    </defs>
-                    <!-- Fondo del monitor -->
-                    <rect x="0" y="0" width="500" height="500" fill="url(#bgGrad)"/>
-
-                    <!-- Grid sutil -->
-                    <g stroke="rgba(2,177,244,.08)" stroke-width="1">
-                        <line x1="0" y1="125" x2="500" y2="125"/>
-                        <line x1="0" y1="250" x2="500" y2="250"/>
-                        <line x1="0" y1="375" x2="500" y2="375"/>
-                        <line x1="125" y1="0" x2="125" y2="500"/>
-                        <line x1="250" y1="0" x2="250" y2="500"/>
-                        <line x1="375" y1="0" x2="375" y2="500"/>
-                    </g>
-
-                    <!-- Cono ecográfico simulado -->
-                    <path d="M 250 80 L 100 420 L 400 420 Z"
-                          fill="rgba(2,177,244,.06)" stroke="rgba(2,177,244,.18)" stroke-width="1"/>
-
-                    <!-- Arcos de profundidad -->
-                    <path d="M 130 380 Q 250 320 370 380" stroke="rgba(2,177,244,.25)" stroke-width="1.5" fill="none"/>
-                    <path d="M 160 320 Q 250 270 340 320" stroke="rgba(2,177,244,.2)" stroke-width="1.5" fill="none"/>
-                    <path d="M 185 260 Q 250 225 315 260" stroke="rgba(2,177,244,.15)" stroke-width="1.5" fill="none"/>
-
-                    <!-- ECG line animado -->
-                    <path class="ecg-wave"
-                          d="M 30 250 L 110 250 L 130 210 L 150 295 L 170 165 L 190 325 L 210 250 L 290 250 L 310 210 L 330 295 L 350 165 L 370 250 L 470 250"
-                          stroke="url(#lineGrad)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-
-                    <!-- Pulse rings -->
-                    <circle class="pulse-ring" cx="250" cy="250" r="50" stroke="rgba(2,177,244,.4)" stroke-width="1.5" fill="none"/>
-                    <circle cx="250" cy="250" r="38" fill="rgba(2,177,244,.15)" stroke="rgba(2,177,244,.4)" stroke-width="1"/>
-                    <circle cx="250" cy="250" r="6" fill="#02b1f4"/>
-
-                    <!-- Etiquetas técnicas decorativas -->
-                    <text x="30" y="40" fill="rgba(1,74,130,.6)" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="2">SCAN · 12 MHz</text>
-                    <text x="30" y="475" fill="rgba(1,74,130,.5)" font-family="Inter,sans-serif" font-size="10" font-weight="500" letter-spacing="1.5">DEPTH 8.0 cm · GAIN 70%</text>
-                    <text x="470" y="40" text-anchor="end" fill="rgba(1,74,130,.6)" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="2">LIVE</text>
-                    <circle cx="430" cy="36" r="3" fill="#ef4444"><animate attributeName="opacity" values="1;.3;1" dur="1.5s" repeatCount="indefinite"/></circle>
-                </svg>
-            </div>
-
-            <div class="hv-pill p1">
-                <div class="icn"><i class="fa-solid fa-check"></i></div>
-                <div class="txt">
-                    <span class="lbl"><?php echo $avg_horas > 0 ? 'Promedio real' : 'Compromiso'; ?></span>
-                    <span class="val"><?php echo $avg_horas > 0 ? $avg_horas . ' h' : '24 h'; ?> · Informe</span>
+                        <div class="hero-panel">
+                <div class="hp-top">
+                    <div class="hp-brand">
+                        <span class="hp-logo"><i class="fa-solid fa-wave-square"></i></span>
+                        <div><strong>Panel EcoMadelleine</strong><span>Resumen del centro</span></div>
+                    </div>
+                    <span class="hp-live"><span class="dot"></span> En vivo</span>
                 </div>
-            </div>
-            <div class="hv-pill p2">
-                <div class="icn"><i class="fa-solid fa-shield-halved"></i></div>
-                <div class="txt">
-                    <span class="lbl">Datos clínicos</span>
-                    <span class="val">Confidencial</span>
+                <div class="hp-chart">
+                    <div class="hp-chart-head"><span>Estudios por mes</span><b><?php echo $an_total_estudios; ?> en 6 m</b></div>
+                    <div class="hp-bars">
+                        <?php $hp_max = max(1, max($an_meses_val)); foreach ($an_meses_val as $hp_i => $hp_v): $hp_h = max(8, (int)round($hp_v / $hp_max * 100)); ?>
+                        <div class="hp-bar"><i style="--h: <?php echo $hp_h; ?>%"></i><em><?php echo htmlspecialchars($an_meses_lbl[$hp_i]); ?></em></div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
+                <div class="hp-metrics">
+                    <div class="hp-metric">
+                        <div class="ic" style="--c: #0284c7; --cb: #e0f5fe;"><i class="fa-solid fa-file-signature"></i></div>
+                        <div class="t"><span><?php echo $total_informes; ?></span><em>Informes firmados</em></div>
+                    </div>
+                    <div class="hp-metric">
+                        <div class="ic" style="--c: #15803d; --cb: #dcfce7;"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="t"><span><?php echo htmlspecialchars($f_tasa['value']); ?></span><em><?php echo htmlspecialchars($f_tasa['label']); ?></em></div>
+                    </div>
+                </div>
+                <div class="hp-foot"><i class="fa-solid fa-shield-halved"></i> Datos clínicos confidenciales · firma verificable</div>
             </div>
         </div>
     </div>
@@ -2041,22 +1927,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
     });
-
-    /* Spotlight follow en el hero visual */
-    const hv = document.querySelector('.hero-visual');
-    if (hv) {
-        hv.addEventListener('mousemove', (e) => {
-            const r = hv.getBoundingClientRect();
-            const x = ((e.clientX - r.left) / r.width - 0.5) * 14;
-            const y = ((e.clientY - r.top) / r.height - 0.5) * 14;
-            const monitor = hv.querySelector('.hv-monitor');
-            if (monitor) monitor.style.transform = `translateY(${y * -0.4}px) rotateX(${-y}deg) rotateY(${x}deg)`;
-        });
-        hv.addEventListener('mouseleave', () => {
-            const monitor = hv.querySelector('.hv-monitor');
-            if (monitor) monitor.style.transform = '';
-        });
-    }
 
     /* Auto-hide status message */
     const msg = document.getElementById('msg-estado');
