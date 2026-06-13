@@ -460,7 +460,7 @@
         font-weight: 500;
         color: var(--ink-2);
         margin-bottom: 10px;
-        margin-top: -110px;
+        margin-top: -128px;
         box-shadow: inset 0 1px 0 var(--silver-top), 0 4px 12px rgba(12, 26, 46, .04);
     }
     .hero-tag .pill {
