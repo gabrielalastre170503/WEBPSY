@@ -75,6 +75,42 @@
         'Pulmonar'           => ['c1' => '#0891b2', 'soft' => '#cffafe', 'text' => '#0e7490'],
     ];
     $eco_palette_default = ['c1' => '#64748b', 'soft' => '#f1f5f9', 'text' => '#475569'];
+
+    /* ── Datos para el panel de analíticas (gráficos reales) ─────────── */
+    // Estudios (informes) por mes — últimos 6 meses con relleno de ceros
+    $an_mp = [];
+    $rq = $conex->query("SELECT DATE_FORMAT(creado_en,'%Y-%m') m, COUNT(*) c FROM informes_estudios GROUP BY m");
+    while ($rq && $f = $rq->fetch_assoc()) { $an_mp[$f['m']] = (int)$f['c']; }
+    $an_nom = [1=>'Ene',2=>'Feb',3=>'Mar',4=>'Abr',5=>'May',6=>'Jun',7=>'Jul',8=>'Ago',9=>'Sep',10=>'Oct',11=>'Nov',12=>'Dic'];
+    $an_meses_lbl = []; $an_meses_val = [];
+    for ($i = 5; $i >= 0; $i--) {
+        $ts = strtotime("first day of -$i month");
+        $an_meses_lbl[] = $an_nom[(int)date('n', $ts)];
+        $an_meses_val[] = $an_mp[date('Y-m', $ts)] ?? 0;
+    }
+    $an_total_estudios = array_sum($an_meses_val);
+
+    // Citas por estado — agrupadas en buckets legibles
+    $an_estados = [];
+    $rq = $conex->query("SELECT estado, COUNT(*) c FROM citas GROUP BY estado");
+    while ($rq && $f = $rq->fetch_assoc()) { $an_estados[$f['estado']] = (int)$f['c']; }
+    $an_bmap = [
+        'confirmada'         => ['Confirmadas',   '#02b1f4'],
+        'completada'         => ['Completadas',   '#22c55e'],
+        'reprogramada'       => ['Reprogramadas', '#8b5cf6'],
+        'pendiente'          => ['Pendientes',    '#f59e0b'],
+        'pendiente_paciente' => ['Pendientes',    '#f59e0b'],
+        'cancelada'          => ['Canceladas',    '#f43f5e'],
+    ];
+    $an_tmp = [];
+    foreach ($an_estados as $e => $n) {
+        $info = $an_bmap[$e] ?? [ucfirst(str_replace('_', ' ', $e)), '#94a3b8'];
+        if (!isset($an_tmp[$info[0]])) $an_tmp[$info[0]] = ['v' => 0, 'c' => $info[1]];
+        $an_tmp[$info[0]]['v'] += $n;
+    }
+    $an_citas_lbl = []; $an_citas_val = []; $an_citas_col = [];
+    foreach ($an_tmp as $lab => $d) { $an_citas_lbl[] = $lab; $an_citas_val[] = $d['v']; $an_citas_col[] = $d['c']; }
+    $an_total_citas = array_sum($an_citas_val);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -1610,6 +1646,45 @@
     </div>
 </section>
 
+<!-- ══════════ PANEL DE ANALÍTICAS ══════════ -->
+<style>
+    .analytics-section { padding: 80px 0; position: relative; }
+    .analytics-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 24px; align-items: stretch; }
+    .chart-card { padding: 30px 30px 26px; border-radius: var(--r-lg); display: flex; flex-direction: column; }
+    .chart-card .cc-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin-bottom: 22px; }
+    .chart-card .cc-head h3 { font-size: 1.18rem; font-weight: 700; color: var(--azul-deep); letter-spacing: -.01em; }
+    .chart-card .cc-sub { font-size: .76rem; font-weight: 700; color: var(--azul-dark); background: var(--azul-soft); padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
+    .chart-card .cc-canvas { position: relative; flex: 1; min-height: 290px; }
+    @media (max-width: 880px) {
+        .analytics-grid { grid-template-columns: 1fr; }
+        .chart-card .cc-canvas { min-height: 250px; }
+    }
+</style>
+<section id="analiticas" class="analytics-section">
+    <div class="container">
+        <div class="section-head section-head--center reveal" style="margin-bottom:48px;">
+            <span class="eyebrow"><i class="fa-solid fa-chart-pie"></i> Analíticas en vivo</span>
+            <h2 class="section-title">El pulso del centro,<br><span class="grad">en datos reales.</span></h2>
+        </div>
+        <div class="analytics-grid">
+            <div class="chart-card glass reveal">
+                <div class="cc-head">
+                    <h3>Estudios por mes</h3>
+                    <span class="cc-sub"><?php echo $an_total_estudios; ?> en 6 meses</span>
+                </div>
+                <div class="cc-canvas"><canvas id="anChartMeses"></canvas></div>
+            </div>
+            <div class="chart-card glass reveal" data-delay="1">
+                <div class="cc-head">
+                    <h3>Estado de las citas</h3>
+                    <span class="cc-sub"><?php echo $an_total_citas; ?> citas</span>
+                </div>
+                <div class="cc-canvas"><canvas id="anChartCitas"></canvas></div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- ══════════ NOSOTROS ══════════ -->
 <section id="nosotros">
     <div class="container">
@@ -2004,6 +2079,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5500);
     }
 });
+</script>
+
+<!-- Panel de analíticas — Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+(function () {
+    if (!window.Chart) return;
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#475569';
+    var built = false;
+
+    function build() {
+        if (built) return; built = true;
+
+        /* Estudios por mes — barras con degradado azul */
+        var em = document.getElementById('anChartMeses');
+        if (em) {
+            var ctx = em.getContext('2d');
+            var g = ctx.createLinearGradient(0, 0, 0, 300);
+            g.addColorStop(0, 'rgba(2,177,244,.92)');
+            g.addColorStop(1, 'rgba(2,177,244,.28)');
+            new Chart(em, {
+                type: 'bar',
+                data: { labels: <?php echo json_encode($an_meses_lbl); ?>,
+                        datasets: [{ data: <?php echo json_encode($an_meses_val); ?>, backgroundColor: g, borderRadius: 10, maxBarThickness: 48 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    animation: { duration: 1100, easing: 'easeOutQuart' },
+                    plugins: { legend: { display: false },
+                               tooltip: { backgroundColor: '#014a82', padding: 10, cornerRadius: 10, displayColors: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0, color: '#94a3b8', font: { weight: '600' } }, grid: { color: 'rgba(148,163,184,.16)' }, border: { display: false } },
+                        x: { ticks: { color: '#475569', font: { weight: '700' } }, grid: { display: false }, border: { display: false } }
+                    }
+                }
+            });
+        }
+
+        /* Estado de las citas — dona */
+        var ec = document.getElementById('anChartCitas');
+        if (ec) {
+            new Chart(ec, {
+                type: 'doughnut',
+                data: { labels: <?php echo json_encode($an_citas_lbl); ?>,
+                        datasets: [{ data: <?php echo json_encode($an_citas_val); ?>, backgroundColor: <?php echo json_encode($an_citas_col); ?>, borderWidth: 0, hoverOffset: 10 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '62%',
+                    animation: { animateRotate: true, duration: 1100 },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, padding: 14, color: '#475569', font: { size: 12, weight: '600' } } },
+                        tooltip: { backgroundColor: '#014a82', padding: 10, cornerRadius: 10, usePointStyle: true }
+                    }
+                }
+            });
+        }
+    }
+
+    /* Anima cuando la sección entra en viewport */
+    var sec = document.getElementById('analiticas');
+    if (sec && 'IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (es) {
+            es.forEach(function (e) { if (e.isIntersecting) { build(); io.disconnect(); } });
+        }, { threshold: .25 });
+        io.observe(sec);
+    } else { build(); }
+})();
 </script>
 </body>
 </html>
