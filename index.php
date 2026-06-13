@@ -1445,8 +1445,7 @@
     <div class="container hero-grid">
         <div class="hero-copy reveal">
             <span class="hero-tag">
-                <span class="pill">Premium</span>
-                Diagnóstico ecográfico con la <strong style="margin-left:4px;">Dra. Madelleine Toro</strong>
+                Centro de Diagnóstico por Ultrasonido
             </span>
             <h1>
                 Imagen clínica<br>
