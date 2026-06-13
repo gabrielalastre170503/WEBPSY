@@ -640,9 +640,9 @@
             inset 0 -1px 0 var(--silver-bot),
             0 22px 48px rgba(12, 26, 46, .18);
     }
-    .hv-pill.p1 { top: -4%;    left: -40px; right: auto; }
-    .hv-pill.p2 { bottom: 22%; left: auto;  right: 80px; }
-    .hv-pill.p3 { bottom: -2%; left: 0;     right: auto; top: auto; }
+    .hv-pill.p1 { top: 0;     left: -36px;  right: auto;  bottom: auto; }
+    .hv-pill.p2 { top: 42%;   right: -36px; left: auto;   bottom: auto; }
+    .hv-pill.p3 { bottom: 2%; left: -20px;  right: auto;  top: auto; }
 
     .hv-pill .icn {
         width: 46px; height: 46px;
