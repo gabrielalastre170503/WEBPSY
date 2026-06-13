@@ -640,9 +640,8 @@
             inset 0 -1px 0 var(--silver-bot),
             0 22px 48px rgba(12, 26, 46, .18);
     }
-    .hv-pill.p1 { top: 0;     left: -36px;  right: auto;  bottom: auto; }
-    .hv-pill.p2 { top: 42%;   right: -36px; left: auto;   bottom: auto; }
-    .hv-pill.p3 { bottom: 2%; left: -20px;  right: auto;  top: auto; }
+    .hv-pill.p1 { top: -4%;    left: -40px; right: auto; }
+    .hv-pill.p2 { bottom: 22%; left: auto;  right: 80px; }
 
     .hv-pill .icn {
         width: 46px; height: 46px;
@@ -655,7 +654,6 @@
     }
     .hv-pill.p1 .icn { background: rgba(34, 197, 94, .15); color: #15803d; }
     .hv-pill.p2 .icn { background: rgba(2, 177, 244, .15); color: var(--azul-dark); }
-    .hv-pill.p3 .icn { background: rgba(139, 92, 246, .15); color: #6d28d9; }
     .hv-pill .txt {
         display: flex;
         flex-direction: column;
@@ -1432,7 +1430,6 @@
         .hamburger { display: inline-flex; }
         .hv-pill.p1 { left: 8px;   top: 4%;    right: auto; }
         .hv-pill.p2 { left: auto;  right: 8px; bottom: 8%; }
-        .hv-pill.p3 { display: none; }
         .servicios-grid { grid-template-columns: 1fr 1fr; }
         .beneficios-grid { grid-template-columns: 1fr; }
         .footer-grid { grid-template-columns: 1fr; gap: 32px; }
@@ -1587,13 +1584,6 @@
                 <div class="txt">
                     <span class="lbl">Datos clínicos</span>
                     <span class="val">Confidencial</span>
-                </div>
-            </div>
-            <div class="hv-pill p3">
-                <div class="icn"><i class="fa-solid fa-file-signature"></i></div>
-                <div class="txt">
-                    <span class="lbl">Firma electrónica</span>
-                    <span class="val">Verificable</span>
                 </div>
             </div>
         </div>
