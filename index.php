@@ -75,1926 +75,625 @@
         'Pulmonar'           => ['c1' => '#0891b2', 'soft' => '#cffafe', 'text' => '#0e7490'],
     ];
     $eco_palette_default = ['c1' => '#64748b', 'soft' => '#f1f5f9', 'text' => '#475569'];
+
+    /* Catálogo de estudios para la grilla pública (icono + categoría → color de paleta) */
+    $servicios_landing = [
+        ['n' => 'Ecografía Abdominal',        'i' => 'fa-disease',          'cat' => 'Abdominal'],
+        ['n' => 'Ecografía Obstétrica',       'i' => 'fa-baby',             'cat' => 'Obstetrica'],
+        ['n' => 'Ecografía Renal',            'i' => 'fa-droplet',          'cat' => 'Renal'],
+        ['n' => 'Ecografía de Tiroides',      'i' => 'fa-user-doctor',      'cat' => 'Cervical'],
+        ['n' => 'Ecografía Pélvica',          'i' => 'fa-venus',            'cat' => 'Pelvica'],
+        ['n' => 'Ecografía Mamaria',          'i' => 'fa-ribbon',           'cat' => 'Mamaria'],
+        ['n' => 'Doppler / Vascular',         'i' => 'fa-wave-square',      'cat' => 'Pulmonar'],
+        ['n' => 'Partes Blandas',             'i' => 'fa-hand-holding-medical', 'cat' => 'Partes Blandas'],
+        ['n' => 'Musculoesquelética',         'i' => 'fa-bone',             'cat' => 'Musculoesqueletica'],
+        ['n' => 'Próstata / Testicular',      'i' => 'fa-mars',             'cat' => 'Prostatica'],
+    ];
+
+    /* Estado de feedback (registro) proveniente de send.php */
+    $flash = $_GET['status'] ?? ($_GET['error'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="EcoMadelleine — Centro de diagnóstico ecográfico premium. Dra. Madelleine Toro. Informes digitales en 24 horas.">
-    <meta name="theme-color" content="#eaf3ff">
+    <meta name="description" content="EcoMadelleine — Centro de diagnóstico ecográfico premium. Dra. Madelleine Toro. Informes digitales firmados en 24 horas.">
+    <meta name="theme-color" content="#eaf6ff">
     <title>EcoMadelleine · Diagnóstico Ecográfico Premium</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <style>
-    /* ════════════════════════════════════════════════════════════════
-       DESIGN TOKENS — Glass Clínico (Apple-style)
-       ════════════════════════════════════════════════════════════════ */
-    :root {
-        /* Fondo cielo-clínico */
-        --sky-1:        #eaf3ff;
-        --sky-2:        #f5f9ff;
-        --sky-3:        #dbeafe;
-        --white:        #ffffff;
-
-        /* Texto */
-        --ink:          #0c1a2e;
-        --ink-2:        #1e2a44;
-        --gris:         #4a5870;
-        --gris-soft:    #6b7689;
-        --gris-mute:    #94a3b8;
-
-        /* Brand */
-        --azul:         #02b1f4;
-        --azul-dark:    #014a82;
-        --azul-deep:    #003a66;
-        --azul-soft:    #e0f5fe;
-
-        /* Bordes plata (truco glass) */
-        --silver-top:   rgba(255, 255, 255, .85);
-        --silver-bot:   rgba(12, 26, 46, .06);
-        --silver-edge:  rgba(255, 255, 255, .55);
-
-        /* Glass surfaces */
-        --glass:        rgba(255, 255, 255, .55);
-        --glass-2:      rgba(255, 255, 255, .42);
-        --glass-strong: rgba(255, 255, 255, .72);
-
-        /* Sombras (luz + brand glow) */
-        --sh-soft:      0 1px 2px rgba(12, 26, 46, .04), 0 8px 24px rgba(12, 26, 46, .06);
-        --sh-glow:      0 24px 60px rgba(2, 177, 244, .18);
-        --sh-deep:      0 30px 80px rgba(12, 26, 46, .15);
-
-        --r-sm:         12px;
-        --r:            18px;
-        --r-lg:         24px;
-        --r-xl:         32px;
-        --r-2xl:        40px;
-
-        --ease:         cubic-bezier(.22, 1, .36, 1);
-        --ease-spring:  cubic-bezier(.34, 1.56, .64, 1);
-
-        --gutter:       28px;
-        --max:          1280px;
+    /* ════════════════════ TOKENS ════════════════════ */
+    :root{
+        --accent:#02b1f4; --accent-2:#0284c7; --accent-hover:#0099d4;
+        --accent-soft:#e0f5fe; --violet:#8b5cf6; --pink:#ec4899;
+        --bg:#f4f8fc; --surface:#ffffff;
+        --text:#0c1a2b; --text-2:#475569; --muted:#8da2b8;
+        --border:#e2e8f0; --border-soft:#eef2f7;
+        --glass:rgba(255,255,255,.62); --glass-strong:rgba(255,255,255,.78);
+        --glass-border:rgba(255,255,255,.7);
+        --shadow-sm:0 4px 16px rgba(2,132,199,.07);
+        --shadow:0 14px 40px rgba(2,132,199,.12);
+        --shadow-lg:0 30px 70px rgba(2,132,199,.18);
+        --radius:22px; --radius-lg:30px;
+        --maxw:1200px;
+        --ease:cubic-bezier(.22,1,.36,1);
     }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    html, body { overflow-x: hidden; }
-    body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: var(--sky-2);
-        color: var(--ink);
-        line-height: 1.55;
-        font-size: 15.5px;
-        font-weight: 400;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        position: relative;
-        min-height: 100vh;
+    *{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth;scroll-padding-top:90px;-webkit-text-size-adjust:100%}
+    body{
+        font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+        color:var(--text); background:var(--bg);
+        line-height:1.65; overflow-x:hidden; position:relative;
+        -webkit-font-smoothing:antialiased;
     }
+    a{text-decoration:none;color:inherit}
+    img{max-width:100%;display:block}
+    .container{width:100%;max-width:var(--maxw);margin:0 auto;padding:0 22px}
+    ::selection{background:var(--accent);color:#fff}
 
-    /* Fondo ambiental — gradient mesh estático + orbes muy sutiles */
-    body::before {
-        content: '';
-        position: fixed;
-        inset: 0;
-        z-index: -2;
+    /* ════════════════════ FONDO ANIMADO (orbes glass) ════════════════════ */
+    .bg-wrap{position:fixed;inset:0;z-index:-2;overflow:hidden;
         background:
-            radial-gradient(ellipse 80% 60% at 85% 0%,  rgba(2, 177, 244, .18) 0%, transparent 55%),
-            radial-gradient(ellipse 60% 50% at 0% 30%,  rgba(99, 179, 237, .14) 0%, transparent 55%),
-            radial-gradient(ellipse 70% 50% at 50% 100%, rgba(167, 139, 250, .10) 0%, transparent 55%),
-            linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 100%);
+          radial-gradient(1200px 600px at 80% -5%, #dff1ff 0%, transparent 60%),
+          radial-gradient(900px 500px at -5% 20%, #ede9ff 0%, transparent 55%),
+          linear-gradient(180deg,#f4f9ff 0%, #f4f8fc 40%, #eef5fb 100%);
     }
-    body::after {
-        content: '';
-        position: fixed;
-        inset: 0;
-        z-index: -1;
-        pointer-events: none;
-        background-image:
-            radial-gradient(circle at 1px 1px, rgba(12, 26, 46, .035) 1px, transparent 0);
-        background-size: 28px 28px;
-    }
+    .orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.55;
+        animation:float 18s var(--ease) infinite alternate;will-change:transform}
+    .orb.a{width:420px;height:420px;background:#7fd4ff;top:-80px;right:-60px}
+    .orb.b{width:360px;height:360px;background:#c4b5fd;top:40%;left:-100px;animation-delay:-5s}
+    .orb.c{width:300px;height:300px;background:#a7f3d0;bottom:-60px;right:18%;animation-delay:-9s;opacity:.4}
+    .orb.d{width:260px;height:260px;background:#fbcfe8;top:60%;right:-40px;animation-delay:-13s;opacity:.35}
+    @keyframes float{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-40px,40px,0) scale(1.12)}}
 
-    img, svg { display: block; max-width: 100%; }
-    a { color: inherit; text-decoration: none; }
-    button { font-family: inherit; }
-    ::selection { background: var(--azul); color: #fff; }
+    /* ════════════════════ NAVBAR ════════════════════ */
+    .nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:14px 0;transition:.4s var(--ease)}
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;
+        background:var(--glass);backdrop-filter:blur(22px) saturate(1.8);-webkit-backdrop-filter:blur(22px) saturate(1.8);
+        border:1px solid var(--glass-border);border-radius:18px;padding:10px 14px 10px 18px;
+        box-shadow:var(--shadow-sm);transition:.4s var(--ease)}
+    .nav.scrolled{padding:8px 0}
+    .nav.scrolled .nav-inner{background:var(--glass-strong);box-shadow:var(--shadow)}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:1.12rem;letter-spacing:-.02em}
+    .brand-logo{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#fff;font-size:1.05rem;
+        background:linear-gradient(135deg,var(--accent),#3aa8ff);box-shadow:0 8px 22px rgba(2,177,244,.45);
+        animation:pulseLogo 3.5s ease-in-out infinite}
+    @keyframes pulseLogo{0%,100%{box-shadow:0 8px 22px rgba(2,177,244,.4)}50%{box-shadow:0 8px 34px rgba(2,177,244,.65)}}
+    .brand small{display:block;font-size:.62rem;font-weight:600;color:var(--accent-2);letter-spacing:.06em;text-transform:uppercase}
+    .nav-links{display:flex;align-items:center;gap:6px;list-style:none}
+    .nav-links a{padding:9px 15px;border-radius:11px;font-weight:600;font-size:.92rem;color:var(--text-2);transition:.25s var(--ease);position:relative}
+    .nav-links a:not(.nav-cta):hover{color:var(--accent-2);background:var(--accent-soft)}
+    .nav-cta{color:#fff !important;background:linear-gradient(135deg,var(--accent),var(--accent-hover));
+        box-shadow:0 8px 20px rgba(2,177,244,.4);display:inline-flex;align-items:center;gap:8px}
+    .nav-cta:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(2,177,244,.55)}
+    .burger{display:none;width:44px;height:44px;border:none;background:transparent;font-size:1.3rem;color:var(--text);cursor:pointer;border-radius:11px}
 
-    .container { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+    /* ════════════════════ BOTONES ════════════════════ */
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:15px 26px;border-radius:15px;font-weight:700;font-size:.97rem;
+        cursor:pointer;border:none;transition:.3s var(--ease);font-family:inherit}
+    .btn-primary{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-hover));box-shadow:0 12px 30px rgba(2,177,244,.42);position:relative;overflow:hidden}
+    .btn-primary::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-120%);transition:.6s}
+    .btn-primary:hover{transform:translateY(-3px);box-shadow:0 18px 40px rgba(2,177,244,.55)}
+    .btn-primary:hover::after{transform:translateX(120%)}
+    .btn-glass{background:var(--glass-strong);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+        border:1px solid var(--glass-border);color:var(--accent-2);box-shadow:var(--shadow-sm)}
+    .btn-glass:hover{transform:translateY(-3px);box-shadow:var(--shadow);background:#fff}
 
-    /* Tipografía */
-    h1, h2, h3, h4 {
-        font-family: 'Inter', sans-serif;
-        font-weight: 700;
-        line-height: 1.08;
-        letter-spacing: -0.025em;
-        color: var(--ink);
-    }
-    .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1.6px;
-        color: var(--azul-dark);
-        background: var(--glass);
-        backdrop-filter: blur(14px) saturate(1.6);
-        -webkit-backdrop-filter: blur(14px) saturate(1.6);
-        padding: 7px 14px;
-        border-radius: 999px;
-        border: 1px solid var(--silver-edge);
-        box-shadow: inset 0 1px 0 var(--silver-top), 0 1px 2px var(--silver-bot);
-    }
-    .eyebrow i { font-size: 9px; color: var(--azul); }
+    /* ════════════════════ HERO ════════════════════ */
+    .hero{min-height:100dvh;display:flex;align-items:center;padding:130px 0 70px;position:relative}
+    .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:50px;align-items:center}
+    .eyebrow{display:inline-flex;align-items:center;gap:9px;padding:8px 16px;border-radius:999px;font-size:.8rem;font-weight:700;
+        color:var(--accent-2);background:var(--glass-strong);border:1px solid var(--glass-border);box-shadow:var(--shadow-sm);
+        backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);margin-bottom:22px}
+    .eyebrow .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(2,177,244,.6);animation:ping 2s infinite}
+    @keyframes ping{0%{box-shadow:0 0 0 0 rgba(2,177,244,.55)}70%{box-shadow:0 0 0 10px rgba(2,177,244,0)}100%{box-shadow:0 0 0 0 rgba(2,177,244,0)}}
+    .hero h1{font-size:clamp(2.3rem,5.2vw,3.85rem);font-weight:900;line-height:1.07;letter-spacing:-.03em;margin-bottom:20px}
+    .hero h1 .grad{background:linear-gradient(120deg,var(--accent),#6366f1 60%,var(--violet));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .hero p.lead{font-size:clamp(1.02rem,1.6vw,1.18rem);color:var(--text-2);max-width:540px;margin-bottom:32px}
+    .hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:38px}
+    .hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:560px}
+    .stat{background:var(--glass);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);
+        border:1px solid var(--glass-border);border-radius:16px;padding:16px 12px;text-align:center;box-shadow:var(--shadow-sm);transition:.35s var(--ease)}
+    .stat:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+    .stat .num{font-size:1.5rem;font-weight:800;color:var(--accent-2);letter-spacing:-.02em;line-height:1}
+    .stat .lbl{font-size:.7rem;color:var(--muted);font-weight:600;margin-top:6px;line-height:1.25}
 
-    .section-title {
-        font-size: clamp(32px, 4.6vw, 56px);
-        font-weight: 700;
-        margin-top: 18px;
-        margin-bottom: 16px;
-        max-width: 760px;
-    }
-    .section-title .grad {
-        background: linear-gradient(120deg, var(--azul) 0%, var(--azul-deep) 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-    }
-    .section-sub {
-        font-size: 16.5px;
-        line-height: 1.65;
-        color: var(--gris);
-        max-width: 600px;
-        font-weight: 400;
-    }
-    .section-head { margin-bottom: 72px; max-width: 760px; }
-    .section-head--center { text-align: center; margin-left: auto; margin-right: auto; }
-    .section-head--center .section-title,
-    .section-head--center .section-sub { margin-left: auto; margin-right: auto; }
+    /* Visual del hero (tarjeta glass + ondas) */
+    .hero-visual{position:relative;display:grid;place-items:center}
+    .glass-card{width:100%;max-width:420px;background:var(--glass-strong);backdrop-filter:blur(30px) saturate(2);-webkit-backdrop-filter:blur(30px) saturate(2);
+        border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-lg);
+        animation:floatCard 7s ease-in-out infinite;will-change:transform}
+    @keyframes floatCard{0%,100%{transform:translateY(0) rotate(-.5deg)}50%{transform:translateY(-16px) rotate(.5deg)}}
+    .gc-head{display:flex;align-items:center;gap:13px;margin-bottom:18px}
+    .gc-avatar{width:52px;height:52px;border-radius:15px;background:linear-gradient(135deg,var(--accent),var(--violet));display:grid;place-items:center;color:#fff;font-size:1.3rem;box-shadow:0 10px 24px rgba(2,177,244,.4)}
+    .gc-head h4{font-size:1rem;font-weight:800}
+    .gc-head span{font-size:.78rem;color:var(--accent-2);font-weight:600}
+    .wave{height:64px;border-radius:14px;background:linear-gradient(90deg,#eef9ff,#f3edff);display:flex;align-items:center;gap:3px;padding:0 14px;overflow:hidden;margin-bottom:16px}
+    .wave i{flex:1;background:linear-gradient(180deg,var(--accent),var(--violet));border-radius:2px;animation:bar 1.3s ease-in-out infinite}
+    @keyframes bar{0%,100%{height:14%}50%{height:80%}}
+    .gc-rows{display:grid;gap:10px}
+    .gc-row{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.6);border:1px solid var(--border-soft);border-radius:13px;padding:11px 14px;font-size:.85rem}
+    .gc-row b{color:var(--accent-2)}
+    .gc-badge{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;font-weight:700;color:#15803d;background:#dcfce7;padding:6px 12px;border-radius:999px}
+    .float-chip{position:absolute;background:var(--glass-strong);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--glass-border);
+        border-radius:15px;padding:11px 15px;box-shadow:var(--shadow);font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:9px}
+    .float-chip i{color:var(--accent)}
+    .float-chip.c1{top:6%;left:-4%;animation:floatChip 5s ease-in-out infinite}
+    .float-chip.c2{bottom:8%;right:-6%;animation:floatChip 6s ease-in-out infinite .8s}
+    @keyframes floatChip{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
 
-    section { padding: 130px 0; position: relative; }
+    /* ════════════════════ SECCIONES GENÉRICAS ════════════════════ */
+    section{position:relative;padding:90px 0}
+    .sec-head{text-align:center;max-width:640px;margin:0 auto 56px}
+    .sec-tag{display:inline-block;font-size:.8rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-2);margin-bottom:12px}
+    .sec-head h2{font-size:clamp(1.9rem,3.6vw,2.7rem);font-weight:900;letter-spacing:-.025em;line-height:1.12}
+    .sec-head p{color:var(--text-2);margin-top:14px;font-size:1.05rem}
 
-    /* ────────────────────────────────────────────────
-       GLASS PRIMITIVE (reutilizable)
-       ──────────────────────────────────────────────── */
-    .glass {
-        background: var(--glass);
-        backdrop-filter: blur(24px) saturate(1.8);
-        -webkit-backdrop-filter: blur(24px) saturate(1.8);
-        border: 1px solid var(--silver-edge);
-        border-radius: var(--r-lg);
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-soft);
-    }
+    .glass{background:var(--glass);backdrop-filter:blur(22px) saturate(1.8);-webkit-backdrop-filter:blur(22px) saturate(1.8);
+        border:1px solid var(--glass-border);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
 
-    /* ────────────────────────────────────────────────
-       SCROLL PROGRESS
-       ──────────────────────────────────────────────── */
-    #scroll-progress {
-        position: fixed;
-        top: 0; left: 0;
-        height: 2px;
-        width: 0;
-        background: linear-gradient(90deg, var(--azul), var(--azul-deep));
-        z-index: 2000;
-        transition: width .12s linear;
-    }
+    /* NOSOTROS / features */
+    .feat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+    .feat{padding:30px 24px;text-align:left;transition:.4s var(--ease)}
+    .feat:hover{transform:translateY(-8px);box-shadow:var(--shadow-lg);background:var(--glass-strong)}
+    .feat-ic{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-size:1.45rem;color:#fff;margin-bottom:18px;
+        background:linear-gradient(135deg,var(--accent),var(--accent-hover));box-shadow:0 12px 28px rgba(2,177,244,.35)}
+    .feat:nth-child(2) .feat-ic{background:linear-gradient(135deg,var(--violet),#a78bfa);box-shadow:0 12px 28px rgba(139,92,246,.35)}
+    .feat:nth-child(3) .feat-ic{background:linear-gradient(135deg,#22c55e,#4ade80);box-shadow:0 12px 28px rgba(34,197,94,.35)}
+    .feat:nth-child(4) .feat-ic{background:linear-gradient(135deg,var(--pink),#f9a8d4);box-shadow:0 12px 28px rgba(236,72,153,.35)}
+    .feat h3{font-size:1.12rem;font-weight:800;margin-bottom:9px;letter-spacing:-.01em}
+    .feat p{font-size:.92rem;color:var(--text-2)}
 
-    /* ────────────────────────────────────────────────
-       MENSAJES DE ESTADO
-       ──────────────────────────────────────────────── */
-    .mensaje-estado {
-        position: fixed;
-        top: 100px; left: 50%;
-        transform: translateX(-50%);
-        z-index: 1500;
-        padding: 14px 22px;
-        border-radius: var(--r);
-        color: #fff;
-        font-size: 14px;
-        font-weight: 500;
-        box-shadow: var(--sh-deep);
-        animation: msgIn .5s var(--ease);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-    }
-    .mensaje-exito { background: linear-gradient(135deg, #16a34a, #15803d); }
-    .mensaje-error { background: linear-gradient(135deg, #ef4444, #b91c1c); }
-    @keyframes msgIn {
-        from { opacity: 0; transform: translate(-50%, -16px); }
-        to   { opacity: 1; transform: translate(-50%, 0); }
-    }
+    /* SERVICIOS */
+    .serv-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+    .serv{padding:26px 20px;text-align:center;transition:.4s var(--ease);position:relative;overflow:hidden}
+    .serv::before{content:'';position:absolute;inset:0;opacity:0;transition:.4s;background:linear-gradient(180deg,var(--soft,#e0f5fe),transparent)}
+    .serv:hover{transform:translateY(-8px);box-shadow:var(--shadow-lg);background:var(--glass-strong)}
+    .serv:hover::before{opacity:1}
+    .serv-ic{width:62px;height:62px;border-radius:18px;display:grid;place-items:center;font-size:1.5rem;margin:0 auto 16px;position:relative;z-index:1;transition:.4s var(--ease)}
+    .serv:hover .serv-ic{transform:scale(1.1) rotate(-6deg)}
+    .serv h3{font-size:.97rem;font-weight:700;position:relative;z-index:1;letter-spacing:-.01em}
+    .serv .go{margin-top:10px;font-size:.78rem;font-weight:700;color:var(--accent-2);opacity:0;transform:translateY(6px);transition:.35s var(--ease);position:relative;z-index:1}
+    .serv:hover .go{opacity:1;transform:translateY(0)}
 
-    /* ════════════════════════════════════════════════════════════════
-       HEADER GLASS
-       ════════════════════════════════════════════════════════════════ */
-    .header {
-        position: fixed;
-        top: 16px; left: 50%;
-        transform: translateX(-50%);
-        z-index: 1000;
-        width: calc(100% - 32px);
-        max-width: 1250px;
-        padding: 12px 16px 12px 20px;
-        background: var(--glass-strong);
-        backdrop-filter: blur(24px) saturate(1.8);
-        -webkit-backdrop-filter: blur(24px) saturate(1.8);
-        border: 1px solid var(--silver-edge);
-        border-radius: 999px;
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            0 10px 40px rgba(12, 26, 46, .08);
-        transition: padding .3s var(--ease), transform .4s var(--ease);
-    }
-    .header.scrolled { padding: 9px 14px 9px 18px; }
-    .header.hidden { transform: translateX(-50%) translateY(-130%); }
+    /* PROCESO */
+    .proc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;counter-reset:step}
+    .proc{padding:30px 24px;position:relative;transition:.4s var(--ease)}
+    .proc:hover{transform:translateY(-6px);box-shadow:var(--shadow)}
+    .proc .step{counter-increment:step;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-weight:900;color:#fff;
+        background:linear-gradient(135deg,var(--accent),var(--violet));box-shadow:0 10px 22px rgba(2,177,244,.35);margin-bottom:16px}
+    .proc .step::before{content:counter(step,decimal-leading-zero)}
+    .proc h3{font-size:1.05rem;font-weight:800;margin-bottom:8px}
+    .proc p{font-size:.9rem;color:var(--text-2)}
 
-    .menu { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+    /* FAQ */
+    .faq-wrap{max-width:780px;margin:0 auto;display:grid;gap:14px}
+    .faq-item{overflow:hidden;transition:.35s var(--ease)}
+    .faq-q{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;cursor:pointer;font-weight:700;font-size:1.02rem}
+    .faq-q i{color:var(--accent);transition:.35s var(--ease);flex-shrink:0}
+    .faq-item.open .faq-q i{transform:rotate(45deg)}
+    .faq-a{max-height:0;opacity:0;transition:max-height .4s var(--ease),opacity .4s,padding .4s}
+    .faq-a p{padding:0 24px;color:var(--text-2);font-size:.94rem}
+    .faq-item.open .faq-a{max-height:260px;opacity:1;padding-bottom:20px}
+    .faq-item.open{box-shadow:var(--shadow);background:var(--glass-strong)}
 
-    .logo {
-        display: inline-flex;
-        align-items: center;
-        gap: 11px;
-        font-size: 17px;
-        font-weight: 700;
-        color: var(--ink);
-        letter-spacing: -0.015em;
-    }
-    .logo-icon {
-        width: 36px; height: 36px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, var(--azul) 0%, var(--azul-dark) 100%);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-size: 14px;
-        box-shadow:
-            inset 0 1px 0 rgba(255,255,255,.4),
-            0 6px 16px rgba(2, 177, 244, .35);
-        position: relative;
-    }
-    .logo-text { display: flex; flex-direction: column; line-height: 1; }
-    .logo-text small {
-        font-size: 8.5px;
-        font-weight: 500;
-        color: var(--gris-mute);
-        text-transform: uppercase;
-        letter-spacing: 1.8px;
-        margin-top: 3px;
-    }
+    /* CONTACTO + FORM */
+    .contacto-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:30px;align-items:stretch}
+    .contacto-info{padding:38px 34px;display:flex;flex-direction:column;gap:8px}
+    .contacto-info h2{font-size:1.9rem;font-weight:900;letter-spacing:-.02em;margin-bottom:8px}
+    .contacto-info>p{color:var(--text-2);margin-bottom:18px}
+    .ci-row{display:flex;align-items:center;gap:15px;padding:14px 0;border-bottom:1px solid var(--border-soft)}
+    .ci-row .ic{width:46px;height:46px;border-radius:13px;background:var(--accent-soft);color:var(--accent-2);display:grid;place-items:center;font-size:1.1rem;flex-shrink:0}
+    .ci-row .lbl{font-size:.74rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    .ci-row .val{font-weight:700;font-size:.96rem}
+    .contacto-socials{display:flex;gap:12px;margin-top:18px}
+    .contacto-socials a{width:46px;height:46px;border-radius:13px;background:var(--glass-strong);border:1px solid var(--glass-border);display:grid;place-items:center;color:var(--accent-2);font-size:1.05rem;transition:.3s var(--ease)}
+    .contacto-socials a:hover{transform:translateY(-4px) scale(1.05);background:var(--accent);color:#fff;box-shadow:0 10px 24px rgba(2,177,244,.4)}
 
-    .navbar ul { list-style: none; display: flex; gap: 2px; align-items: center; }
-    .navbar a {
-        font-size: 13.5px;
-        font-weight: 500;
-        color: var(--gris);
-        padding: 9px 14px;
-        border-radius: 999px;
-        transition: color .2s, background .25s var(--ease);
-    }
-    .navbar a:not(.nav-cta):hover { color: var(--ink); background: rgba(2, 177, 244, .08); }
-    .navbar .nav-cta {
-        background: var(--ink);
-        color: #fff;
-        padding: 10px 18px;
-        margin-left: 8px;
-        font-weight: 500;
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        box-shadow: 0 8px 20px rgba(12, 26, 46, .25);
-        transition: transform .25s var(--ease), box-shadow .25s;
-    }
-    .navbar .nav-cta:hover { background: var(--azul-dark); transform: translateY(-1px); box-shadow: 0 12px 28px rgba(1, 74, 130, .35); }
-    .navbar .nav-cta i { font-size: 10px; }
+    .formulario{padding:38px 34px;background:var(--glass-strong);backdrop-filter:blur(30px) saturate(1.9);-webkit-backdrop-filter:blur(30px) saturate(1.9);
+        border:1px solid var(--glass-border);border-radius:var(--radius);box-shadow:var(--shadow-lg)}
+    .formulario h3{font-size:1.5rem;font-weight:900;letter-spacing:-.02em}
+    .form-sub{color:var(--text-2);font-size:.92rem;margin-bottom:22px}
+    .input-group{display:grid;gap:13px}
+    .input-container{position:relative;display:flex;align-items:center}
+    .input-container>i{position:absolute;left:16px;color:var(--muted);font-size:.95rem;pointer-events:none}
+    .input-container input{width:100%;height:52px;border:1.5px solid var(--border);border-radius:14px;background:rgba(255,255,255,.7);
+        padding:0 16px 0 44px;font-size:.95rem;font-family:inherit;color:var(--text);transition:.25s var(--ease)}
+    .input-container input::placeholder{color:var(--muted)}
+    .input-container input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);background:#fff}
+    .cedula-group{gap:10px}
+    .cedula-select{height:52px;width:64px;border:1.5px solid var(--border);border-radius:14px;background:rgba(255,255,255,.7);font-family:inherit;font-weight:700;color:var(--text);padding:0 8px;cursor:pointer}
+    .cedula-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+    .cedula-input{padding-left:16px !important}
+    .btn-submit{height:54px;border:none;border-radius:14px;font-family:inherit;font-weight:800;font-size:.98rem;color:#fff;cursor:pointer;
+        background:linear-gradient(135deg,var(--accent),var(--accent-hover));box-shadow:0 14px 32px rgba(2,177,244,.42);
+        display:flex;align-items:center;justify-content:center;gap:10px;transition:.3s var(--ease);margin-top:4px}
+    .btn-submit:hover{transform:translateY(-3px);box-shadow:0 20px 44px rgba(2,177,244,.55)}
+    .form-legal{font-size:.74rem;color:var(--muted);text-align:center;margin-top:4px}
 
-    .hamburger {
-        display: none;
-        background: transparent;
-        border: 1px solid var(--silver-edge);
-        border-radius: 999px;
-        width: 38px; height: 38px;
-        cursor: pointer;
-        color: var(--ink);
-        font-size: 14px;
-        align-items: center;
-        justify-content: center;
-    }
+    /* FOOTER */
+    .footer{padding:64px 0 30px;margin-top:40px;position:relative}
+    .footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:34px;padding-bottom:34px;border-bottom:1px solid var(--border)}
+    .footer-brand .brand{margin-bottom:14px}
+    .footer-brand p{color:var(--text-2);font-size:.9rem;max-width:280px}
+    .footer h5{font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text);margin-bottom:16px}
+    .footer ul{list-style:none;display:grid;gap:10px}
+    .footer ul a{color:var(--text-2);font-size:.9rem;transition:.25s}
+    .footer ul a:hover{color:var(--accent-2);padding-left:4px}
+    .footer-bottom{text-align:center;padding-top:24px;color:var(--muted);font-size:.84rem}
 
-    /* ════════════════════════════════════════════════════════════════
-       HERO — Split 60/40 con visual abstracto + métricas glass
-       ════════════════════════════════════════════════════════════════ */
-    .hero {
-        padding-top: 125px;
-        padding-bottom: 100px;
-        position: relative;
-    }
-    .hero-grid {
-        display: grid;
-        grid-template-columns: 1.1fr 1fr;
-        gap: 64px;
-        align-items: center;
-    }
+    /* TOAST / flash */
+    .toast{position:fixed;top:88px;left:50%;transform:translateX(-50%) translateY(-20px);z-index:200;opacity:0;
+        background:var(--glass-strong);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);
+        border-radius:14px;padding:14px 22px;box-shadow:var(--shadow-lg);font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:10px;transition:.5s var(--ease)}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .toast.err{color:#b91c1c}.toast.ok{color:#15803d}
 
-    .hero-copy { position: relative; }
-    .hero-tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 16px 8px 8px;
-        background: var(--glass);
-        backdrop-filter: blur(14px) saturate(1.6);
-        -webkit-backdrop-filter: blur(14px) saturate(1.6);
-        border: 1px solid var(--silver-edge);
-        border-radius: 999px;
-        font-size: 12.5px;
-        font-weight: 500;
-        color: var(--ink-2);
-        margin-bottom: 32px;
-        box-shadow: inset 0 1px 0 var(--silver-top), 0 4px 12px rgba(12, 26, 46, .04);
-    }
-    .hero-tag .pill {
-        background: linear-gradient(135deg, var(--azul), var(--azul-dark));
-        color: #fff;
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 4px 10px;
-        border-radius: 999px;
-        box-shadow: 0 4px 10px rgba(2,177,244,.4);
-    }
+    /* ════════════════════ SCROLL REVEAL ════════════════════ */
+    .reveal{opacity:0;transform:translateY(34px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+    .reveal.in{opacity:1;transform:none}
+    .reveal[data-delay="1"]{transition-delay:.08s}.reveal[data-delay="2"]{transition-delay:.16s}
+    .reveal[data-delay="3"]{transition-delay:.24s}.reveal[data-delay="4"]{transition-delay:.32s}
+    .reveal[data-delay="5"]{transition-delay:.40s}
 
-    .hero-copy h1 {
-        font-size: clamp(42px, 5.6vw, 72px);
-        font-weight: 800;
-        line-height: 1.02;
-        letter-spacing: -0.035em;
-        margin-bottom: 24px;
-    }
-    .hero-copy h1 .grad {
-        background: linear-gradient(120deg, var(--azul) 0%, var(--azul-deep) 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        display: inline-block;
-    }
-    .hero-copy .lead {
-        font-size: 17.5px;
-        line-height: 1.6;
-        color: var(--gris);
-        max-width: 500px;
-        margin-bottom: 36px;
-    }
-    .hero-copy .lead strong { color: var(--ink); font-weight: 600; }
-
-    .hero-ctas { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 40px; }
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 15px 26px;
-        border-radius: 999px;
-        font-weight: 600;
-        font-size: 14.5px;
-        cursor: pointer;
-        border: 1px solid transparent;
-        transition: transform .35s var(--ease), background .25s, color .25s, border-color .25s, box-shadow .35s;
-        will-change: transform;
-        font-family: inherit;
-    }
-    .btn i { font-size: 13px; transition: transform .3s var(--ease); }
-    .btn-primary {
-        background: linear-gradient(135deg, var(--azul) 0%, var(--azul-dark) 100%);
-        color: #fff;
-        box-shadow:
-            inset 0 1px 0 rgba(255,255,255,.3),
-            0 14px 30px rgba(2, 177, 244, .35);
-    }
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow:
-            inset 0 1px 0 rgba(255,255,255,.3),
-            0 22px 44px rgba(2, 177, 244, .45);
-    }
-    .btn-primary:hover i { transform: translateX(3px); }
-    .btn-glass {
-        background: var(--glass-strong);
-        color: var(--ink);
-        border-color: var(--silver-edge);
-        backdrop-filter: blur(20px) saturate(1.6);
-        -webkit-backdrop-filter: blur(20px) saturate(1.6);
-        box-shadow: inset 0 1px 0 var(--silver-top), var(--sh-soft);
-    }
-    .btn-glass:hover { background: #fff; transform: translateY(-2px); }
-
-    .hero-trust {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-    }
-    .trust-avatars { display: flex; }
-    .trust-avatars span {
-        width: 34px; height: 34px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--azul), var(--azul-dark));
-        color: #fff;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        font-weight: 600;
-        margin-left: -8px;
-        border: 2px solid #fff;
-        box-shadow: 0 4px 10px rgba(12, 26, 46, .12);
-    }
-    .trust-avatars span:first-child { margin-left: 0; }
-    .trust-avatars .sec { background: linear-gradient(135deg, #0ea5e9, #7dd3fc); }
-    .trust-avatars .ter { background: linear-gradient(135deg, #8b5cf6, #c4b5fd); }
-    .hero-trust .txt { font-size: 13px; color: var(--gris); line-height: 1.4; }
-    .hero-trust .txt strong { color: var(--ink); font-weight: 600; }
-    .hero-trust .stars { color: #f59e0b; font-size: 11px; letter-spacing: 1px; margin-bottom: 2px; display: block; }
-
-    /* ── Visual hero: panel ecográfico abstracto ── */
-    .hero-visual {
-        position: relative;
-        aspect-ratio: 1 / 1.08;
-        max-width: 480px;
-        margin-left: auto;
-        margin-right: 220px;
-        margin-top: -80px;
-        perspective: 1000px;
-    }
-    .hv-glow {
-        position: absolute;
-        inset: -10%;
-        background:
-            radial-gradient(circle at 30% 30%, rgba(2, 177, 244, .35), transparent 55%),
-            radial-gradient(circle at 80% 70%, rgba(139, 92, 246, .25), transparent 55%);
-        filter: blur(60px);
-        z-index: -1;
-        animation: glowMove 8s ease-in-out infinite alternate;
-    }
-    @keyframes glowMove {
-        from { transform: scale(1) translate(0, 0); }
-        to   { transform: scale(1.1) translate(-3%, 3%); }
-    }
-
-    /* Tarjeta principal: monitor ecográfico */
-    .hv-monitor {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(160deg, rgba(255,255,255,.7) 0%, rgba(255,255,255,.4) 100%);
-        backdrop-filter: blur(30px) saturate(2);
-        -webkit-backdrop-filter: blur(30px) saturate(2);
-        border: 1px solid var(--silver-edge);
-        border-radius: var(--r-2xl);
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-deep);
-        overflow: hidden;
-        animation: floatY 10s ease-in-out infinite;
-    }
-    @keyframes floatY {
-        0%, 100% { transform: translateY(0); }
-        50%      { transform: translateY(-8px); }
-    }
-    .hv-monitor svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-
-    /* Mini-cards glass flotantes — estáticas (sin bounce) */
-    .hv-pill {
-        position: absolute;
-        background: var(--glass-strong);
-        backdrop-filter: blur(22px) saturate(1.8);
-        -webkit-backdrop-filter: blur(22px) saturate(1.8);
-        border: 1px solid var(--silver-edge);
-        border-radius: var(--r-lg);
-        padding: 16px 22px 16px 14px;
-        display: inline-flex;
-        align-items: center;
-        gap: 14px;
-        width: max-content;
-        max-width: none;
-        white-space: nowrap;
-        z-index: 3;
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            0 18px 38px rgba(12, 26, 46, .14);
-        transition: transform .5s var(--ease), box-shadow .5s var(--ease);
-    }
-    .hv-pill:hover {
-        transform: translateY(-3px);
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            0 22px 48px rgba(12, 26, 46, .18);
-    }
-    .hv-pill.p1 { top: -4%;    left: -40px; right: auto; }
-    .hv-pill.p2 { bottom: 22%; left: auto;  right: 80px; }
-
-    .hv-pill .icn {
-        width: 46px; height: 46px;
-        border-radius: 13px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 17px;
-        flex-shrink: 0;
-    }
-    .hv-pill.p1 .icn { background: rgba(34, 197, 94, .15); color: #15803d; }
-    .hv-pill.p2 .icn { background: rgba(2, 177, 244, .15); color: var(--azul-dark); }
-    .hv-pill .txt {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        line-height: 1;
-        min-width: 0;
-    }
-    .hv-pill .lbl {
-        font-size: 10.5px;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        color: var(--gris-soft);
-        font-weight: 600;
-        white-space: nowrap;
-        line-height: 1;
-    }
-    .hv-pill .val {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--ink);
-        line-height: 1.15;
-        white-space: nowrap;
-        letter-spacing: -0.01em;
-    }
-
-    /* Wave animado del monitor */
-    .ecg-wave {
-        stroke-dasharray: 1200;
-        stroke-dashoffset: 1200;
-        animation: drawWave 4.5s cubic-bezier(.65,.05,.36,1) infinite;
-    }
-    @keyframes drawWave {
-        0%   { stroke-dashoffset: 1200; opacity: .4; }
-        60%  { stroke-dashoffset: 0;    opacity: 1; }
-        100% { stroke-dashoffset: 0;    opacity: 0; }
-    }
-    .pulse-ring {
-        transform-origin: center;
-        animation: pulseRing 2.6s ease-out infinite;
-    }
-    @keyframes pulseRing {
-        0%   { transform: scale(.55); opacity: .85; }
-        100% { transform: scale(1.7);  opacity: 0; }
-    }
-
-    /* ════════════════════════════════════════════════════════════════
-       STATS — 4 métricas REALES en cards glass
-       ════════════════════════════════════════════════════════════════ */
-    .stats-section {
-        padding: 60px 0 100px;
-    }
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-    }
-    .stat-card {
-        background: var(--glass);
-        backdrop-filter: blur(22px) saturate(1.8);
-        -webkit-backdrop-filter: blur(22px) saturate(1.8);
-        border: 1px solid var(--silver-edge);
-        border-radius: var(--r-lg);
-        padding: 30px 26px;
-        position: relative;
-        overflow: hidden;
-        transition: transform .4s var(--ease), box-shadow .4s;
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-soft);
-    }
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: -50%; right: -50%;
-        width: 200%; height: 200%;
-        background: radial-gradient(circle, rgba(2,177,244,.18) 0%, transparent 50%);
-        opacity: 0;
-        transition: opacity .5s var(--ease);
-        pointer-events: none;
-    }
-    .stat-card:hover {
-        transform: translateY(-6px);
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            0 20px 50px rgba(2, 177, 244, .2);
-    }
-    .stat-card:hover::before { opacity: 1; }
-    .stat-card .ico {
-        width: 42px; height: 42px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, var(--azul) 0%, var(--azul-dark) 100%);
-        color: #fff;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        margin-bottom: 18px;
-        box-shadow:
-            inset 0 1px 0 rgba(255,255,255,.3),
-            0 8px 18px rgba(2, 177, 244, .3);
-        position: relative;
-    }
-    .stat-card .num {
-        font-size: clamp(34px, 4.4vw, 46px);
-        font-weight: 800;
-        color: var(--ink);
-        line-height: 1;
-        letter-spacing: -0.035em;
-        margin-bottom: 6px;
-        position: relative;
-    }
-    .stat-card .num .grad {
-        background: linear-gradient(120deg, var(--azul) 0%, var(--azul-deep) 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-    }
-    .stat-card .lbl {
-        font-size: 12px;
-        color: var(--gris-soft);
-        text-transform: uppercase;
-        letter-spacing: 1.4px;
-        font-weight: 600;
-        position: relative;
-    }
-    .stat-card .sub-meta {
-        font-size: 11px;
-        color: var(--gris-mute);
-        margin-top: 4px;
-        font-weight: 500;
-        position: relative;
-    }
-
-    /* ════════════════════════════════════════════════════════════════
-       NOSOTROS — 3 cards glass con icono coloreado
-       ════════════════════════════════════════════════════════════════ */
-    #nosotros { padding-top: 80px; }
-    .mvv-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 22px;
-    }
-    .mvv-card {
-        background: var(--glass);
-        backdrop-filter: blur(24px) saturate(1.8);
-        -webkit-backdrop-filter: blur(24px) saturate(1.8);
-        border: 1px solid var(--silver-edge);
-        border-radius: var(--r-xl);
-        padding: 40px 34px;
-        position: relative;
-        overflow: hidden;
-        transition: transform .4s var(--ease), box-shadow .4s;
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-soft);
-    }
-    .mvv-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 4px;
-        background: linear-gradient(90deg, var(--azul), var(--azul-dark));
-        transform: scaleX(0);
-        transform-origin: left;
-        transition: transform .5s var(--ease);
-    }
-    .mvv-card:hover {
-        transform: translateY(-6px);
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-glow);
-    }
-    .mvv-card:hover::before { transform: scaleX(1); }
-    .mvv-icon {
-        width: 56px; height: 56px;
-        border-radius: 16px;
-        background: linear-gradient(135deg, rgba(2,177,244,.15), rgba(2,177,244,.05));
-        border: 1px solid var(--silver-edge);
-        color: var(--azul-dark);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-        margin-bottom: 22px;
-        box-shadow: inset 0 1px 0 var(--silver-top);
-    }
-    .mvv-card h3 {
-        font-size: 24px;
-        font-weight: 700;
-        margin-bottom: 14px;
-        letter-spacing: -0.02em;
-    }
-    .mvv-card p {
-        font-size: 15px;
-        color: var(--gris);
-        line-height: 1.7;
-    }
-
-    /* ════════════════════════════════════════════════════════════════
-       PROCESO CLÍNICO — 3 pasos conectados
-       ════════════════════════════════════════════════════════════════ */
-    #proceso { padding-bottom: 130px; }
-    .proceso-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 22px;
-        position: relative;
-    }
-    .proceso-card {
-        background: var(--glass);
-        backdrop-filter: blur(22px) saturate(1.8);
-        -webkit-backdrop-filter: blur(22px) saturate(1.8);
-        border: 1px solid var(--silver-edge);
-        border-radius: var(--r-xl);
-        padding: 36px 30px;
-        position: relative;
-        text-align: left;
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-soft);
-        transition: transform .4s var(--ease), box-shadow .4s;
-    }
-    .proceso-card:hover {
-        transform: translateY(-4px);
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-glow);
-    }
-    .proceso-num {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--azul-dark);
-        background: linear-gradient(135deg, rgba(2,177,244,.15), transparent);
-        border: 1px solid var(--silver-edge);
-        padding: 5px 12px;
-        border-radius: 999px;
-        display: inline-block;
-        margin-bottom: 18px;
-        letter-spacing: 1.5px;
-    }
-    .proceso-card .ico {
-        font-size: 28px;
-        color: var(--azul);
-        margin-bottom: 18px;
-        display: block;
-    }
-    .proceso-card h4 {
-        font-size: 20px;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-    .proceso-card p {
-        font-size: 14.5px;
-        color: var(--gris);
-        line-height: 1.65;
-    }
-
-    /* ════════════════════════════════════════════════════════════════
-       SERVICIOS — Grid con glow por categoría
-       ════════════════════════════════════════════════════════════════ */
-    .servicios-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 18px;
-    }
-    .service-card {
-        --c1: var(--azul);
-        --soft: var(--azul-soft);
-        --tcolor: var(--azul-dark);
-        background: var(--glass);
-        backdrop-filter: blur(24px) saturate(1.8);
-        -webkit-backdrop-filter: blur(24px) saturate(1.8);
-        border: 1px solid var(--silver-edge);
-        border-radius: var(--r-xl);
-        padding: 28px 26px;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        min-height: 240px;
-        position: relative;
-        overflow: hidden;
-        text-decoration: none;
-        color: inherit;
-        transition: transform .4s var(--ease), box-shadow .4s, border-color .35s;
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-soft);
-    }
-    .service-card::before {
-        content: '';
-        position: absolute;
-        top: -40%; right: -40%;
-        width: 180%; height: 180%;
-        background: radial-gradient(circle, var(--c1) 0%, transparent 50%);
-        opacity: 0;
-        transition: opacity .5s var(--ease);
-        pointer-events: none;
-        filter: blur(40px);
-    }
-    .service-card:hover {
-        transform: translateY(-8px);
-        border-color: var(--c1);
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            0 24px 50px color-mix(in srgb, var(--c1) 28%, transparent);
-    }
-    .service-card:hover::before { opacity: .25; }
-    .service-icon {
-        width: 50px; height: 50px;
-        border-radius: 14px;
-        background: linear-gradient(135deg, var(--soft) 0%, rgba(255,255,255,.5) 100%);
-        border: 1px solid var(--silver-edge);
-        color: var(--tcolor);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        position: relative;
-        z-index: 1;
-        box-shadow: inset 0 1px 0 var(--silver-top);
-        transition: transform .4s var(--ease-spring), background .35s, color .35s;
-    }
-    .service-card:hover .service-icon {
-        transform: scale(1.08) rotate(-6deg);
-        background: linear-gradient(135deg, var(--c1), color-mix(in srgb, var(--c1) 60%, #000 0%));
-        color: #fff;
-        box-shadow: 0 10px 24px color-mix(in srgb, var(--c1) 35%, transparent);
-    }
-    .service-cat {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 1.6px;
-        font-weight: 700;
-        color: var(--tcolor);
-        position: relative;
-        z-index: 1;
-    }
-    .service-card h3 {
-        font-size: 17px;
-        font-weight: 700;
-        color: var(--ink);
-        line-height: 1.3;
-        margin: 0;
-        position: relative;
-        z-index: 1;
-    }
-    .service-card p {
-        font-size: 13.5px;
-        color: var(--gris-soft);
-        line-height: 1.6;
-        margin: 0;
-        flex: 1;
-        position: relative;
-        z-index: 1;
-    }
-    .service-link {
-        font-size: 12.5px;
-        font-weight: 600;
-        color: var(--ink);
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        position: relative;
-        z-index: 1;
-        transition: gap .3s var(--ease), color .25s;
-    }
-    .service-link i { font-size: 10px; transition: transform .3s var(--ease); }
-    .service-card:hover .service-link { gap: 14px; color: var(--tcolor); }
-
-    /* ════════════════════════════════════════════════════════════════
-       BENEFICIOS — Features minimal
-       ════════════════════════════════════════════════════════════════ */
-    .beneficios-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 18px;
-    }
-    .beneficio {
-        background: var(--glass);
-        backdrop-filter: blur(22px) saturate(1.8);
-        -webkit-backdrop-filter: blur(22px) saturate(1.8);
-        border: 1px solid var(--silver-edge);
-        border-radius: var(--r-lg);
-        padding: 32px 26px;
-        text-align: center;
-        transition: transform .4s var(--ease), box-shadow .4s;
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-soft);
-    }
-    .beneficio:hover {
-        transform: translateY(-4px);
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-glow);
-    }
-    .beneficio-icon {
-        width: 58px; height: 58px;
-        margin: 0 auto 18px;
-        border-radius: 16px;
-        background: linear-gradient(135deg, var(--azul) 0%, var(--azul-dark) 100%);
-        color: #fff;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-        box-shadow:
-            inset 0 1px 0 rgba(255,255,255,.3),
-            0 10px 22px rgba(2, 177, 244, .3);
-    }
-    .beneficio h4 {
-        font-size: 16px;
-        font-weight: 700;
-        margin-bottom: 8px;
-    }
-    .beneficio p {
-        font-size: 13.5px;
-        color: var(--gris-soft);
-        line-height: 1.6;
-    }
-
-    /* ════════════════════════════════════════════════════════════════
-       CONTACTO — info glass + form glass
-       ════════════════════════════════════════════════════════════════ */
-    .contacto-grid {
-        display: grid;
-        grid-template-columns: 1fr 1.25fr;
-        gap: 24px;
-        align-items: stretch;
-    }
-    .contacto-info {
-        background: linear-gradient(160deg, var(--ink) 0%, var(--azul-deep) 100%);
-        color: #fff;
-        border-radius: var(--r-xl);
-        padding: 48px 40px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: var(--sh-deep);
-    }
-    .contacto-info::before {
-        content: '';
-        position: absolute;
-        bottom: -80px; right: -80px;
-        width: 280px; height: 280px;
-        background: radial-gradient(circle, rgba(2,177,244,.4), transparent 60%);
-        filter: blur(20px);
-    }
-    .contacto-info::after {
-        content: '';
-        position: absolute;
-        top: -100px; left: -100px;
-        width: 240px; height: 240px;
-        background: radial-gradient(circle, rgba(139, 92, 246, .25), transparent 65%);
-        filter: blur(30px);
-    }
-    .contacto-info h3 {
-        font-size: 28px;
-        margin-bottom: 12px;
-        color: #fff;
-        position: relative;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-    }
-    .contacto-info > p {
-        font-size: 14.5px;
-        color: rgba(255,255,255,.75);
-        margin-bottom: 36px;
-        position: relative;
-        max-width: 320px;
-        line-height: 1.65;
-    }
-    .contacto-info-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-        margin-bottom: 22px;
-        position: relative;
-    }
-    .contacto-info-item i {
-        width: 40px; height: 40px;
-        background: rgba(255,255,255,.08);
-        border: 1px solid rgba(255,255,255,.14);
-        border-radius: 12px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        color: rgba(255,255,255,.9);
-        flex-shrink: 0;
-        backdrop-filter: blur(10px);
-    }
-    .contacto-info-item .lbl {
-        font-size: 10.5px;
-        text-transform: uppercase;
-        letter-spacing: 1.6px;
-        color: rgba(255,255,255,.55);
-        margin-bottom: 4px;
-        font-weight: 500;
-    }
-    .contacto-info-item .val {
-        font-size: 14.5px;
-        font-weight: 600;
-        color: #fff;
-    }
-    .contacto-socials {
-        display: flex;
-        gap: 10px;
-        margin-top: 32px;
-        position: relative;
-    }
-    .contacto-socials a {
-        width: 42px; height: 42px;
-        background: rgba(255,255,255,.08);
-        border: 1px solid rgba(255,255,255,.14);
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-size: 14px;
-        backdrop-filter: blur(10px);
-        transition: background .25s, transform .25s var(--ease), border-color .25s;
-    }
-    .contacto-socials a:hover {
-        background: var(--azul);
-        border-color: var(--azul);
-        transform: translateY(-2px);
-    }
-
-    .formulario {
-        background: var(--glass-strong);
-        backdrop-filter: blur(28px) saturate(1.8);
-        -webkit-backdrop-filter: blur(28px) saturate(1.8);
-        border: 1px solid var(--silver-edge);
-        border-radius: var(--r-xl);
-        padding: 48px 42px;
-        box-shadow:
-            inset 0 1px 0 var(--silver-top),
-            inset 0 -1px 0 var(--silver-bot),
-            var(--sh-soft);
-    }
-    .formulario h3 {
-        font-size: 26px;
-        font-weight: 700;
-        margin-bottom: 6px;
-        letter-spacing: -0.02em;
-    }
-    .formulario .form-sub {
-        font-size: 14px;
-        color: var(--gris-soft);
-        margin-bottom: 28px;
-    }
-    .input-group { display: flex; flex-direction: column; gap: 14px; }
-    .input-container {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-    .input-container > i {
-        position: absolute;
-        left: 16px;
-        color: var(--gris-mute);
-        font-size: 14px;
-        pointer-events: none;
-        z-index: 1;
-        transition: color .25s;
-    }
-    .input-container input,
-    .input-container textarea {
-        width: 100%;
-        padding: 14px 16px 14px 46px;
-        border: 1px solid var(--silver-edge);
-        border-radius: 14px;
-        font-size: 14.5px;
-        background: rgba(255,255,255,.6);
-        backdrop-filter: blur(10px);
-        color: var(--ink);
-        font-family: inherit;
-        transition: border-color .25s, background .25s, box-shadow .3s var(--ease);
-    }
-    .input-container input::placeholder { color: var(--gris-mute); }
-    .input-container input:focus,
-    .input-container textarea:focus {
-        outline: none;
-        border-color: var(--azul);
-        background: #fff;
-        box-shadow: 0 0 0 4px rgba(2, 177, 244, .14);
-    }
-    .input-container:focus-within > i { color: var(--azul-dark); }
-
-    .cedula-group { padding: 0 !important; border: none !important; }
-    .cedula-group .cedula-select {
-        background: rgba(255,255,255,.6);
-        backdrop-filter: blur(10px);
-        border: 1px solid var(--silver-edge);
-        border-right: none;
-        border-radius: 14px 0 0 14px;
-        padding: 14px 14px;
-        font-weight: 700;
-        color: var(--ink);
-        cursor: pointer;
-        font-family: inherit;
-        font-size: 14px;
-        outline: none;
-    }
-    .cedula-group .cedula-input {
-        border-radius: 0 14px 14px 0 !important;
-        padding-left: 16px !important;
-    }
-    .cedula-group:focus-within .cedula-select {
-        border-color: var(--azul);
-        background: #fff;
-    }
-
-    .btn-submit {
-        width: 100%;
-        padding: 16px;
-        border: none;
-        background: linear-gradient(135deg, var(--azul) 0%, var(--azul-dark) 100%);
-        color: #fff;
-        font-size: 14.5px;
-        font-weight: 600;
-        border-radius: 14px;
-        cursor: pointer;
-        margin-top: 10px;
-        box-shadow:
-            inset 0 1px 0 rgba(255,255,255,.3),
-            0 14px 30px rgba(2, 177, 244, .35);
-        transition: transform .25s var(--ease), box-shadow .3s;
-        font-family: inherit;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-    }
-    .btn-submit:hover {
-        transform: translateY(-2px);
-        box-shadow:
-            inset 0 1px 0 rgba(255,255,255,.3),
-            0 22px 44px rgba(2, 177, 244, .45);
-    }
-    .btn-submit i { transition: transform .3s var(--ease); }
-    .btn-submit:hover i { transform: translateX(3px); }
-
-    .form-legal {
-        font-size: 11.5px;
-        color: var(--gris-mute);
-        text-align: center;
-        margin-top: 16px;
-        line-height: 1.5;
-    }
-
-    /* ════════════════════════════════════════════════════════════════
-       FOOTER
-       ════════════════════════════════════════════════════════════════ */
-    .footer {
-        background: linear-gradient(180deg, transparent 0%, rgba(12, 26, 46, .04) 100%);
-        padding: 70px 0 24px;
-        margin-top: 60px;
-        border-top: 1px solid var(--silver-edge);
-    }
-    .footer-grid {
-        display: grid;
-        grid-template-columns: 1.8fr 1fr 1fr 1fr;
-        gap: 48px;
-        margin-bottom: 48px;
-        padding-bottom: 36px;
-        border-bottom: 1px solid var(--silver-edge);
-    }
-    .footer-brand .logo { margin-bottom: 16px; }
-    .footer-brand p {
-        font-size: 13.5px;
-        color: var(--gris);
-        max-width: 340px;
-        line-height: 1.7;
-    }
-    .footer h5 {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        color: var(--ink);
-        margin-bottom: 18px;
-        font-weight: 700;
-    }
-    .footer ul { list-style: none; }
-    .footer ul li { margin-bottom: 11px; font-size: 13.5px; }
-    .footer ul a {
-        color: var(--gris);
-        transition: color .25s, padding-left .25s var(--ease);
-        display: inline-block;
-    }
-    .footer ul a:hover { color: var(--azul-dark); padding-left: 4px; }
-    .footer ul li i { color: var(--gris-mute); margin-right: 8px; font-size: 11px; }
-    .footer-bottom {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        font-size: 12.5px;
-        color: var(--gris-soft);
-    }
-    .footer-bottom .made { font-weight: 500; color: var(--azul-dark); }
-
-    /* ════════════════════════════════════════════════════════════════
-       REVEAL ANIMATIONS
-       ════════════════════════════════════════════════════════════════ */
-    .reveal {
-        opacity: 0;
-        transform: translateY(28px);
-        transition: opacity .9s var(--ease), transform .9s var(--ease);
-    }
-    .reveal.in { opacity: 1; transform: none; }
-    .reveal[data-delay="1"] { transition-delay: .08s; }
-    .reveal[data-delay="2"] { transition-delay: .16s; }
-    .reveal[data-delay="3"] { transition-delay: .24s; }
-    .reveal[data-delay="4"] { transition-delay: .32s; }
-
-    @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-            animation-duration: .01ms !important;
-            transition-duration: .01ms !important;
-        }
-        .reveal { opacity: 1; transform: none; }
-    }
-
-    /* ════════════════════════════════════════════════════════════════
-       RESPONSIVE
-       ════════════════════════════════════════════════════════════════ */
-    @media (max-width: 1080px) {
-        section { padding: 100px 0; }
-        .hero-grid { gap: 48px; }
-    }
-    @media (max-width: 960px) {
-        .hero { padding-top: 100px; padding-bottom: 70px; }
-        .hero-grid { grid-template-columns: 1fr; gap: 60px; }
-        .hero-visual { margin: 0 auto; max-width: 440px; }
-        .stats-grid { grid-template-columns: repeat(2, 1fr); }
-        .mvv-grid { grid-template-columns: 1fr; }
-        .proceso-grid { grid-template-columns: 1fr; }
-        .beneficios-grid { grid-template-columns: repeat(2, 1fr); }
-        .contacto-grid { grid-template-columns: 1fr; gap: 22px; }
-        .footer-grid { grid-template-columns: 1fr 1fr; gap: 36px; }
-    }
-    @media (max-width: 640px) {
-        :root { --gutter: 20px; }
-        section { padding: 80px 0; }
-        .navbar ul { display: none; }
-        .navbar ul.open {
-            display: flex;
-            position: absolute;
-            top: calc(100% + 10px); left: 0; right: 0;
-            background: var(--glass-strong);
-            backdrop-filter: blur(24px) saturate(1.8);
-            -webkit-backdrop-filter: blur(24px) saturate(1.8);
-            border: 1px solid var(--silver-edge);
-            flex-direction: column;
-            padding: 14px;
-            border-radius: var(--r-lg);
-            box-shadow: var(--sh-deep);
-            gap: 4px;
-        }
-        .navbar ul.open a { padding: 12px 16px; width: 100%; }
-        .navbar ul.open .nav-cta { margin-left: 0; margin-top: 6px; }
-        .hamburger { display: inline-flex; }
-        .hv-pill.p1 { left: 8px;   top: 4%;    right: auto; }
-        .hv-pill.p2 { left: auto;  right: 8px; bottom: 8%; }
-        .servicios-grid { grid-template-columns: 1fr 1fr; }
-        .beneficios-grid { grid-template-columns: 1fr; }
-        .footer-grid { grid-template-columns: 1fr; gap: 32px; }
-        .formulario, .contacto-info { padding: 36px 26px; }
+    /* ════════════════════ RESPONSIVE ════════════════════ */
+    @media (max-width:1024px){
+        .hero-grid{grid-template-columns:1fr;gap:40px;text-align:center}
+        .hero p.lead{margin-left:auto;margin-right:auto}.hero-cta{justify-content:center}.hero-stats{margin:0 auto}
+        .hero-visual{order:-1}.glass-card{max-width:380px}
+        .feat-grid,.proc-grid{grid-template-columns:repeat(2,1fr)}
+        .serv-grid{grid-template-columns:repeat(3,1fr)}
+        .contacto-grid{grid-template-columns:1fr}
+        .footer-grid{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width:680px){
+        .nav-links{position:fixed;inset:0 0 auto 0;top:78px;margin:0 14px;flex-direction:column;align-items:stretch;gap:6px;padding:14px;
+            background:var(--glass-strong);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);
+            border:1px solid var(--glass-border);border-radius:18px;box-shadow:var(--shadow-lg);
+            opacity:0;visibility:hidden;transform:translateY(-12px);transition:.35s var(--ease)}
+        .nav-links.open{opacity:1;visibility:visible;transform:none}
+        .nav-links a{padding:13px 16px;font-size:1rem}.nav-cta{justify-content:center}
+        .burger{display:grid;place-items:center}
+        .hero{padding:115px 0 50px}
+        .hero-stats{grid-template-columns:repeat(2,1fr)}
+        .serv-grid{grid-template-columns:repeat(2,1fr)}
+        .feat-grid,.proc-grid{grid-template-columns:1fr}
+        .footer-grid{grid-template-columns:1fr;gap:26px}
+        section{padding:64px 0}
+        .float-chip{display:none}
+        .contacto-info,.formulario{padding:28px 22px}
+    }
+    @media (prefers-reduced-motion:reduce){
+        *,*::after,*::before{animation:none !important;transition:none !important;scroll-behavior:auto !important}
+        .reveal{opacity:1;transform:none}
     }
     </style>
 </head>
 <body>
-
-<div id="scroll-progress"></div>
-
-<?php if (isset($_GET['status'])): ?>
-    <?php
-    $mensaje = ''; $clase_css = '';
-    if ($_GET['status'] == 'success') { $mensaje = '¡Solicitud enviada con éxito! Nos pondremos en contacto pronto.'; $clase_css = 'mensaje-exito'; }
-    elseif ($_GET['status'] == 'error') { $mensaje = 'Hubo un error al enviar tu consulta. Inténtalo de nuevo.'; $clase_css = 'mensaje-error'; }
-    if ($mensaje) { echo "<div class='mensaje-estado $clase_css' id='msg-estado'>$mensaje</div>"; }
-    ?>
-<?php endif; ?>
-
-<!-- ══════════ HEADER ══════════ -->
-<header id="inicio" class="header">
-    <div class="menu">
-        <a href="#inicio" class="logo">
-            <span class="logo-icon"><i class="fa-solid fa-wave-square"></i></span>
-            <span class="logo-text">
-                EcoMadelleine
-                <small>Centro de Diagnóstico</small>
-            </span>
-        </a>
-        <nav class="navbar">
-            <ul id="nav-list">
-                <li><a href="#nosotros">Nosotros</a></li>
-                <li><a href="#proceso">Proceso</a></li>
-                <li><a href="#servicios">Estudios</a></li>
-                <li><a href="#beneficios">Beneficios</a></li>
-                <li><a href="#contacto">Contacto</a></li>
-                <li><a href="<?= eco_url('login') ?>" class="nav-cta"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</a></li>
-            </ul>
-            <button type="button" class="hamburger" id="hamburger" aria-label="Menú">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-        </nav>
+    <!-- Fondo animado -->
+    <div class="bg-wrap" aria-hidden="true">
+        <span class="orb a"></span><span class="orb b"></span><span class="orb c"></span><span class="orb d"></span>
     </div>
-</header>
 
-<!-- ══════════ HERO ══════════ -->
-<section class="hero">
-    <div class="container hero-grid">
-        <div class="hero-copy reveal">
-            <span class="hero-tag">
-                <span class="pill">Premium</span>
-                Diagnóstico ecográfico con la <strong style="margin-left:4px;">Dra. Madelleine Toro</strong>
-            </span>
-            <h1>
-                Imagen clínica<br>
-                <span class="grad">de alta resolución</span><br>
-                con criterio humano.
-            </h1>
-            <p class="lead">
-                Estudios ecográficos realizados personalmente por la doctora, con
-                <strong>informes digitales detallados</strong> y agenda en línea.
-                Tecnología de punta al servicio de tu salud.
-            </p>
-            <div class="hero-ctas">
-                <a href="#contacto" class="btn btn-primary">
-                    Agendar estudio <i class="fa-solid fa-arrow-right"></i>
-                </a>
-                <a href="<?= eco_url('login') ?>" class="btn btn-glass">
-                    <i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión
-                </a>
-            </div>
-            <div class="hero-trust">
-                <div class="trust-avatars">
-                    <span>MT</span>
-                    <span class="sec">EM</span>
-                    <span class="ter">+</span>
-                </div>
-                <div class="txt">
-                    <span class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span>
-                    <?php if ($total_pacientes > 0): ?>
-                        <strong><?php echo number_format($total_pacientes, 0, ',', '.'); ?></strong> pacientes confiaron en nosotros
-                    <?php else: ?>
-                        Centro <strong>recién inaugurado</strong> · sé uno de los primeros
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-
-        <div class="hero-visual reveal" data-delay="2">
-            <div class="hv-glow"></div>
-            <div class="hv-monitor">
-                <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-                    <defs>
-                        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#02b1f4" stop-opacity="0.15"/>
-                            <stop offset="100%" stop-color="#014a82" stop-opacity="0.05"/>
-                        </linearGradient>
-                        <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#02b1f4"/>
-                            <stop offset="100%" stop-color="#014a82"/>
-                        </linearGradient>
-                    </defs>
-                    <!-- Fondo del monitor -->
-                    <rect x="0" y="0" width="500" height="500" fill="url(#bgGrad)"/>
-
-                    <!-- Grid sutil -->
-                    <g stroke="rgba(2,177,244,.08)" stroke-width="1">
-                        <line x1="0" y1="125" x2="500" y2="125"/>
-                        <line x1="0" y1="250" x2="500" y2="250"/>
-                        <line x1="0" y1="375" x2="500" y2="375"/>
-                        <line x1="125" y1="0" x2="125" y2="500"/>
-                        <line x1="250" y1="0" x2="250" y2="500"/>
-                        <line x1="375" y1="0" x2="375" y2="500"/>
-                    </g>
-
-                    <!-- Cono ecográfico simulado -->
-                    <path d="M 250 80 L 100 420 L 400 420 Z"
-                          fill="rgba(2,177,244,.06)" stroke="rgba(2,177,244,.18)" stroke-width="1"/>
-
-                    <!-- Arcos de profundidad -->
-                    <path d="M 130 380 Q 250 320 370 380" stroke="rgba(2,177,244,.25)" stroke-width="1.5" fill="none"/>
-                    <path d="M 160 320 Q 250 270 340 320" stroke="rgba(2,177,244,.2)" stroke-width="1.5" fill="none"/>
-                    <path d="M 185 260 Q 250 225 315 260" stroke="rgba(2,177,244,.15)" stroke-width="1.5" fill="none"/>
-
-                    <!-- ECG line animado -->
-                    <path class="ecg-wave"
-                          d="M 30 250 L 110 250 L 130 210 L 150 295 L 170 165 L 190 325 L 210 250 L 290 250 L 310 210 L 330 295 L 350 165 L 370 250 L 470 250"
-                          stroke="url(#lineGrad)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-
-                    <!-- Pulse rings -->
-                    <circle class="pulse-ring" cx="250" cy="250" r="50" stroke="rgba(2,177,244,.4)" stroke-width="1.5" fill="none"/>
-                    <circle cx="250" cy="250" r="38" fill="rgba(2,177,244,.15)" stroke="rgba(2,177,244,.4)" stroke-width="1"/>
-                    <circle cx="250" cy="250" r="6" fill="#02b1f4"/>
-
-                    <!-- Etiquetas técnicas decorativas -->
-                    <text x="30" y="40" fill="rgba(1,74,130,.6)" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="2">SCAN · 12 MHz</text>
-                    <text x="30" y="475" fill="rgba(1,74,130,.5)" font-family="Inter,sans-serif" font-size="10" font-weight="500" letter-spacing="1.5">DEPTH 8.0 cm · GAIN 70%</text>
-                    <text x="470" y="40" text-anchor="end" fill="rgba(1,74,130,.6)" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="2">LIVE</text>
-                    <circle cx="430" cy="36" r="3" fill="#ef4444"><animate attributeName="opacity" values="1;.3;1" dur="1.5s" repeatCount="indefinite"/></circle>
-                </svg>
-            </div>
-
-            <div class="hv-pill p1">
-                <div class="icn"><i class="fa-solid fa-check"></i></div>
-                <div class="txt">
-                    <span class="lbl"><?php echo $avg_horas > 0 ? 'Promedio real' : 'Compromiso'; ?></span>
-                    <span class="val"><?php echo $avg_horas > 0 ? $avg_horas . ' h' : '24 h'; ?> · Informe</span>
-                </div>
-            </div>
-            <div class="hv-pill p2">
-                <div class="icn"><i class="fa-solid fa-shield-halved"></i></div>
-                <div class="txt">
-                    <span class="lbl">Datos clínicos</span>
-                    <span class="val">Confidencial</span>
-                </div>
-            </div>
-        </div>
+    <?php if ($flash): ?>
+    <div class="toast <?= ($flash==='registro_ok')?'ok':'err' ?>" id="flash">
+        <i class="fa-solid <?= ($flash==='registro_ok')?'fa-circle-check':'fa-circle-exclamation' ?>"></i>
+        <?php
+            echo ($flash==='registro_ok') ? '¡Registro exitoso! Revisa tu correo para verificar la cuenta.'
+               : (($flash==='user_exists') ? 'Ese correo o documento ya está registrado.'
+               : 'No pudimos completar el registro. Revisa los datos e inténtalo de nuevo.');
+        ?>
     </div>
-</section>
+    <?php endif; ?>
 
-<!-- ══════════ STATS REALES ══════════ -->
-<section class="stats-section">
-    <div class="container">
-        <div class="section-head section-head--center reveal" style="margin-bottom:48px;">
-            <span class="eyebrow"><i class="fa-solid fa-chart-line"></i> Datos en tiempo real</span>
-            <h2 class="section-title">Cifras del centro,<br><span class="grad">extraídas del sistema.</span></h2>
-        </div>
-        <div class="stats-grid">
-            <div class="stat-card reveal">
-                <div class="ico"><i class="fa-solid fa-user-group"></i></div>
-                <div class="num"><span class="grad" data-counter="<?php echo $total_pacientes; ?>" data-suffix="<?php echo $total_pacientes > 0 ? '+' : ''; ?>"><?php echo $total_pacientes > 0 ? '0' : '—'; ?></span></div>
-                <div class="lbl"><?php echo htmlspecialchars($f_pac['label']); ?></div>
-                <?php if ($total_pacientes == 0): ?>
-                    <div class="sub-meta">Sistema recién activo</div>
-                <?php endif; ?>
-            </div>
-            <div class="stat-card reveal" data-delay="1">
-                <div class="ico"><i class="fa-solid fa-wave-square"></i></div>
-                <div class="num"><span class="grad" data-counter="<?php echo $total_tipos; ?>" data-suffix="<?php echo $total_tipos > 0 ? '+' : ''; ?>"><?php echo $total_tipos > 0 ? '0' : '—'; ?></span></div>
-                <div class="lbl"><?php echo htmlspecialchars($f_tip['label']); ?></div>
-                <div class="sub-meta">Esquema clínico dinámico</div>
-            </div>
-            <div class="stat-card reveal" data-delay="2">
-                <div class="ico"><i class="fa-solid fa-clock"></i></div>
-                <div class="num"><span class="grad" data-counter="<?php echo $avg_horas > 0 ? $avg_horas : 24; ?>" data-suffix="h"><?php echo $avg_horas > 0 ? '0' : '24'; ?></span></div>
-                <div class="lbl"><?php echo htmlspecialchars($f_hrs['label']); ?></div>
-                <?php if ($avg_horas > 0): ?>
-                    <div class="sub-meta"><?php echo $total_informes; ?> informe<?php echo $total_informes !== 1 ? 's' : ''; ?> medidos</div>
-                <?php else: ?>
-                    <div class="sub-meta">SLA garantizado</div>
-                <?php endif; ?>
-            </div>
-            <div class="stat-card reveal" data-delay="3">
-                <div class="ico"><i class="fa-solid fa-heart-pulse"></i></div>
-                <div class="num"><span class="grad" data-counter="<?php echo $tasa_conclusion > 0 ? $tasa_conclusion : 100; ?>" data-suffix="%"><?php echo $tasa_conclusion > 0 ? '0' : '100'; ?></span></div>
-                <div class="lbl"><?php echo htmlspecialchars($f_tasa['label']); ?></div>
-                <?php if ($tasa_conclusion > 0): ?>
-                    <div class="sub-meta">Sobre <?php echo (int)$row['gestionadas']; ?> citas gestionadas</div>
-                <?php else: ?>
-                    <div class="sub-meta">Excelencia en cada estudio</div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ══════════ NOSOTROS ══════════ -->
-<section id="nosotros">
-    <div class="container">
-        <div class="section-head section-head--center reveal">
-            <span class="eyebrow"><i class="fa-solid fa-stethoscope"></i> Sobre nosotros</span>
-            <h2 class="section-title">Compromiso clínico,<br><span class="grad">criterio humano.</span></h2>
-            <p class="section-sub">Un centro especializado donde cada estudio es realizado por la doctora y entregado con el detalle que tu salud merece.</p>
-        </div>
-
-        <div class="mvv-grid">
-            <article class="mvv-card reveal" data-delay="1">
-                <div class="mvv-icon"><i class="fa-solid fa-bullseye"></i></div>
-                <h3>Misión</h3>
-                <p><?php echo nl2br(htmlspecialchars($contenido_web['mision'] ?? 'Brindar diagnóstico ecográfico de excelencia con calidez humana y precisión médica, acompañando a cada paciente desde el agendamiento hasta la entrega del informe.')); ?></p>
-            </article>
-            <article class="mvv-card reveal" data-delay="2">
-                <div class="mvv-icon"><i class="fa-solid fa-eye"></i></div>
-                <h3>Visión</h3>
-                <p><?php echo nl2br(htmlspecialchars($contenido_web['vision'] ?? 'Ser referencia regional en diagnóstico por imagen, integrando tecnología, criterio clínico y un trato profundamente humano en cada estudio.')); ?></p>
-            </article>
-            <article class="mvv-card reveal" data-delay="3">
-                <div class="mvv-icon"><i class="fa-solid fa-heart"></i></div>
-                <h3>Valores</h3>
-                <p><?php echo nl2br(htmlspecialchars($contenido_web['valores'] ?? 'Integridad. Precisión. Confidencialidad. Empatía. Excelencia en cada informe que firmamos.')); ?></p>
-            </article>
-        </div>
-    </div>
-</section>
-
-<!-- ══════════ PROCESO ══════════ -->
-<section id="proceso">
-    <div class="container">
-        <div class="section-head section-head--center reveal">
-            <span class="eyebrow"><i class="fa-solid fa-route"></i> Cómo trabajamos</span>
-            <h2 class="section-title">Tres pasos.<br><span class="grad">Cero fricción.</span></h2>
-            <p class="section-sub">Desde el agendamiento hasta el informe firmado, el proceso está pensado para que tu única preocupación sea tu salud.</p>
-        </div>
-
-        <div class="proceso-grid">
-            <div class="proceso-card reveal" data-delay="1">
-                <span class="proceso-num">PASO 01</span>
-                <i class="fa-regular fa-calendar-check ico"></i>
-                <h4>Agendas en línea</h4>
-                <p>Reserva tu cita 24/7 desde el panel. Recibes confirmación por correo y recordatorio antes del estudio.</p>
-            </div>
-            <div class="proceso-card reveal" data-delay="2">
-                <span class="proceso-num">PASO 02</span>
-                <i class="fa-solid fa-wave-square ico"></i>
-                <h4>Estudio con la doctora</h4>
-                <p>La Dra. Madelleine Toro realiza personalmente la ecografía y captura los hallazgos en el formulario clínico estructurado.</p>
-            </div>
-            <div class="proceso-card reveal" data-delay="3">
-                <span class="proceso-num">PASO 03</span>
-                <i class="fa-regular fa-file-lines ico"></i>
-                <h4>Informe en 24 horas</h4>
-                <p>Recibes el informe en PDF profesional listo para tu médico tratante, con esquema clínico detallado por tipo de estudio.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ══════════ SERVICIOS ══════════ -->
-<section id="servicios">
-    <div class="container">
-        <div class="section-head section-head--center reveal">
-            <span class="eyebrow"><i class="fa-solid fa-wave-square"></i> Cartera clínica</span>
-            <h2 class="section-title">Nuestros estudios<br><span class="grad">ecográficos.</span></h2>
-            <p class="section-sub">Esquemas dinámicos por tipo de estudio (Renal, Abdominal, Pélvica, Obstétrica y más) con captura estructurada e informes listos para impresión profesional.</p>
-        </div>
-
-        <div class="servicios-grid">
-            <?php
-            $tipos_publicos = $conex->query("SELECT codigo, nombre, categoria, descripcion, icono FROM tipos_ecografias WHERE activo = 1 AND (categoria IS NULL OR categoria NOT IN ('Musculoesqueletica_Sub', 'Obstetrica_Sub', 'Partes_Blandas_Sub')) ORDER BY categoria, nombre");
-            $idx = 0;
-            if ($tipos_publicos && $tipos_publicos->num_rows > 0):
-                while ($t = $tipos_publicos->fetch_assoc()):
-                    $cat = $t['categoria'] ?? '';
-                    $pal = $eco_palette[$cat] ?? $eco_palette_default;
-                    $icono = htmlspecialchars($t['icono'] ?: 'fa-solid fa-wave-square');
-                    $desc  = htmlspecialchars(mb_strimwidth($t['descripcion'] ?? 'Estudio ecográfico clínico con informe detallado.', 0, 95, '…', 'UTF-8'));
-                    $delay = ($idx % 4) + 1;
-                    $idx++;
-            ?>
-                <a href="<?= eco_url('login') ?>" class="service-card reveal" data-delay="<?php echo $delay; ?>"
-                   style="--c1:<?php echo $pal['c1']; ?>;--soft:<?php echo $pal['soft']; ?>;--tcolor:<?php echo $pal['text']; ?>;">
-                    <div class="service-icon"><i class="<?php echo $icono; ?>"></i></div>
-                    <?php if ($cat !== ''): ?>
-                        <span class="service-cat"><?php echo htmlspecialchars($cat); ?></span>
-                    <?php endif; ?>
-                    <h3><?php echo htmlspecialchars($t['nombre']); ?></h3>
-                    <p><?php echo $desc; ?></p>
-                    <span class="service-link">Ver detalles <i class="fa-solid fa-arrow-right"></i></span>
-                </a>
-            <?php
-                endwhile;
-            else:
-            ?>
-                <a href="<?= eco_url('login') ?>" class="service-card"><div class="service-icon"><i class="fa-solid fa-wave-square"></i></div><h3>Ecografía Abdominal</h3></a>
-                <a href="<?= eco_url('login') ?>" class="service-card"><div class="service-icon"><i class="fa-solid fa-baby"></i></div><h3>Ecografía Obstétrica</h3></a>
-                <a href="<?= eco_url('login') ?>" class="service-card"><div class="service-icon"><i class="fa-solid fa-user-doctor"></i></div><h3>Ecografía de Tiroides</h3></a>
-            <?php endif; ?>
-        </div>
-    </div>
-</section>
-
-<!-- ══════════ BENEFICIOS ══════════ -->
-<section id="beneficios">
-    <div class="container">
-        <div class="section-head section-head--center reveal">
-            <span class="eyebrow"><i class="fa-solid fa-medal"></i> Por qué EcoMadelleine</span>
-            <h2 class="section-title">La diferencia<br><span class="grad">está en el detalle.</span></h2>
-            <p class="section-sub">Cuatro pilares que separan nuestro enfoque del de un centro tradicional.</p>
-        </div>
-
-        <div class="beneficios-grid">
-            <div class="beneficio reveal" data-delay="1">
-                <div class="beneficio-icon"><i class="fa-solid fa-user-doctor"></i></div>
-                <h4>Atención personalizada</h4>
-                <p>Cada estudio es realizado e interpretado directamente por la doctora.</p>
-            </div>
-            <div class="beneficio reveal" data-delay="2">
-                <div class="beneficio-icon"><i class="fa-solid fa-file-waveform"></i></div>
-                <h4>Informes digitales</h4>
-                <p>Formularios estructurados y descarga PDF lista para imprimir.</p>
-            </div>
-            <div class="beneficio reveal" data-delay="3">
-                <div class="beneficio-icon"><i class="fa-solid fa-bolt"></i></div>
-                <h4>Entrega en 24h</h4>
-                <p>Resultados rápidos sin sacrificar el detalle clínico necesario.</p>
-            </div>
-            <div class="beneficio reveal" data-delay="4">
-                <div class="beneficio-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <h4>Datos confidenciales</h4>
-                <p>Tu historial protegido en un sistema seguro y privado.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ══════════ CONTACTO ══════════ -->
-<section id="contacto">
-    <div class="container">
-        <div class="section-head section-head--center reveal">
-            <span class="eyebrow"><i class="fa-regular fa-calendar"></i> Agenda tu cita</span>
-            <h2 class="section-title">Crea tu cuenta<br><span class="grad">y solicita tu estudio.</span></h2>
-            <p class="section-sub">Te contactaremos en menos de 24 horas para confirmar el día y la hora de tu ecografía.</p>
-        </div>
-
-        <div class="contacto-grid">
-            <aside class="contacto-info reveal">
-                <h3>Conversemos.</h3>
-                <p>Resolvemos cualquier duda sobre tu estudio antes y después de la consulta.</p>
-
-                <div class="contacto-info-item">
-                    <i class="fa-solid fa-phone"></i>
-                    <div>
-                        <div class="lbl">Teléfono</div>
-                        <div class="val">0412-8517770</div>
-                    </div>
-                </div>
-                <div class="contacto-info-item">
-                    <i class="fa-regular fa-envelope"></i>
-                    <div>
-                        <div class="lbl">Correo</div>
-                        <div class="val">contacto@ecomadelleine.com</div>
-                    </div>
-                </div>
-                <div class="contacto-info-item">
-                    <i class="fa-solid fa-location-dot"></i>
-                    <div>
-                        <div class="lbl">Consultorio</div>
-                        <div class="val">Centro de Diagnóstico EcoMadelleine</div>
-                    </div>
-                </div>
-                <div class="contacto-info-item">
-                    <i class="fa-regular fa-clock"></i>
-                    <div>
-                        <div class="lbl">Horario</div>
-                        <div class="val">Lun — Vie · 8:00 a 17:00</div>
-                    </div>
-                </div>
-
-                <div class="contacto-socials">
-                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
-                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-                </div>
-            </aside>
-
-            <div class="formulario reveal" data-delay="1">
-                <h3>Crea tu cuenta</h3>
-                <p class="form-sub">Regístrate para agendar tu próxima ecografía.</p>
-                <form method="post" autocomplete="off">
-                    <div class="input-group">
-                        <div class="input-container">
-                            <i class="fa-solid fa-user"></i>
-                            <input type="text" name="name" placeholder="Nombre y Apellido" required>
-                        </div>
-                        <div class="input-container">
-                            <i class="fa-solid fa-calendar-day"></i>
-                            <input type="text" id="fecha_nacimiento_flatpickr" name="fecha_nacimiento" placeholder="Fecha de nacimiento" required>
-                        </div>
-                        <div class="input-container cedula-group">
-                            <select name="nacionalidad" class="cedula-select" required>
-                                <option value="V">V</option>
-                                <option value="E">E</option>
-                                <option value="P">P</option>
-                            </select>
-                            <input type="text" name="cedula_numero" class="cedula-input" placeholder="Número de documento" required pattern="\d{7,8}" title="Ingresa entre 7 y 8 números" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-                        </div>
-                        <div class="input-container">
-                            <i class="fa-regular fa-envelope"></i>
-                            <input type="email" name="email" placeholder="Correo electrónico" required>
-                        </div>
-                        <div class="input-container">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" name="password" placeholder="Crea una contraseña" required
-                                   pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}"
-                                   title="Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.">
-                        </div>
-                        <button type="submit" name="send" class="btn-submit">
-                            Registrarme y solicitar estudio <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                        <p class="form-legal">Al registrarte aceptas el tratamiento confidencial de tus datos clínicos.</p>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ══════════ FOOTER ══════════ -->
-<footer class="footer">
-    <div class="container">
-        <div class="footer-grid">
-            <div class="footer-brand">
-                <a href="#inicio" class="logo">
-                    <span class="logo-icon"><i class="fa-solid fa-wave-square"></i></span>
-                    <span class="logo-text">EcoMadelleine<small>Centro de Diagnóstico</small></span>
-                </a>
-                <p>Centro de diagnóstico ecográfico premium dirigido por la Dra. Madelleine Toro. Tecnología, criterio clínico y atención humana en un solo lugar.</p>
-            </div>
-            <div>
-                <h5>Navegación</h5>
-                <ul>
+    <!-- ══════════ NAVBAR ══════════ -->
+    <header class="nav" id="nav">
+        <div class="container nav-inner">
+            <a href="#inicio" class="brand">
+                <span class="brand-logo"><i class="fa-solid fa-wave-square"></i></span>
+                <span>EcoMadelleine<small>Diagnóstico ecográfico</small></span>
+            </a>
+            <nav>
+                <ul class="nav-links" id="navLinks">
                     <li><a href="#inicio">Inicio</a></li>
                     <li><a href="#nosotros">Nosotros</a></li>
-                    <li><a href="#proceso">Proceso</a></li>
-                    <li><a href="#servicios">Estudios</a></li>
-                    <li><a href="#beneficios">Beneficios</a></li>
+                    <li><a href="#servicios">Servicios</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                    <li><a href="<?= eco_url('login') ?>" class="nav-cta"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</a></li>
                 </ul>
+            </nav>
+            <button class="burger" id="burger" aria-label="Menú"><i class="fa-solid fa-bars"></i></button>
+        </div>
+    </header>
+
+    <!-- ══════════ HERO ══════════ -->
+    <section id="inicio" class="hero">
+        <div class="container hero-grid">
+            <div class="hero-copy">
+                <span class="eyebrow reveal"><span class="dot"></span> Centro de Diagnóstico por Ultrasonido</span>
+                <h1 class="reveal" data-delay="1">Imágenes que dan <span class="grad">claridad</span>, informes que dan <span class="grad">tranquilidad</span>.</h1>
+                <p class="lead reveal" data-delay="2">Tecnología de imagen avanzada y la experiencia de la <strong>Dra. Madelleine Toro</strong>. Agenda tu ecografía y recibe tu <strong>informe digital firmado</strong> con resultados claros.</p>
+                <div class="hero-cta reveal" data-delay="3">
+                    <a href="#contacto" class="btn btn-primary">Solicitar cita <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="<?= eco_url('login') ?>" class="btn btn-glass"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</a>
+                </div>
+                <div class="hero-stats reveal" data-delay="4">
+                    <div class="stat"><div class="num" data-count="<?= htmlspecialchars($f_pac['value']) ?>"><?= htmlspecialchars($f_pac['value']) ?></div><div class="lbl"><?= htmlspecialchars($f_pac['label']) ?></div></div>
+                    <div class="stat"><div class="num" data-count="<?= htmlspecialchars($f_tip['value']) ?>"><?= htmlspecialchars($f_tip['value']) ?></div><div class="lbl"><?= htmlspecialchars($f_tip['label']) ?></div></div>
+                    <div class="stat"><div class="num" data-count="<?= htmlspecialchars($f_hrs['value']) ?>"><?= htmlspecialchars($f_hrs['value']) ?></div><div class="lbl"><?= htmlspecialchars($f_hrs['label']) ?></div></div>
+                    <div class="stat"><div class="num" data-count="<?= htmlspecialchars($f_tasa['value']) ?>"><?= htmlspecialchars($f_tasa['value']) ?></div><div class="lbl"><?= htmlspecialchars($f_tasa['label']) ?></div></div>
+                </div>
             </div>
-            <div>
-                <h5>Acceso</h5>
-                <ul>
+
+            <div class="hero-visual reveal" data-delay="2">
+                <div class="float-chip c1"><i class="fa-solid fa-shield-halved"></i> Informe firmado</div>
+                <div class="float-chip c2"><i class="fa-solid fa-clock"></i> Listo en 24 h</div>
+                <div class="glass-card">
+                    <div class="gc-head">
+                        <div class="gc-avatar"><i class="fa-solid fa-user-doctor"></i></div>
+                        <div><h4>Dra. Madelleine Toro</h4><span>Médico Ecografista</span></div>
+                    </div>
+                    <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                    <div class="gc-rows">
+                        <div class="gc-row"><span>Estudio</span> <b>Ecografía Abdominal</b></div>
+                        <div class="gc-row"><span>Estado</span> <span class="gc-badge"><i class="fa-solid fa-circle-check"></i> Informe firmado</span></div>
+                        <div class="gc-row"><span>Entrega</span> <b>Digital · 24 h</b></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════ NOSOTROS ══════════ -->
+    <section id="nosotros">
+        <div class="container">
+            <div class="sec-head reveal">
+                <span class="sec-tag">Por qué EcoMadelleine</span>
+                <h2>Diagnóstico de precisión, atención que se siente cercana</h2>
+                <p>Combinamos equipos de última generación con una lectura clínica experta para darte respuestas claras y a tiempo.</p>
+            </div>
+            <div class="feat-grid">
+                <div class="feat glass reveal" data-delay="1"><div class="feat-ic"><i class="fa-solid fa-microchip"></i></div><h3>Tecnología avanzada</h3><p>Equipos de ultrasonido de alta resolución para imágenes nítidas y diagnósticos confiables.</p></div>
+                <div class="feat glass reveal" data-delay="2"><div class="feat-ic"><i class="fa-solid fa-user-doctor"></i></div><h3>Especialista certificada</h3><p>Estudios realizados e interpretados por la Dra. Madelleine Toro, médico ecografista.</p></div>
+                <div class="feat glass reveal" data-delay="3"><div class="feat-ic"><i class="fa-solid fa-file-shield"></i></div><h3>Informe en 24 horas</h3><p>Recibe tu informe digital, firmado electrónicamente y verificable, directo en tu portal.</p></div>
+                <div class="feat glass reveal" data-delay="4"><div class="feat-ic"><i class="fa-solid fa-heart"></i></div><h3>Atención cercana</h3><p>Agenda en línea, recordatorios automáticos y acompañamiento en cada paso.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════ SERVICIOS ══════════ -->
+    <section id="servicios">
+        <div class="container">
+            <div class="sec-head reveal">
+                <span class="sec-tag">Estudios</span>
+                <h2>Una ecografía para cada necesidad</h2>
+                <p>Explora nuestros estudios disponibles. Inicia sesión o regístrate para agendar el tuyo.</p>
+            </div>
+            <div class="serv-grid">
+                <?php foreach ($servicios_landing as $i => $s):
+                    $p = $eco_palette[$s['cat']] ?? $eco_palette_default; ?>
+                    <a href="<?= eco_url('login') ?>" class="serv glass reveal" data-delay="<?= ($i % 5) + 1 ?>" style="--soft:<?= $p['soft'] ?>">
+                        <div class="serv-ic" style="background:<?= $p['soft'] ?>;color:<?= $p['text'] ?>"><i class="fa-solid <?= $s['i'] ?>"></i></div>
+                        <h3><?= htmlspecialchars($s['n']) ?></h3>
+                        <div class="go">Agendar <i class="fa-solid fa-arrow-right"></i></div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════ PROCESO ══════════ -->
+    <section id="proceso">
+        <div class="container">
+            <div class="sec-head reveal">
+                <span class="sec-tag">Cómo funciona</span>
+                <h2>De la cita al informe, en cuatro pasos</h2>
+            </div>
+            <div class="proc-grid">
+                <div class="proc glass reveal" data-delay="1"><div class="step"></div><h3>Agenda tu cita</h3><p>Regístrate y solicita tu estudio en línea, eligiendo el horario que más te convenga.</p></div>
+                <div class="proc glass reveal" data-delay="2"><div class="step"></div><h3>Realiza el estudio</h3><p>Te atendemos con equipos de alta resolución y la guía de preparación específica.</p></div>
+                <div class="proc glass reveal" data-delay="3"><div class="step"></div><h3>Lectura experta</h3><p>La especialista interpreta y firma tu informe electrónicamente.</p></div>
+                <div class="proc glass reveal" data-delay="4"><div class="step"></div><h3>Recibe resultados</h3><p>Tu informe digital queda disponible en tu portal y por enlace seguro.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════ FAQ ══════════ -->
+    <section id="faq">
+        <div class="container">
+            <div class="sec-head reveal">
+                <span class="sec-tag">Preguntas frecuentes</span>
+                <h2>Resolvemos tus dudas</h2>
+            </div>
+            <div class="faq-wrap">
+                <?php
+                $faqs = [
+                    ['¿Necesito preparación para mi ecografía?','Depende del estudio. Algunas (como la abdominal) requieren ayuno; otras, vejiga llena. Al agendar te indicamos la preparación exacta para tu caso.'],
+                    ['¿Cuándo recibo mi informe?','Nuestro compromiso es entregar el informe digital firmado en un máximo de 24 horas, disponible en tu portal del paciente.'],
+                    ['¿El informe es válido y verificable?','Sí. Cada informe lleva una firma electrónica con sello del servidor (huella SHA-256 + HMAC) que garantiza su integridad y autenticidad.'],
+                    ['¿Necesito orden médica?','Es recomendable traer la indicación de tu médico. Si no la tienes, consúltalo con recepción al agendar.'],
+                    ['¿Cómo agendo una cita?','Regístrate en el formulario de contacto o inicia sesión, y solicita tu estudio eligiendo fecha y hora disponibles.'],
+                ];
+                foreach ($faqs as $i => $f): ?>
+                    <div class="faq-item glass reveal" data-delay="<?= min($i+1,4) ?>">
+                        <div class="faq-q"><span><?= htmlspecialchars($f[0]) ?></span> <i class="fa-solid fa-plus"></i></div>
+                        <div class="faq-a"><p><?= htmlspecialchars($f[1]) ?></p></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════ CONTACTO ══════════ -->
+    <section id="contacto">
+        <div class="container">
+            <div class="contacto-grid">
+                <aside class="contacto-info glass reveal">
+                    <h2>Hablemos</h2>
+                    <p>Estamos para ayudarte. Escríbenos o regístrate para agendar tu estudio.</p>
+                    <div class="ci-row"><div class="ic"><i class="fa-solid fa-location-dot"></i></div><div><div class="lbl">Ubicación</div><div class="val">Consultorio EcoMadelleine</div></div></div>
+                    <div class="ci-row"><div class="ic"><i class="fa-solid fa-phone"></i></div><div><div class="lbl">Teléfono</div><div class="val">+58 412 000 0000</div></div></div>
+                    <div class="ci-row"><div class="ic"><i class="fa-regular fa-envelope"></i></div><div><div class="lbl">Correo</div><div class="val">contacto@ecomadelleine.com</div></div></div>
+                    <div class="ci-row"><div class="ic"><i class="fa-regular fa-clock"></i></div><div><div class="lbl">Horario</div><div class="val">Lun — Vie · 8:00 a 17:00</div></div></div>
+                    <div class="contacto-socials">
+                        <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                        <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    </div>
+                </aside>
+
+                <div class="formulario reveal" data-delay="1">
+                    <h3>Crea tu cuenta</h3>
+                    <p class="form-sub">Regístrate para agendar tu próxima ecografía.</p>
+                    <form method="post" autocomplete="off">
+                        <div class="input-group">
+                            <div class="input-container">
+                                <i class="fa-solid fa-user"></i>
+                                <input type="text" name="name" placeholder="Nombre y Apellido" required>
+                            </div>
+                            <div class="input-container">
+                                <i class="fa-solid fa-calendar-day"></i>
+                                <input type="text" id="fecha_nacimiento_flatpickr" name="fecha_nacimiento" placeholder="Fecha de nacimiento" required>
+                            </div>
+                            <div class="input-container cedula-group">
+                                <select name="nacionalidad" class="cedula-select" required>
+                                    <option value="V">V</option>
+                                    <option value="E">E</option>
+                                    <option value="P">P</option>
+                                </select>
+                                <input type="text" name="cedula_numero" class="cedula-input" placeholder="Número de documento" required pattern="\d{7,8}" title="Ingresa entre 7 y 8 números" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                            </div>
+                            <div class="input-container">
+                                <i class="fa-regular fa-envelope"></i>
+                                <input type="email" name="email" placeholder="Correo electrónico" required>
+                            </div>
+                            <div class="input-container">
+                                <i class="fa-solid fa-lock"></i>
+                                <input type="password" name="password" placeholder="Crea una contraseña" required
+                                       pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}"
+                                       title="Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.">
+                            </div>
+                            <button type="submit" name="send" class="btn-submit">
+                                Registrarme y solicitar estudio <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                            <p class="form-legal">Al registrarte aceptas el tratamiento confidencial de tus datos clínicos.</p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════ FOOTER ══════════ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#inicio" class="brand">
+                        <span class="brand-logo"><i class="fa-solid fa-wave-square"></i></span>
+                        <span>EcoMadelleine<small>Diagnóstico ecográfico</small></span>
+                    </a>
+                    <p>Centro de diagnóstico por ultrasonido. Imágenes claras, informes digitales firmados y atención cercana.</p>
+                </div>
+                <div><h5>Navegación</h5><ul>
+                    <li><a href="#inicio">Inicio</a></li>
+                    <li><a href="#nosotros">Nosotros</a></li>
+                    <li><a href="#servicios">Servicios</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                </ul></div>
+                <div><h5>Pacientes</h5><ul>
                     <li><a href="<?= eco_url('login') ?>">Iniciar sesión</a></li>
-                    <li><a href="#contacto">Crear cuenta</a></li>
-                    <li><a href="#contacto">Agendar estudio</a></li>
-                </ul>
+                    <li><a href="<?= eco_url('registro') ?>">Crear cuenta</a></li>
+                    <li><a href="#contacto">Agendar cita</a></li>
+                    <li><a href="<?= eco_url('privacidad') ?>">Aviso de privacidad</a></li>
+                </ul></div>
+                <div><h5>Contacto</h5><ul>
+                    <li><a href="#contacto"><i class="fa-solid fa-location-dot"></i> Ubicación</a></li>
+                    <li><a href="#contacto"><i class="fa-solid fa-phone"></i> +58 412 000 0000</a></li>
+                    <li><a href="#contacto"><i class="fa-regular fa-envelope"></i> contacto@ecomadelleine.com</a></li>
+                </ul></div>
             </div>
-            <div>
-                <h5>Contacto</h5>
-                <ul>
-                    <li><i class="fa-solid fa-phone"></i> 0412-8517770</li>
-                    <li><i class="fa-regular fa-envelope"></i> contacto@ecomadelleine.com</li>
-                    <li><i class="fa-regular fa-clock"></i> Lun — Vie · 8:00 — 17:00</li>
-                </ul>
-            </div>
+            <div class="footer-bottom">© <?= date('Y') ?> EcoMadelleine · Centro de Diagnóstico por Ultrasonido. Todos los derechos reservados.</div>
         </div>
-        <div class="footer-bottom">
-            <span>&copy; <?php echo date('Y'); ?> EcoMadelleine · Centro de Diagnóstico Ecográfico</span>
-            <span class="made">Diseñado con criterio clínico · Dra. Madelleine Toro</span>
-        </div>
-    </div>
-</footer>
+    </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script>
+    (function(){
+        'use strict';
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
+        /* Flatpickr fecha de nacimiento */
+        if (window.flatpickr) {
+            flatpickr.localize(flatpickr.l10ns.es);
+            flatpickr('#fecha_nacimiento_flatpickr', { dateFormat:'Y-m-d', maxDate:'today', altInput:true, altFormat:'d / m / Y', disableMobile:true });
+        }
 
-    /* Flatpickr */
-    if (window.flatpickr) {
-        flatpickr("#fecha_nacimiento_flatpickr", {
-            locale: "es",
-            dateFormat: "d-m-Y",
-            maxDate: "today",
-            altInput: true,
-            altFormat: "j F, Y",
-        });
-    }
+        /* Navbar: glass intensifica al hacer scroll */
+        var nav = document.getElementById('nav');
+        var onScroll = function(){ nav.classList.toggle('scrolled', window.scrollY > 24); };
+        onScroll(); window.addEventListener('scroll', onScroll, {passive:true});
 
-    /* Header scroll state + hide-on-scroll-down */
-    const header = document.querySelector('.header');
-    let lastY = window.scrollY;
-    const onScroll = () => {
-        const y = window.scrollY;
-        header.classList.toggle('scrolled', y > 24);
-        if (y > 140 && y - lastY > 6)      header.classList.add('hidden');
-        else if (lastY - y > 4 || y < 80)  header.classList.remove('hidden');
-        lastY = y;
+        /* Menú móvil */
+        var burger = document.getElementById('burger'), links = document.getElementById('navLinks');
+        burger.addEventListener('click', function(){ links.classList.toggle('open'); });
+        links.addEventListener('click', function(e){ if (e.target.tagName==='A') links.classList.remove('open'); });
 
-        const h = document.documentElement;
-        const total = h.scrollHeight - h.clientHeight;
-        const pct = total > 0 ? (y / total) * 100 : 0;
-        const bar = document.getElementById('scroll-progress');
-        if (bar) bar.style.width = pct + '%';
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
+        /* Scroll reveal */
+        var revs = document.querySelectorAll('.reveal');
+        if (reduce || !('IntersectionObserver' in window)) {
+            revs.forEach(function(el){ el.classList.add('in'); });
+        } else {
+            var io = new IntersectionObserver(function(entries){
+                entries.forEach(function(en){ if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+            }, { threshold:.12, rootMargin:'0px 0px -8% 0px' });
+            revs.forEach(function(el){ io.observe(el); });
+        }
 
-    /* Hamburger */
-    const ham = document.getElementById('hamburger');
-    const navList = document.getElementById('nav-list');
-    if (ham && navList) {
-        ham.addEventListener('click', () => navList.classList.toggle('open'));
-        navList.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navList.classList.remove('open')));
-    }
-
-    /* Reveal on scroll */
-    const reveals = document.querySelectorAll('.reveal');
-    const io = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-            if (e.isIntersecting) {
-                e.target.classList.add('in');
-                io.unobserve(e.target);
+        /* Contadores animados (solo valores numéricos) */
+        function animateCount(el){
+            var raw = el.getAttribute('data-count') || el.textContent;
+            var m = raw.match(/^(\D*)([\d.,]+)(\D*)$/);
+            if (!m){ return; }
+            var pre=m[1], suf=m[3], target=parseFloat(m[2].replace(/\./g,'').replace(',', '.'));
+            if (isNaN(target)){ return; }
+            var dur=1300, start=null;
+            function step(ts){ if(!start)start=ts; var p=Math.min((ts-start)/dur,1);
+                var val=Math.floor((1-Math.pow(1-p,3))*target);
+                el.textContent = pre + val.toLocaleString('es') + suf;
+                if(p<1) requestAnimationFrame(step); else el.textContent = raw;
             }
-        });
-    }, { threshold: 0.12, rootMargin: '0px 0px -50px 0px' });
-    reveals.forEach(el => io.observe(el));
-
-    /* Stat counters — solo si hay valor numérico real */
-    const counters = document.querySelectorAll('[data-counter]');
-    const ioCount = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-            if (!e.isIntersecting) return;
-            const el = e.target;
-            const target = parseInt(el.getAttribute('data-counter'), 10);
-            const suffix = el.getAttribute('data-suffix') || '';
-            if (isNaN(target) || target === 0) { ioCount.unobserve(el); return; }
-            const duration = 1600;
-            const start = performance.now();
-            const step = (now) => {
-                const t = Math.min((now - start) / duration, 1);
-                const eased = 1 - Math.pow(1 - t, 3);
-                const val = Math.round(target * eased);
-                el.textContent = val.toLocaleString('es-VE') + (t === 1 ? suffix : '');
-                if (t < 1) requestAnimationFrame(step);
-            };
             requestAnimationFrame(step);
-            ioCount.unobserve(el);
-        });
-    }, { threshold: 0.4 });
-    counters.forEach(el => ioCount.observe(el));
+        }
+        var nums = document.querySelectorAll('.stat .num[data-count]');
+        if (!reduce && 'IntersectionObserver' in window){
+            var io2 = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ animateCount(e.target); io2.unobserve(e.target);} }); }, {threshold:.6});
+            nums.forEach(function(n){ io2.observe(n); });
+        }
 
-    /* Magnetic CTA */
-    document.querySelectorAll('.btn-primary, .btn-submit').forEach(btn => {
-        btn.addEventListener('mousemove', (e) => {
-            const r = btn.getBoundingClientRect();
-            const x = e.clientX - r.left - r.width / 2;
-            const y = e.clientY - r.top - r.height / 2;
-            btn.style.transform = `translate(${x * 0.12}px, ${y * 0.18}px)`;
+        /* FAQ acordeón */
+        document.querySelectorAll('.faq-q').forEach(function(q){
+            q.addEventListener('click', function(){
+                var item = q.parentElement, open = item.classList.contains('open');
+                document.querySelectorAll('.faq-item.open').forEach(function(i){ i.classList.remove('open'); });
+                if (!open) item.classList.add('open');
+            });
         });
-        btn.addEventListener('mouseleave', () => { btn.style.transform = ''; });
-    });
 
-    /* Spotlight follow en el hero visual */
-    const hv = document.querySelector('.hero-visual');
-    if (hv) {
-        hv.addEventListener('mousemove', (e) => {
-            const r = hv.getBoundingClientRect();
-            const x = ((e.clientX - r.left) / r.width - 0.5) * 14;
-            const y = ((e.clientY - r.top) / r.height - 0.5) * 14;
-            const monitor = hv.querySelector('.hv-monitor');
-            if (monitor) monitor.style.transform = `translateY(${y * -0.4}px) rotateX(${-y}deg) rotateY(${x}deg)`;
-        });
-        hv.addEventListener('mouseleave', () => {
-            const monitor = hv.querySelector('.hv-monitor');
-            if (monitor) monitor.style.transform = '';
-        });
-    }
-
-    /* Auto-hide status message */
-    const msg = document.getElementById('msg-estado');
-    if (msg) {
-        setTimeout(() => {
-            msg.style.transition = 'opacity .4s, transform .4s';
-            msg.style.opacity = '0';
-            msg.style.transform = 'translate(-50%, -20px)';
-            setTimeout(() => msg.remove(), 500);
-        }, 5500);
-    }
-});
-</script>
+        /* Toast flash auto-hide */
+        var t = document.getElementById('flash');
+        if (t){ requestAnimationFrame(function(){ t.classList.add('show'); });
+            setTimeout(function(){ t.classList.remove('show'); }, 6000); }
+    })();
+    </script>
 </body>
 </html>
