@@ -459,7 +459,8 @@
         font-size: 12.5px;
         font-weight: 500;
         color: var(--ink-2);
-        margin-bottom: 32px;
+        margin-bottom: 10px;
+        margin-top: -110px;
         box-shadow: inset 0 1px 0 var(--silver-top), 0 4px 12px rgba(12, 26, 46, .04);
     }
     .hero-tag .pill {
@@ -511,6 +512,7 @@
         transition: transform .35s var(--ease), background .25s, color .25s, border-color .25s, box-shadow .35s;
         will-change: transform;
         font-family: inherit;
+        margin-top: -10px;
     }
     .btn i { font-size: 13px; transition: transform .3s var(--ease); }
     .btn-primary {
@@ -567,12 +569,14 @@
     /* ── Visual hero: panel ecográfico abstracto ── */
     .hero-visual {
         position: relative;
-        max-width: 640px;
-        margin: -52px auto 0;
+        max-width: 500px;
+        margin top: -40px auto 0;
     }
     /* ── Panel "en vivo" del hero (reemplaza el monitor + pills) ── */
     .hero-panel {
         position: relative; z-index: 2;
+        margin-top: -100px;
+        margin-right: -160px;
         background: var(--glass-strong);
         backdrop-filter: blur(30px) saturate(1.9); -webkit-backdrop-filter: blur(30px) saturate(1.9);
         border: 1px solid var(--silver-edge); border-radius: var(--r-2xl);
