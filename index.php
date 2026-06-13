@@ -568,7 +568,7 @@
     .hero-visual {
         position: relative;
         max-width: 520px;
-        margin: 0 auto;
+        margin: -40px auto 0;
     }
     /* ── Panel "en vivo" del hero (reemplaza el monitor + pills) ── */
     .hero-panel {
