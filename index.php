@@ -434,7 +434,7 @@
        HERO — Split 60/40 con visual abstracto + métricas glass
        ════════════════════════════════════════════════════════════════ */
     .hero {
-        padding-top: 100px;
+        padding-top: 116px;
         padding-bottom: 100px;
         position: relative;
     }
